@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Lớp "vỏ" chung cho TẤT CẢ các phản hồi từ API
 /// <T> là kiểu dữ liệu của trường "data" (ví dụ: RegisteredUserData, LoginData, List<Post>...)
 class BaseResponse<T> {
