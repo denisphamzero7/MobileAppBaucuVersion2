@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "349406973230",
+    "project_id": "baucunotication",
+    "storage_bucket": "baucunotication.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:349406973230:android:7349f2c404654f88097ebf",
+        "android_client_info": {
+          "package_name": "com.example.app_02"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARG6rZLkxlRt2CtpgL6JMrC3ILdmNdOWQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
