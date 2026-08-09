@@ -117,3 +117,11 @@ if (orgId != null) {
   ```
 * Sử dụng `Obx(() => ...)` để bọc xung quanh các widget hiển thị dữ liệu thay đổi nhằm lắng nghe các thuộc tính `.obs` từ Controller.
 * Để làm mới dữ liệu khi người dùng kéo màn hình xuống, hãy sử dụng `RefreshIndicator` bọc ngoài các `ListView` hoặc `SingleChildScrollView` có thuộc tính `physics: const AlwaysScrollableScrollPhysics()`.
+
+---
+
+## 5. Quy tắc quản lý và sử dụng Bảng màu (Color Palette Rules)
+
+* **Bắt buộc sử dụng màu từ hệ thống**: Mọi màu sắc được sử dụng trên giao diện Trang chủ (HomeScreen), Thống kê (StatisticScreen), các thẻ, nhãn hay biểu đồ bắt buộc phải được khai báo và gọi từ class **`AppColors`** tại file **[`app_colors.dart`](file:///c:/LTMB_Tools/class1/project01/app_baucu_version1/lib/untils/app_colors.dart)**.
+* **Tuyệt đối không tự ý tạo màu sắc khác**: Nghiêm cấm sử dụng trực tiếp các constructor màu dạng cứng hoặc mã HEX tùy biến khác (ví dụ: `Color(0xFF...)`) ở các lớp View hoặc Widget. Nếu phát sinh nhu cầu sử dụng màu sắc mới, bắt buộc phải khai báo tĩnh màu đó vào trong `AppColors` trước, sau đó mới gọi sử dụng.
+

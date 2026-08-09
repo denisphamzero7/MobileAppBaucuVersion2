@@ -10,7 +10,7 @@ class Organization {
 
   factory Organization.fromJson(Map<String, dynamic> json) => Organization(
     id: json["id"] as int? ?? 0,
-    name: json["name"] as String? ?? '',
+    name: json["name"]?.toString() ?? '',
   );
 
   Map<String, dynamic> toJson() => {
@@ -23,20 +23,36 @@ class Organization {
 class User {
   final int id;
   final String name;
+  final String email;
+  final String userName;
+  final String avatar;
+  final String lastLoginAt;
 
   User({
     required this.id,
     required this.name,
+    this.email = '',
+    this.userName = '',
+    this.avatar = '',
+    this.lastLoginAt = '',
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
     id: json["id"] as int? ?? 0,
-    name: json["name"] as String? ?? '',
+    name: json["name"]?.toString() ?? '',
+    email: json["email"]?.toString() ?? '',
+    userName: json["user_name"]?.toString() ?? '',
+    avatar: json["avatar"]?.toString() ?? '',
+    lastLoginAt: json["last_login_at"]?.toString() ?? '',
   );
 
   Map<String, dynamic> toJson() => {
     "id": id,
     "name": name,
+    "email": email,
+    "user_name": userName,
+    "avatar": avatar,
+    "last_login_at": lastLoginAt,
   };
 }
 
@@ -66,8 +82,8 @@ class LoginData {
     var permsList = json["permissions"] as List? ?? [];
 
     return LoginData(
-      accessToken: json["access_token"] as String? ?? '',
-      tokenType: json["token_type"] as String? ?? 'Bearer',
+      accessToken: json["access_token"]?.toString() ?? '',
+      tokenType: json["token_type"]?.toString() ?? 'Bearer',
       user: User.fromJson(json["user"] as Map<String, dynamic>? ?? {}),
       availableOrganizations: orgsList.map((x) => Organization.fromJson(x as Map<String, dynamic>)).toList(),
       currentOrganizationId: json["current_organization_id"] as int?,

@@ -23,6 +23,7 @@ import 'package:app_baucu_version1/helper/onesignal.dart';
 import 'package:app_baucu_version1/controllers/voter_controller.dart';
 import 'package:app_baucu_version1/controllers/weather_controller.dart';
 import 'package:app_baucu_version1/controllers/notification_controller.dart';
+import 'package:app_baucu_version1/controllers/log_activity_controller.dart';
 import 'package:app_baucu_version1/controllers/task_controller.dart';
 // Hoặc nếu để ngay ngoài lib thì: import 'onesignal.dart';
 
@@ -48,6 +49,7 @@ void main() async {
   Get.put(WeatherController());
   Get.put(NotificationController());
   Get.put(TaskController());
+  Get.put(LogActivityController());
 
   runApp(const MyApp());
 }

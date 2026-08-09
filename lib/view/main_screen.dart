@@ -2,9 +2,9 @@ import 'package:app_baucu_version1/controllers/navigation.dart';
 import 'package:app_baucu_version1/controllers/theme_controller.dart';
 import 'package:app_baucu_version1/view/document/document_screen.dart';
 import 'package:app_baucu_version1/view/home/home_screen.dart';
-import 'package:app_baucu_version1/view/notification/notification_screen.dart';
 import 'package:app_baucu_version1/view/task/task_screen.dart';
-import 'package:app_baucu_version1/view/voter/votescan_screen.dart';
+import 'package:app_baucu_version1/view/statistic/statistic_screen.dart';
+import 'package:app_baucu_version1/view/user/user_screen.dart';
 import 'package:app_baucu_version1/view/widgets/custom_bottom_navbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,10 +29,11 @@ class _MainScreenState extends State<MainScreen> {
               index: navigationController.currentIndex.value,
               children: [
                 const HomeScreen(),
-                const VoteScanScreen(),
-                const NotificationScreen(),
-                const TaskScreen(),
+                TaskScreen(type: 'sent'),
+                TaskScreen(type: 'received'),
                 const DocumentScreen(),
+                const StatisticScreen(),
+                const ProfileScreen(),
               ],
             )
         ),

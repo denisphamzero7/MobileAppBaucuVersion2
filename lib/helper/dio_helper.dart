@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart'; // Để dùng Get.offAllNamed khi logout
 import 'dart:developer';
+import 'dart:io';
+import 'package:dio/io.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../core/api_constants.dart'; // Để in log đẹp hơn print
 
@@ -26,8 +28,18 @@ class DioHelper {
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
+          'Host': 'danatec-test.theworkpc.com', // Fix for direct IP connection
         },
       ),
+    );
+
+    // Bypass SSL Verification because we are connecting to IP directly
+    _dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+        return client;
+      },
     );
 
     _initializeInterceptors();

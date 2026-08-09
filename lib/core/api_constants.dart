@@ -2,7 +2,8 @@ class ApiConstants {
   // Thay đổi IP máy tính của bạn ở đây.
   // IP hiện tại của máy tính: 10.155.54.112 (dùng khi kết nối cùng mạng Wi-Fi không chặn client isolation)
   // Sử dụng 127.0.0.1 kết hợp chạy 'adb reverse tcp:8080 tcp:8080' là tối ưu nhất cho thiết bị thật cắm cáp USB
-  static const String baseUrl = "https://danatec-test.theworkpc.com/api/";
+  // Sử dụng trực tiếp IP 192.168.168.6 vì máy ảo Android không đọc được file hosts của Windows
+  static const String baseUrl = "https://192.168.168.6/api/";
 
   static const String login = "auth/login";
   static const String logout = "auth/logout";
@@ -34,4 +35,5 @@ class ApiConstants {
 
   // === Công việc ===
   static const String taskAssignmentItems = "task-assignment-items";
+  static const String taskAssignmentPetitionsDepartments = "task-assignment-petitions/available-departments";
 }

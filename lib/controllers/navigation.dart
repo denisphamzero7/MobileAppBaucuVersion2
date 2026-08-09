@@ -9,13 +9,13 @@ class NavigationController extends GetxController {
     currentIndex.value = index;
 
     // Tự động tải lại dữ liệu khi nhấn vào tab tương ứng
-    if (index == 3) {
+    if (index == 1 || index == 2) {
       if (Get.isRegistered<TaskController>()) {
         Get.find<TaskController>().fetchTasks();
       }
-    } else if (index == 2) {
-      if (Get.isRegistered<NotificationController>()) {
-        Get.find<NotificationController>().fetchNotifications();
+    } else if (index == 4) {
+      if (Get.isRegistered<TaskController>()) {
+        Get.find<TaskController>().fetchStats();
       }
     }
   }

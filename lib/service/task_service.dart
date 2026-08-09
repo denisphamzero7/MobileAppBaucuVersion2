@@ -32,4 +32,26 @@ class TaskService {
       return null;
     }
   }
+
+  Future<Map<String, dynamic>?> getTaskStats({String? startDate, String? endDate, int? departmentId}) async {
+    try {
+      final Map<String, dynamic> queryParams = {};
+      if (startDate != null && startDate.isNotEmpty) queryParams['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) queryParams['end_date'] = endDate;
+      if (departmentId != null) queryParams['department_id'] = departmentId;
+
+      final response = await _http.get(
+        url: '${ApiConstants.taskAssignmentItems}/stats',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      print("in kết quả task stats: $response");
+      if (response is Map<String, dynamic>) {
+        return response;
+      }
+      return null;
+    } catch (e) {
+      print("Error in repository getTaskStats: $e");
+      return null;
+    }
+  }
 }

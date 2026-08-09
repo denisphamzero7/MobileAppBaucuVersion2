@@ -43,6 +43,11 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed, // Cố định vị trí các nút (quan trọng nếu có > 3 nút)
           elevation: 0,
+          iconSize: 20,
+          selectedFontSize: 9,
+          unselectedFontSize: 9,
+          selectedLabelStyle: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontSize: 9, fontWeight: FontWeight.w500),
 
           // Danh sách các tab
           items: const [
@@ -52,24 +57,29 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
               label: 'Trang chủ',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.how_to_vote_outlined),
-              activeIcon: Icon(Icons.how_to_vote),
-              label: 'Bầu cử',
+              icon: Icon(Icons.send_outlined),
+              activeIcon: Icon(Icons.send),
+              label: 'Đang giao',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.notifications_outlined),
-              activeIcon: Icon(Icons.notifications),
-              label: 'Thông báo',
+              icon: Icon(Icons.mail_outline),
+              activeIcon: Icon(Icons.mail),
+              label: 'Được giao',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment),
-              label: 'Công việc',
+              icon: Icon(Icons.description_outlined),
+              activeIcon: Icon(Icons.description),
+              label: 'Đơn thư',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              activeIcon: Icon(Icons.article),
-              label: 'Tài liệu',
+              icon: Icon(Icons.pie_chart_outline),
+              activeIcon: Icon(Icons.pie_chart),
+              label: 'Thống kê',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Người dùng',
             ),
           ],
         ),

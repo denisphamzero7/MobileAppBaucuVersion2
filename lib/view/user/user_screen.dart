@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/user_controller.dart';
+import '../../controllers/theme_controller.dart';
 import '../../model/profile.dart';
 
 // --- STYLES CƠ BẢN ---
@@ -134,8 +135,35 @@ class ProfileScreen extends GetView<UserController> {
           label: 'Admin',
           value: profile.role?.name?.toLowerCase() == 'admin' ? 'Có' : 'Không',
         ),
+        
+        const Divider(height: 16),
 
-        const SizedBox(height: 32),
+        // Cài đặt giao diện tối
+        GetBuilder<ThemeController>(
+          builder: (themeController) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              themeController.isDarkMode ? Icons.light_mode : Icons.dark_mode_outlined,
+              color: Theme.of(context).primaryColor,
+              size: 24,
+            ),
+            title: Text(
+              'Chế độ giao diện',
+              style: bodySmall.copyWith(color: Colors.grey),
+            ),
+            subtitle: Text(
+              themeController.isDarkMode ? 'Giao diện tối' : 'Giao diện sáng',
+              style: bodyMedium.copyWith(fontWeight: FontWeight.w500),
+            ),
+            trailing: Switch(
+              value: themeController.isDarkMode,
+              onChanged: (val) => themeController.toggleTheme(),
+              activeColor: Theme.of(context).primaryColor,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
 
         // Nút Đăng xuất
         SizedBox(
