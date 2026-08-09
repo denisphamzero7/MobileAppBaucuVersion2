@@ -62,9 +62,9 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
               label: 'Thông báo',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Cá nhân',
+              icon: Icon(Icons.assignment_outlined),
+              activeIcon: Icon(Icons.assignment),
+              label: 'Công việc',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.article_outlined),

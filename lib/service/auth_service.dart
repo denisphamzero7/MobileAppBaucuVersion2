@@ -1,5 +1,3 @@
-
-
 import '../core/api_constants.dart';
 import '../model/auth_model.dart';
 import '../model/base_response.dart';
@@ -7,25 +5,45 @@ import '../helper/dio_helper.dart';
 
 class AuthService {
   final DioHelper _http = DioHelper();
+
   Future<BaseResponse<LoginData>?> login(String email, String password) async {
     try {
       final response = await _http.post(
           url: ApiConstants.login,
-          data: { "username": email, "password": password }
+          data: { "email": email, "password": password }
       );
       print("in kết quả: $response");
       if (response != null) {
-
         return BaseResponse.fromJson(
             response,
-                (json) =>
-                LoginData.fromJson(json)
+            (json) => LoginData.fromJson(json as Map<String, dynamic>)
         );
       }
       return null;
     } catch (e) {
       print("Error in repository login: $e");
+      rethrow; // Ném lỗi để AuthController bắt được thông điệp lỗi cụ thể
+    }
+  }
+
+  Future<BaseResponse?> switchOrganization(int organizationId) async {
+    try {
+      final response = await _http.post(
+        url: ApiConstants.switchOrganization,
+        data: {
+          "organization_id": organizationId,
+        },
+      );
+      if (response != null) {
+        return BaseResponse.fromJson(
+          response,
+          (json) => null,
+        );
+      }
       return null;
+    } catch (e) {
+      print("Error in repository switchOrganization: $e");
+      rethrow;
     }
   }
 
@@ -57,7 +75,7 @@ class AuthService {
       return null;
     } catch (e) {
       print("Error in repository register: $e");
-      return null;
+      rethrow;
     }
   }
 
@@ -67,18 +85,14 @@ class AuthService {
           url: ApiConstants.logout,
       );
       if (response != null) {
-        // Sử dụng BaseResponse không có generic type để xử lý phản hồi đơn giản
-        // Nếu API trả về 201 Created, BaseResponse sẽ được tạo thành công
         return BaseResponse.fromJson(
             response,
-                (json) => null // Không cần phân tích data nếu data là 'true'
+            (json) => null
         );
       }
-    }catch(e){
+    } catch (e) {
       print("Error in repository logout: $e");
-      // Nếu có lỗi 401 (Unauthorized) thì DioHelper sẽ ném DioException
-      // Hàm này sẽ bắt lỗi và trả về null.
-      return null;
+      rethrow;
     }
     return null;
   }

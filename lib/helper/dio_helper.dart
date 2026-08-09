@@ -42,15 +42,18 @@ class DioHelper {
       InterceptorsWrapper(
         // a. Trước khi gửi Request
         onRequest: (options, handler) {
-          // Lấy token từ GetStorage (Đồng bộ - Nhanh)
-          final token = _box.read('accessToken');
+          // Không gửi token đối với các API public như đăng nhập/đăng ký để tránh bị server redirect về HTML khi token cũ hết hạn
+          if (!options.path.contains('auth/login') && !options.path.contains('auth/register')) {
+            final token = _box.read('accessToken');
+            if (token != null && token.toString().isNotEmpty) {
+              options.headers["Authorization"] = "Bearer $token";
+            }
+          }
 
-          // Nếu có token, tự động nhét vào Header
-          if (token != null && token.toString().isNotEmpty) {
-            options.headers["Authorization"] = "Bearer $token";
-            // log("🚀 [REQ] >> ${options.method} ${options.path} | Token: ${token.substring(0, 5)}...");
-          } else {
-            // log("🚀 [REQ] >> ${options.method} ${options.path} | No Token");
+          // Thêm ID tổ chức vào Header nếu có
+          final orgId = _box.read('organizationId');
+          if (orgId != null) {
+            options.headers["X-Organization-Id"] = orgId.toString();
           }
 
           return handler.next(options);

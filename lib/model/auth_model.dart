@@ -1,85 +1,88 @@
-import 'dart:convert';
+// BƯỚC 1: Organization
+class Organization {
+  final int id;
+  final String name;
 
-// BƯỚC 1: LoginData
-class LoginData {
-  String accessToken;
-  String refreshToken;
-  User user;
-
-
-  LoginData({
-    required this.accessToken,
-    required this.refreshToken,
-    required this.user,
-  });
-
-  factory LoginData.fromJson(Map<String, dynamic> json) => LoginData(
-    accessToken: json["access_token"],
-    refreshToken: json["refresh_token"],
-    user: User.fromJson(json["user"]),
-  );
-
-  // --- THÊM HÀM NÀY ---
-  Map<String, dynamic> toJson() => {
-    "access_token": accessToken,
-    "refresh_token": refreshToken,
-    "user": user.toJson(), // Gọi hàm toJson của User
-  };
-}
-
-// BƯỚC 2: Role
-class Role {
-  String id;
-  String name;
-
-  Role({
+  Organization({
     required this.id,
     required this.name,
   });
 
-  factory Role.fromJson(Map<String, dynamic> json) => Role(
-    id: json["_id"], // Server trả về _id
-    name: json["name"],
+  factory Organization.fromJson(Map<String, dynamic> json) => Organization(
+    id: json["id"] as int? ?? 0,
+    name: json["name"] as String? ?? '',
   );
 
-  // --- THÊM HÀM NÀY ---
   Map<String, dynamic> toJson() => {
-    "_id": id, // Khi lưu lại cũng giữ key là _id để đồng bộ
+    "id": id,
     "name": name,
   };
 }
 
-// BƯỚC 3: User
+// BƯỚC 2: User
 class User {
-  String id;
-  String email;
-  Role? role;
-  String name;
-  String? status;
+  final int id;
+  final String name;
 
   User({
     required this.id,
-    required this.email,
-    this.role,
     required this.name,
-    this.status,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-    id: json["_id"] ?? '',
-    email: json["email"] ?? '',
-    role: json["role"] != null ? Role.fromJson(json["role"] as Map<String, dynamic>) : null,
-    name: json["name"] ?? '',
-    status: json["status"],
+    id: json["id"] as int? ?? 0,
+    name: json["name"] as String? ?? '',
   );
 
-  // --- THÊM HÀM NÀY ---
-  // Đây là hàm giúp sửa lỗi "The method 'toJson' isn't defined"
   Map<String, dynamic> toJson() => {
-    "_id": id,
-    "email": email,
-    "role": role?.toJson(), // Gọi để biến Role thành Map
+    "id": id,
     "name": name,
-    "status": status,
+  };
+}
+
+// BƯỚC 3: LoginData
+class LoginData {
+  final String accessToken;
+  final String tokenType;
+  final User user;
+  final List<Organization> availableOrganizations;
+  final int? currentOrganizationId;
+  final List<String> roles;
+  final List<String> permissions;
+
+  LoginData({
+    required this.accessToken,
+    required this.tokenType,
+    required this.user,
+    required this.availableOrganizations,
+    this.currentOrganizationId,
+    required this.roles,
+    required this.permissions,
+  });
+
+  factory LoginData.fromJson(Map<String, dynamic> json) {
+    var orgsList = json["available_organizations"] as List? ?? [];
+    var rolesList = json["roles"] as List? ?? [];
+    var permsList = json["permissions"] as List? ?? [];
+
+    return LoginData(
+      accessToken: json["access_token"] as String? ?? '',
+      tokenType: json["token_type"] as String? ?? 'Bearer',
+      user: User.fromJson(json["user"] as Map<String, dynamic>? ?? {}),
+      availableOrganizations: orgsList.map((x) => Organization.fromJson(x as Map<String, dynamic>)).toList(),
+      currentOrganizationId: json["current_organization_id"] as int?,
+      roles: rolesList.map((x) => x.toString()).toList(),
+      permissions: permsList.map((x) => x.toString()).toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "access_token": accessToken,
+    "token_type": tokenType,
+    "user": user.toJson(),
+    "available_organizations": availableOrganizations.map((x) => x.toJson()).toList(),
+    "current_organization_id": currentOrganizationId,
+    "roles": roles,
+    "permissions": permissions,
   };
 }

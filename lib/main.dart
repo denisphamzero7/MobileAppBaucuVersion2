@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:app_baucu_version1/controllers/user_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,13 +20,17 @@ import 'package:app_baucu_version1/untils/app_themes.dart';
 // Ví dụ nếu bạn để ở thư mục lib/helper/onesignal.dart thì import như sau:
 import 'package:app_baucu_version1/helper/onesignal.dart';
 
-import 'controllers/voter_controller.dart';
-import 'controllers/weather_controller.dart';
-import 'controllers/notification_controller.dart';
+import 'package:app_baucu_version1/controllers/voter_controller.dart';
+import 'package:app_baucu_version1/controllers/weather_controller.dart';
+import 'package:app_baucu_version1/controllers/notification_controller.dart';
+import 'package:app_baucu_version1/controllers/task_controller.dart';
 // Hoặc nếu để ngay ngoài lib thì: import 'onesignal.dart';
 
 void main() async {
-  // A. Bắt buộc phải có dòng này để chạy các hàm async trước runApp
+  // A. Cấu hình Proxy chuyển tiếp cho tên miền local để tương thích với điện thoại thật qua USB
+  HttpOverrides.global = MyHttpOverrides();
+  
+  // B. Bắt buộc phải có dòng này để chạy các hàm async trước runApp
   WidgetsFlutterBinding.ensureInitialized();
 
   // B. Khởi tạo Storage (Lưu token, user info)
@@ -42,6 +47,7 @@ void main() async {
   Get.put(UserController());
   Get.put(WeatherController());
   Get.put(NotificationController());
+  Get.put(TaskController());
 
   runApp(const MyApp());
 }
@@ -74,5 +80,20 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/home', page: () => const MainScreen()),
       ],
     );
+  }
+}
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    final client = super.createHttpClient(context);
+    client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    client.findProxy = (uri) {
+      if (uri.host == 'danatec-test.theworkpc.com') {
+        return 'PROXY 127.0.0.1:8080';
+      }
+      return 'DIRECT';
+    };
+    return client;
   }
 }

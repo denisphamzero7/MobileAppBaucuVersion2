@@ -18,8 +18,8 @@ class BaseResponse<T> {
       T Function(dynamic json) fromJsonT, // Hàm để parse 'T'
       ) {
     return BaseResponse<T>(
-      statusCode: json["statusCode"],
-      message: json["message"],
+      statusCode: json["statusCode"] as int? ?? (json["success"] == true ? 200 : 400),
+      message: json["message"] as String? ?? '',
       data: fromJsonT(json["data"]), // Dùng hàm fromJsonT để parse data
     );
   }

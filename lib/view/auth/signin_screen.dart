@@ -17,8 +17,8 @@ class _SigninScreenState extends State<SigninScreen> {
   final AuthController _authController = Get.put(AuthController());
 
   // Đổi tên biến cho rõ nghĩa
-  final TextEditingController _usernameController = TextEditingController(text: 'testuser@gmail.com');
-  final TextEditingController _passwordController = TextEditingController(text: 'password123');
+  final TextEditingController _usernameController = TextEditingController(text: 'admin@example.com');
+  final TextEditingController _passwordController = TextEditingController(text: 'quandcore**11');
   final _formKey = GlobalKey<FormState>();
 
   @override

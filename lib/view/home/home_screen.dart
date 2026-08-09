@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 import 'package:marquee/marquee.dart';
 import 'package:intl/intl.dart'; // Cần thêm intl vào pubspec.yaml để format ngày
 
-import '../user/user_screen.dart';
-import '../widgets/weather_info_card.dart';
-import '../../controllers/navigation.dart';
+import 'package:app_baucu_version1/view/user/user_screen.dart';
+import 'package:app_baucu_version1/view/widgets/weather_info_card.dart';
+import 'package:app_baucu_version1/controllers/navigation.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

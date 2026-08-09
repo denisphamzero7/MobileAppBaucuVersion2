@@ -17,7 +17,7 @@ class UserService {
       if (response != null) {
 
         return BaseResponse.fromJson(
-            response, (json) => ProfileData.fromJson(json)
+            response, (json) => ProfileData.fromJson(json as Map<String, dynamic>)
         );
 
       }

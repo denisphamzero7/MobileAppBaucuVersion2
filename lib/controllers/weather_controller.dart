@@ -41,24 +41,15 @@ class WeatherController extends GetxController {
       // Chạy cái này độc lập, không phụ thuộc vào API thời tiết
       await _getCityNameFromGPS(lat, lon);
 
-      // BƯỚC 3: Gọi API lấy dữ liệu thời tiết
-      final response = await weatherApi.getCurrentWeather(
-        lat: lat,
-        lon: lon,
+      // BƯỚC 3: Dùng dữ liệu thời tiết cứng như yêu cầu
+      currentWeatherData.value = Weather(
+        temperature: 29.5,
+        description: 'Mây rải rác',
+        iconCode: '02d',
+        cityName: 'Thành phố Đà Nẵng',
       );
-
-      if (response != null && response.statusCode == 200 && response.data != null) {
-        // Cập nhật dữ liệu thời tiết (Nhiệt độ, Icon...)
-        currentWeatherData.value = response.data;
-
-        // 🛑 QUAN TRỌNG: KHÔNG gán locationName = response.data!.cityName
-        // Vì API trả về "Ap Ba", còn Geocoding (Bước 2) đã trả về "Đà Nẵng".
-
-        log("✅ Tải thời tiết thành công: ${response.data!.temperature}°C");
-      } else {
-        final msg = response?.message ?? 'Không thể tải dữ liệu thời tiết.';
-        errorMessage.value = msg;
-      }
+      
+      log("✅ Tải thời tiết thành công (Dữ liệu cứng): 29.5°C");
     } on LocationServiceDisabledException {
       errorMessage.value = 'Vui lòng bật GPS để xem thời tiết.';
     } on PermissionDeniedException {

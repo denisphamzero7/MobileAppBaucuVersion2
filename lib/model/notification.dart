@@ -18,16 +18,19 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    // Thích ứng linh hoạt giữa NestJS (camelCase) và Laravel (snake_case)
     return NotificationModel(
-      id: json['_id'] as String? ?? '',
-      userId: json['userId'] as String? ?? '',
+      id: (json['id'] ?? json['_id'] ?? '').toString(),
+      userId: (json['user_id'] ?? json['userId'] ?? '').toString(),
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
       type: json['type'] as String? ?? '',
-      isRead: json['isRead'] as bool? ?? false,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+      isRead: json['is_read'] as bool? ?? json['isRead'] as bool? ?? false,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : (json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now()),
     );
   }
 }

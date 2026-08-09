@@ -1,11 +1,9 @@
-// lib/model/profile_response.dart
-
 class ProfileData {
   final String id;
   final String name;
   final String email;
   final Role? role;
-  final List<String> permissions; // Giả sử đây là List<String>
+  final List<String> permissions;
 
   ProfileData({
     required this.id,
@@ -16,42 +14,24 @@ class ProfileData {
   });
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
-    // Chuyển đổi list<dynamic> thành list<String>
-    var permsList = (json['permissions'] as List? ?? [])
-        .map((item) => item.toString())
-        .toList();
+    var userJson = json['user'] as Map<String, dynamic>? ?? {};
+    var rolesList = json['roles'] as List? ?? [];
+    var permsList = json['permissions'] as List? ?? [];
 
     return ProfileData(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      role: json['role'] != null ? Role.fromJson(json['role'] as Map<String, dynamic>) : null,
-      permissions: permsList,
+      id: (userJson['id'] ?? '').toString(),
+      name: userJson['name'] as String? ?? 'Chưa cập nhật tên',
+      email: userJson['email'] as String? ?? 'N/A',
+      role: rolesList.isNotEmpty ? Role(name: rolesList.first.toString()) : null,
+      permissions: permsList.map((item) => item.toString()).toList(),
     );
   }
 }
 
 class Role {
-  final String id;
   final String name;
-  final List<String> permissions;
 
   Role({
-    required this.id,
     required this.name,
-    required this.permissions,
   });
-
-  factory Role.fromJson(Map<String, dynamic> json) {
-    // Chuyển đổi list<dynamic> thành list<String>
-    var permsList = (json['permissions'] as List? ?? [])
-        .map((item) => item.toString())
-        .toList();
-
-    return Role(
-      id: json['_id'],
-      name: json['name'],
-      permissions: permsList,
-    );
-  }
 }
