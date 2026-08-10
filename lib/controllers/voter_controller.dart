@@ -1,3 +1,4 @@
+﻿import '../untils/app_colors.dart';
 import 'dart:developer';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -127,8 +128,8 @@ class VoterController extends GetxController {
       Get.snackbar(
         "Lỗi Dữ liệu", // Đã đổi tiêu đề để hiển thị lỗi phân tích cụ thể hơn
         userMessage, // Hiển thị thông báo lỗi chi tiết hơn
-        backgroundColor: Colors.orange.shade700,
-        colorText: Colors.white,
+        backgroundColor: AppColors.orange.shade700,
+        colorText: AppColors.white,
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 5),
       );
@@ -251,7 +252,7 @@ class VoterController extends GetxController {
           "Thành công",
           response.message,
           backgroundColor: Get.theme.primaryColor,
-          colorText: Colors.white,
+          colorText: AppColors.white,
           snackPosition: SnackPosition.BOTTOM,
         );
 
@@ -261,8 +262,8 @@ class VoterController extends GetxController {
         Get.snackbar(
           "Cảnh báo",
           response?.message ?? 'Lỗi xác nhận cử tri không xác định.',
-          backgroundColor: Colors.orange.shade700,
-          colorText: Colors.white,
+          backgroundColor: AppColors.orange.shade700,
+          colorText: AppColors.white,
           snackPosition: SnackPosition.BOTTOM,
         );
       }
@@ -284,8 +285,8 @@ class VoterController extends GetxController {
       Get.snackbar(
         "Lỗi",
         errorMessage,
-        backgroundColor: Colors.red.shade700,
-        colorText: Colors.white,
+        backgroundColor: AppColors.red.shade700,
+        colorText: AppColors.white,
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -305,3 +306,5 @@ class VoterController extends GetxController {
     _resetState();
   }
 }
+
+

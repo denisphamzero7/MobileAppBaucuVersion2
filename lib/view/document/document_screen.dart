@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
 import '../../untils/app_colors.dart';
@@ -102,8 +102,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
         ),
         centerTitle: false,
         elevation: 0,
-        backgroundColor: isDark ? Colors.black : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
+        backgroundColor: isDark ? AppColors.black : AppColors.white,
+        foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
       body: SafeArea(
         child: Obx(() {
@@ -149,7 +149,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       child: Container(
                         height: 40,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6),
+                          color: isDark ? AppColors.cardDark : AppColors.lightBg,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: TextField(
@@ -157,8 +157,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           style: const TextStyle(fontSize: 13),
                           decoration: const InputDecoration(
                             hintText: 'Tìm kiếm theo tên, CCCD, SĐT, email, nội dung',
-                            hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
-                            prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey),
+                            hintStyle: TextStyle(fontSize: 12, color: AppColors.grey),
+                            prefixIcon: Icon(Icons.search, size: 18, color: AppColors.grey),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 10),
                           ),
@@ -170,12 +170,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       height: 40,
                       width: 40,
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        color: isDark ? AppColors.cardDark : AppColors.white,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                        border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05)),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.filter_alt_outlined, size: 18, color: Colors.grey),
+                        icon: const Icon(Icons.filter_alt_outlined, size: 18, color: AppColors.grey),
                         onPressed: () {
                           selectedStatusFilter.value = 'all';
                           searchText.value = '';
@@ -208,7 +208,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                     _buildStatCard(
                       label: 'Mới tiếp nhận',
                       count: newCount,
-                      color: Colors.grey[700]!,
+                      color: AppColors.grey[700]!,
                       isSelected: selectedStatusFilter.value == 'new',
                       onTap: () => selectedStatusFilter.value = 'new',
                       isDark: isDark,
@@ -256,11 +256,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       padding: const EdgeInsets.only(top: 40.0),
                       child: Column(
                         children: [
-                          Icon(Icons.mark_email_read_outlined, size: 48, color: Colors.grey[400]),
+                          Icon(Icons.mark_email_read_outlined, size: 48, color: AppColors.grey[400]),
                           const SizedBox(height: 8),
                           Text(
                             'Không có đơn thư nào phù hợp',
-                            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                            style: TextStyle(fontSize: 13, color: AppColors.grey[500]),
                           ),
                         ],
                       ),
@@ -296,29 +296,29 @@ class _DocumentScreenState extends State<DocumentScreen> {
     Color textColor;
 
     if (label == 'Tổng đơn thư') {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF5F3FF);
-      textColor = const Color(0xFF8B5CF6);
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.bgPurpleLight;
+      textColor = AppColors.todo;
     } else if (label == 'Mới tiếp nhận') {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6);
-      textColor = const Color(0xFF4B5563);
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.lightBg;
+      textColor = AppColors.textGrayDark;
     } else if (label == 'Đang xử lý') {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF0F9FF);
-      textColor = const Color(0xFF0EA5E9);
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.bgBlueLight;
+      textColor = AppColors.inProgress;
     } else if (label == 'Đã hoàn thành') {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFECFDF5);
-      textColor = const Color(0xFF10B981);
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.badgeGreenBg;
+      textColor = AppColors.done;
     } else if (label == 'Tạm dừng') {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFFFFBEB);
-      textColor = const Color(0xFFF59E0B);
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.bgYellowLight;
+      textColor = AppColors.paused;
     } else if (label == 'Đã hủy') {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFFEF2F2);
-      textColor = const Color(0xFFEF4444);
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.bgRedLight;
+      textColor = AppColors.overdue;
     } else {
-      cardBg = isDark ? const Color(0xFF2D2D2D) : Colors.white;
+      cardBg = isDark ? AppColors.cardItemDark : AppColors.white;
       textColor = color;
     }
 
-    Color borderCol = isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white10 : Colors.black.withOpacity(0.05));
+    Color borderCol = isSelected ? AppColors.primary : (isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05));
 
     return GestureDetector(
       onTap: onTap,
@@ -341,7 +341,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
               style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.grey[400] : textColor.withOpacity(0.8),
+                color: isDark ? AppColors.grey[400] : textColor.withOpacity(0.8),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -352,7 +352,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : textColor,
+                color: isDark ? AppColors.white : textColor,
               ),
             ),
           ],
@@ -364,37 +364,37 @@ class _DocumentScreenState extends State<DocumentScreen> {
   Widget _buildPetitionCard(BuildContext context, PetitionModel petition, bool isDark) {
     // Determine status badge properties
     String badgeText = 'Mới tiếp nhận';
-    Color badgeColor = Colors.grey[600]!;
-    Color badgeBg = isDark ? Colors.white10 : const Color(0xFFF3F4F6);
+    Color badgeColor = AppColors.grey[600]!;
+    Color badgeBg = isDark ? AppColors.white10 : AppColors.lightBg;
 
     if (petition.status == 'processing') {
       badgeText = 'Đang xử lý';
       badgeColor = AppColors.primary;
-      badgeBg = const Color(0xFFEFF6FF);
+      badgeBg = AppColors.badgeBlueBg;
     } else if (petition.status == 'completed') {
       badgeText = 'Đã hoàn thành';
       badgeColor = AppColors.done;
-      badgeBg = const Color(0xFFECFDF5);
+      badgeBg = AppColors.badgeGreenBg;
     } else if (petition.status == 'paused') {
       badgeText = 'Tạm dừng';
       badgeColor = AppColors.paused;
-      badgeBg = const Color(0xFFFFFBEB);
+      badgeBg = AppColors.bgYellowLight;
     } else if (petition.status == 'cancelled') {
       badgeText = 'Đã hủy';
       badgeColor = AppColors.overdue;
-      badgeBg = const Color(0xFFFEE2E2);
+      badgeBg = AppColors.badgeRedBg;
     }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04)),
+        border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.04)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.01),
+            color: AppColors.black.withOpacity(0.01),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -424,7 +424,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
               ),
               Text(
                 petition.date,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                style: const TextStyle(fontSize: 10, color: AppColors.grey),
               ),
             ],
           ),
@@ -436,7 +436,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
             style: const TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: AppColors.black87,
             ),
           ),
           const SizedBox(height: 8),
@@ -444,11 +444,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
           // Row 3: Petitioner info
           Row(
             children: [
-              Icon(Icons.person, size: 14, color: Colors.grey[600]),
+              Icon(Icons.person, size: 14, color: AppColors.grey[600]),
               const SizedBox(width: 6),
               Text(
                 'Người nộp: ${petition.petitioner}',
-                style: TextStyle(fontSize: 10.5, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 10.5, color: AppColors.grey[700]),
               ),
             ],
           ),
@@ -459,13 +459,13 @@ class _DocumentScreenState extends State<DocumentScreen> {
             petition.content,
             style: TextStyle(
               fontSize: 11,
-              color: isDark ? Colors.grey[300] : Colors.grey[800],
+              color: isDark ? AppColors.grey[300] : AppColors.grey[800],
             ),
           ),
           const SizedBox(height: 12),
 
           // Divider
-          const Divider(height: 1, color: Colors.black12),
+          const Divider(height: 1, color: AppColors.black12),
           const SizedBox(height: 10),
 
           // Row 5: Department & Deadline
@@ -474,11 +474,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.apartment, size: 14, color: Colors.blue[600]),
+                  Icon(Icons.apartment, size: 14, color: AppColors.blue[600]),
                   const SizedBox(width: 6),
                   Text(
                     petition.department,
-                    style: TextStyle(fontSize: 10, color: Colors.grey[700], fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 10, color: AppColors.grey[700], fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -486,7 +486,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                 'Hạn: ${petition.deadline}',
                 style: const TextStyle(
                   fontSize: 10,
-                  color: Color(0xFF2563EB),
+                  color: AppColors.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -497,3 +497,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
     );
   }
 }
+
+
+

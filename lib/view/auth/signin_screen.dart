@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/auth_controller.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:app_baucu_version1/view/auth/forgot_password.dart';
@@ -53,7 +54,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   'Sign in to continue voter',
                   style: AppTextStyle.withColor(
                     AppTextStyle.bodyLarge,
-                    isDark ? Colors.grey[400]! : Colors.grey[600]!,
+                    isDark ? AppColors.grey[400]! : AppColors.grey[600]!,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -132,7 +133,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         'Sign in',
                         style: AppTextStyle.withColor(
                           AppTextStyle.buttonMedium,
-                          Colors.white,
+                          AppColors.white,
                         ),
                       ),
                     );
@@ -148,7 +149,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       "Don't have an account?",
                       style: AppTextStyle.withColor(
                         AppTextStyle.bodyMedium,
-                        isDark ? Colors.grey[400]! : Colors.grey[600]!,
+                        isDark ? AppColors.grey[400]! : AppColors.grey[600]!,
                       ),
                     ),
                     TextButton(
@@ -180,3 +181,5 @@ class _SigninScreenState extends State<SigninScreen> {
     }
   }
 }
+
+

@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
@@ -25,7 +26,7 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: AppColors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -5),
             )
@@ -37,9 +38,9 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
           onTap: (index) => navigationController.changeIndex(index),
 
           // Style cho thanh menu
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
           selectedItemColor: primaryColor,
-          unselectedItemColor: isDark ? Colors.grey[600] : Colors.grey[400],
+          unselectedItemColor: isDark ? AppColors.grey[600] : AppColors.grey[400],
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed, // Cố định vị trí các nút (quan trọng nếu có > 3 nút)
           elevation: 0,
@@ -87,3 +88,5 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
     );
   }
 }
+
+

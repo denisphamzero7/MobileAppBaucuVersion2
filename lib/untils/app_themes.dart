@@ -1,29 +1,32 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'app_colors.dart';
+import '../../untils/app_colors.dart';
+
 
 class AppThemes {
   // Light Theme
   static final light = ThemeData(
-    primaryColor: const Color(0xFF007fff),
-    scaffoldBackgroundColor: Colors.white,
+    primaryColor: AppColors.themePrimary,
+    scaffoldBackgroundColor: AppColors.white,
     brightness: Brightness.light,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       elevation: 0,
       iconTheme: IconThemeData(
-          color: Colors.black
+          color: AppColors.black
       ),
     ),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF007fff),
-      primary: const Color(0xFF007fff),
+      seedColor: AppColors.themePrimary,
+      primary: AppColors.themePrimary,
       brightness: Brightness.light,
-      surface: Colors.white,
+      surface: AppColors.white,
     ),
-    cardColor: Colors.white,
+    cardColor: AppColors.white,
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Colors.white,
-      selectedItemColor: Color(0xFF007fff),
-      unselectedItemColor: Colors.grey,
+      backgroundColor: AppColors.white,
+      selectedItemColor: AppColors.themePrimary,
+      unselectedItemColor: AppColors.grey,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
@@ -32,30 +35,32 @@ class AppThemes {
 
   // Dark Theme
   static final dark = ThemeData(
-    primaryColor: const Color(0xFF007fff),
-    scaffoldBackgroundColor: Color(0xFF121212),
+    primaryColor: AppColors.themePrimary,
+    scaffoldBackgroundColor: AppColors.darkBg,
     brightness: Brightness.dark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF121212),
+      backgroundColor: AppColors.darkBg,
       elevation: 0,
       iconTheme: IconThemeData(
-          color: Colors.white
+          color: AppColors.white
       ),
     ),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF007fff),
-      primary: const Color(0xFF007fff),
+      seedColor: AppColors.themePrimary,
+      primary: AppColors.themePrimary,
       brightness: Brightness.dark,
-      surface: const Color(0xFF121212),
+      surface: AppColors.darkBg,
     ),
-    cardColor: const Color(0xFF007fff),
+    cardColor: AppColors.themePrimary,
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFF121212),
-      selectedItemColor: Color(0xFF007fff),
-      unselectedItemColor: Colors.grey,
+      backgroundColor: AppColors.darkBg,
+      selectedItemColor: AppColors.themePrimary,
+      unselectedItemColor: AppColors.grey,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
 
   );
 }
+
+

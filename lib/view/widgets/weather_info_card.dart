@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -55,9 +56,9 @@ class WeatherInfoCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 30),
+            Icon(icon, color: AppColors.white, size: 30),
             const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center, style: AppTextStyle.bodyMedium.copyWith(color: Colors.white)),
+            Text(message, textAlign: TextAlign.center, style: AppTextStyle.bodyMedium.copyWith(color: AppColors.white)),
           ],
         ),
       ),
@@ -111,12 +112,12 @@ class WeatherInfoCard extends StatelessWidget {
                 Expanded( // Dùng Expanded để tên dài không bị lỗi giao diện
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.white, size: 18),
+                      const Icon(Icons.location_on, color: AppColors.white, size: 18),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           location, // "Thành phố Đà Nẵng"
-                          style: AppTextStyle.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: AppTextStyle.labelMedium.copyWith(color: AppColors.white, fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -126,12 +127,12 @@ class WeatherInfoCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: AppColors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     DateFormat('dd/MM/yyyy').format(DateTime.now()),
-                    style: AppTextStyle.bodySmall.copyWith(color: Colors.white),
+                    style: AppTextStyle.bodySmall.copyWith(color: AppColors.white),
                   ),
                 ),
               ],
@@ -140,19 +141,19 @@ class WeatherInfoCard extends StatelessWidget {
             // Dòng 2: Nhiệt độ, Icon, Mô tả
             Row(
               children: [
-                Icon(_mapWeatherIcon(weather.iconCode), color: Colors.white, size: 54),
+                Icon(_mapWeatherIcon(weather.iconCode), color: AppColors.white, size: 54),
                 const SizedBox(width: 20),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       "${weather.temperature.round()}°C",
-                      style: AppTextStyle.h1.copyWith(color: Colors.white, fontSize: 42, height: 1),
+                      style: AppTextStyle.h1.copyWith(color: AppColors.white, fontSize: 42, height: 1),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       weather.description.capitalizeFirst ?? "",
-                      style: AppTextStyle.bodyMedium.copyWith(color: Colors.white.withOpacity(0.9), fontSize: 16),
+                      style: AppTextStyle.bodyMedium.copyWith(color: AppColors.white.withOpacity(0.9), fontSize: 16),
                     ),
                   ],
                 ),
@@ -164,3 +165,5 @@ class WeatherInfoCard extends StatelessWidget {
     });
   }
 }
+
+

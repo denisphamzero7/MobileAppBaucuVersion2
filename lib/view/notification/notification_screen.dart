@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/notification_controller.dart';
 import 'package:app_baucu_version1/model/notification.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
@@ -27,7 +28,7 @@ class NotificationScreen extends GetView<NotificationController> {
         title: Text(
           "Thông báo",
           style: AppTextStyle.h3.copyWith(
-            color: isDark ? Colors.white : Colors.black87,
+            color: isDark ? AppColors.white : AppColors.black87,
           ),
         ),
         actions: [
@@ -77,8 +78,8 @@ class NotificationScreen extends GetView<NotificationController> {
 
     // Màu nền: Chưa đọc thì sáng hơn/đậm hơn để nổi bật
     final bgColor = isDark
-        ? (isRead ? Colors.grey[900] : Colors.grey[800])
-        : (isRead ? Colors.white : Colors.blue[50]);
+        ? (isRead ? AppColors.grey[900] : AppColors.grey[800])
+        : (isRead ? AppColors.white : AppColors.blue[50]);
 
     return Dismissible(
       key: Key(item.id),
@@ -87,10 +88,10 @@ class NotificationScreen extends GetView<NotificationController> {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: Colors.redAccent,
+          color: AppColors.redAccent,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+        child: const Icon(Icons.delete_outline, color: AppColors.white),
       ),
       onDismissed: (direction) {
         controller.notifications.remove(item);
@@ -107,13 +108,13 @@ class NotificationScreen extends GetView<NotificationController> {
               boxShadow: [
                 if (!isRead) // Chỉ đổ bóng nếu chưa đọc
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
               ],
               border: Border.all(
-                  color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                  color: isDark ? AppColors.grey[800]! : AppColors.grey[200]!,
                   width: 1
               )
           ),
@@ -138,7 +139,7 @@ class NotificationScreen extends GetView<NotificationController> {
                             item.title,
                             style: AppTextStyle.bodyMedium.copyWith(
                               fontWeight: isRead ? FontWeight.w600 : FontWeight.bold, // Chưa đọc thì đậm hơn
-                              color: isDark ? Colors.white : Colors.black87,
+                              color: isDark ? AppColors.white : AppColors.black87,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -159,7 +160,7 @@ class NotificationScreen extends GetView<NotificationController> {
                     Text(
                       item.content,
                       style: AppTextStyle.bodySmall.copyWith(
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: isDark ? AppColors.grey[400] : AppColors.grey[600],
                           height: 1.4
                       ),
                       maxLines: 2,
@@ -169,7 +170,7 @@ class NotificationScreen extends GetView<NotificationController> {
                     Text(
                       _formatTime(time),
                       style: AppTextStyle.labelMedium.copyWith(
-                          color: Colors.grey,
+                          color: AppColors.grey,
                           fontSize: 12
                       ),
                     ),
@@ -191,23 +192,23 @@ class NotificationScreen extends GetView<NotificationController> {
     switch (type) {
       case 'VOTE_SUCCESS':
         icon = Icons.check_circle_outline;
-        color = Colors.green;
+        color = AppColors.green;
         break;
       case 'VOTE_WARNING':
         icon = Icons.warning_amber_rounded;
-        color = Colors.orange;
+        color = AppColors.orange;
         break;
       case 'SYSTEM':
         icon = Icons.info_outline;
-        color = Colors.blue;
+        color = AppColors.blue;
         break;
       case 'UPDATE_VOTER':
         icon = Icons.person_search_outlined;
-        color = Colors.purple;
+        color = AppColors.purple;
         break;
       default:
         icon = Icons.notifications_none;
-        color = Colors.grey;
+        color = AppColors.grey;
     }
 
     return Container(
@@ -245,27 +246,27 @@ class NotificationScreen extends GetView<NotificationController> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey[900] : Colors.grey[100],
+              color: isDark ? AppColors.grey[900] : AppColors.grey[100],
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.notifications_off_outlined,
               size: 64,
-              color: isDark ? Colors.grey[700] : Colors.grey[400],
+              color: isDark ? AppColors.grey[700] : AppColors.grey[400],
             ),
           ),
           const SizedBox(height: 24),
           Text(
             "Không có thông báo nào",
             style: AppTextStyle.h3.copyWith(
-              color: isDark ? Colors.white70 : Colors.black54,
+              color: isDark ? AppColors.white70 : AppColors.black54,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             "Các thông báo mới sẽ xuất hiện tại đây",
             style: AppTextStyle.bodyMedium.copyWith(
-              color: Colors.grey,
+              color: AppColors.grey,
             ),
           ),
         ],
@@ -273,3 +274,5 @@ class NotificationScreen extends GetView<NotificationController> {
     );
   }
 }
+
+

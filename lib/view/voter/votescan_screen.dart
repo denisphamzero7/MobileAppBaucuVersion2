@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,7 +15,7 @@ class VoteScanScreen extends GetView<VoterController> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
     final surfaceColor = Theme.of(context).colorScheme.surface;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardColor = isDark ? AppColors.cardDark : AppColors.white;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -34,15 +35,15 @@ class VoteScanScreen extends GetView<VoterController> {
                     color: cardColor,
                     border: Border.all(
                       color: isDark
-                          ? Colors.grey[700]!
+                          ? AppColors.grey[700]!
                           : primaryColor.withOpacity(0.3),
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: isDark
-                            ? Colors.black26
-                            : Colors.grey.withOpacity(0.1),
+                            ? AppColors.black26
+                            : AppColors.grey.withOpacity(0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -76,8 +77,8 @@ class VoteScanScreen extends GetView<VoterController> {
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: isDark
-                              ? Colors.grey[850]
-                              : Colors.grey[200],
+                              ? AppColors.grey[850]
+                              : AppColors.grey[200],
                           child: Center(
                             child: Column(
                               mainAxisAlignment:
@@ -86,8 +87,8 @@ class VoteScanScreen extends GetView<VoterController> {
                                 Icon(
                                   Icons.broken_image_outlined,
                                   color: isDark
-                                      ? Colors.grey[600]
-                                      : Colors.grey[400],
+                                      ? AppColors.grey[600]
+                                      : AppColors.grey[400],
                                   size: 50,
                                 ),
                                 const SizedBox(height: 8),
@@ -96,8 +97,8 @@ class VoteScanScreen extends GetView<VoterController> {
                                   style: AppTextStyle.withColor(
                                     AppTextStyle.bodySmall,
                                     isDark
-                                        ? Colors.grey[400]!
-                                        : Colors.grey[600]!,
+                                        ? AppColors.grey[400]!
+                                        : AppColors.grey[600]!,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -116,8 +117,8 @@ class VoteScanScreen extends GetView<VoterController> {
                           Icons.add_a_photo_outlined,
                           size: 50,
                           color: isDark
-                              ? Colors.grey[600]
-                              : Colors.grey[400],
+                              ? AppColors.grey[600]
+                              : AppColors.grey[400],
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -125,8 +126,8 @@ class VoteScanScreen extends GetView<VoterController> {
                           style: AppTextStyle.withColor(
                             AppTextStyle.bodyMedium,
                             isDark
-                                ? Colors.grey[400]!
-                                : Colors.grey[600]!,
+                                ? AppColors.grey[400]!
+                                : AppColors.grey[600]!,
                           ),
                         ),
                       ],
@@ -150,7 +151,7 @@ class VoteScanScreen extends GetView<VoterController> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -172,8 +173,8 @@ class VoteScanScreen extends GetView<VoterController> {
                           style: AppTextStyle.buttonMedium,
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.teal,
+                          foregroundColor: AppColors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -241,8 +242,8 @@ class VoteScanScreen extends GetView<VoterController> {
                               style: AppTextStyle.buttonLarge,
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green.shade700,
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppColors.green.shade700,
+                              foregroundColor: AppColors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -261,8 +262,8 @@ class VoteScanScreen extends GetView<VoterController> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isDark
-                              ? Colors.grey[700]!
-                              : Colors.grey[300]!,
+                              ? AppColors.grey[700]!
+                              : AppColors.grey[300]!,
                         ),
                       ),
                       child: Center(
@@ -272,8 +273,8 @@ class VoteScanScreen extends GetView<VoterController> {
                               Icons.info_outline,
                               size: 40,
                               color: isDark
-                                  ? Colors.grey[600]
-                                  : Colors.grey[400],
+                                  ? AppColors.grey[600]
+                                  : AppColors.grey[400],
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -281,8 +282,8 @@ class VoteScanScreen extends GetView<VoterController> {
                               style: AppTextStyle.withColor(
                                 AppTextStyle.bodyMedium,
                                 isDark
-                                    ? Colors.grey[400]!
-                                    : Colors.grey[600]!,
+                                    ? AppColors.grey[400]!
+                                    : AppColors.grey[600]!,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -305,13 +306,13 @@ class VoteScanScreen extends GetView<VoterController> {
           !controller.isProcessing.value
           ? FloatingActionButton.extended(
         onPressed: () => controller.resetScan(),
-        backgroundColor: Colors.orange.shade700,
-        icon: const Icon(Icons.refresh, color: Colors.white),
+        backgroundColor: AppColors.orange.shade700,
+        icon: const Icon(Icons.refresh, color: AppColors.white),
         label: Text(
           'Quét lại',
           style: AppTextStyle.withColor(
             AppTextStyle.buttonSmall,
-            Colors.white,
+            AppColors.white,
           ),
         ),
       )
@@ -343,11 +344,11 @@ class _InfoCard extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+          color: isDark ? AppColors.grey[700]! : AppColors.grey[300]!,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
+            color: isDark ? AppColors.black26 : AppColors.grey.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -369,7 +370,7 @@ class _InfoCard extends StatelessWidget {
               style: AppTextStyle.withColor(
                 AppTextStyle.bodyMedium,
                 value.isEmpty
-                    ? (isDark ? Colors.grey[500]! : Colors.grey[600]!)
+                    ? (isDark ? AppColors.grey[500]! : AppColors.grey[600]!)
                     : Theme.of(context).textTheme.bodyLarge!.color!,
               ),
             ),
@@ -379,3 +380,5 @@ class _InfoCard extends StatelessWidget {
     );
   }
 }
+
+

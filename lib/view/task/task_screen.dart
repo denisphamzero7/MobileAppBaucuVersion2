@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
@@ -45,8 +45,8 @@ class TaskScreen extends GetView<TaskController> {
         ),
         centerTitle: false,
         elevation: 0,
-        backgroundColor: isDark ? Colors.black : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
+        backgroundColor: isDark ? AppColors.black : AppColors.white,
+        foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
       body: SafeArea(
         child: Obx(() {
@@ -113,7 +113,7 @@ class TaskScreen extends GetView<TaskController> {
                         child: Container(
                           height: 40,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6),
+                            color: isDark ? AppColors.cardDark : AppColors.lightBg,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: TextField(
@@ -121,8 +121,8 @@ class TaskScreen extends GetView<TaskController> {
                             style: const TextStyle(fontSize: 13),
                             decoration: const InputDecoration(
                               hintText: 'Tìm kiếm công việc',
-                              hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                              prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey),
+                              hintStyle: TextStyle(fontSize: 13, color: AppColors.grey),
+                              prefixIcon: Icon(Icons.search, size: 18, color: AppColors.grey),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(vertical: 10),
                             ),
@@ -134,12 +134,12 @@ class TaskScreen extends GetView<TaskController> {
                         height: 40,
                         width: 40,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          color: isDark ? AppColors.cardDark : AppColors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                          border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05)),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.filter_alt_outlined, size: 18, color: Colors.grey),
+                          icon: const Icon(Icons.filter_alt_outlined, size: 18, color: AppColors.grey),
                           onPressed: () {
                             // Reset filters
                             selectedStatusFilter.value = 'all';
@@ -155,7 +155,7 @@ class TaskScreen extends GetView<TaskController> {
                   // B. TRẠNG THÁI XỬ LÝ GRID
                   const Text(
                     'TRẠNG THÁI XỬ LÝ',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 10),
                   GridView.count(
@@ -257,7 +257,7 @@ class TaskScreen extends GetView<TaskController> {
                   // C. TIẾN ĐỘ CÔNG VIỆC GRID
                   const Text(
                     'TIẾN ĐỘ CÔNG VIỆC',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 10),
                   GridView.count(
@@ -343,7 +343,7 @@ class TaskScreen extends GetView<TaskController> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Divider(height: 1, color: Colors.black12),
+                  const Divider(height: 1, color: AppColors.black12),
                   const SizedBox(height: 10),
 
                   // D. TASKS LIST
@@ -353,11 +353,11 @@ class TaskScreen extends GetView<TaskController> {
                         padding: const EdgeInsets.only(top: 40.0),
                         child: Column(
                           children: [
-                            Icon(Icons.assignment_turned_in_outlined, size: 48, color: Colors.grey[400]),
+                            Icon(Icons.assignment_turned_in_outlined, size: 48, color: AppColors.grey[400]),
                             const SizedBox(height: 8),
                             Text(
                               'Không tìm thấy công việc phù hợp',
-                              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                              style: TextStyle(fontSize: 13, color: AppColors.grey[500]),
                             ),
                           ],
                         ),
@@ -396,15 +396,15 @@ class TaskScreen extends GetView<TaskController> {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: isDark ? AppColors.cardDark : AppColors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+            color: isSelected ? AppColors.primary : (isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05)),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.01),
+              color: AppColors.black.withOpacity(0.01),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -424,7 +424,7 @@ class TaskScreen extends GetView<TaskController> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: isDark ? AppColors.white : AppColors.black87,
                   ),
                 ),
               ],
@@ -435,7 +435,7 @@ class TaskScreen extends GetView<TaskController> {
               style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color: isDark ? AppColors.grey[400] : AppColors.grey[600],
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -494,12 +494,12 @@ class TaskScreen extends GetView<TaskController> {
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04)),
+        border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.04)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.01),
+            color: AppColors.black.withOpacity(0.01),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -515,7 +515,7 @@ class TaskScreen extends GetView<TaskController> {
               width: 8,
               height: 8,
               decoration: const BoxDecoration(
-                color: Color(0xFFF59E0B),
+                color: AppColors.paused,
                 shape: BoxShape.circle,
               ),
             ),
@@ -526,7 +526,7 @@ class TaskScreen extends GetView<TaskController> {
                 children: [
                   Text(
                     task.name,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.black87),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -539,25 +539,25 @@ class TaskScreen extends GetView<TaskController> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : const Color(0xFFF3F4F6),
+                            color: isDark ? AppColors.white10 : AppColors.lightBg,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text('Nguyễn Văn Hùng', style: TextStyle(fontSize: 9, color: Colors.grey[700])),
+                          child: Text('Nguyễn Văn Hùng', style: TextStyle(fontSize: 9, color: AppColors.grey[700])),
                         ),
                         const SizedBox(width: 6),
-                        const Icon(Icons.circle, size: 3, color: Colors.grey),
+                        const Icon(Icons.circle, size: 3, color: AppColors.grey),
                         const SizedBox(width: 6),
-                        Text('Hạn: $deadlineStr', style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                        Text('Hạn: $deadlineStr', style: const TextStyle(fontSize: 9, color: AppColors.grey)),
                         const SizedBox(width: 6),
-                        const Icon(Icons.circle, size: 3, color: Colors.grey),
+                        const Icon(Icons.circle, size: 3, color: AppColors.grey),
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: AppColors.badgeBlueBg,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text('• ${task.completionPercent}%', style: const TextStyle(fontSize: 9, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                          child: Text('• ${task.completionPercent}%', style: const TextStyle(fontSize: 9, color: AppColors.primary, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -572,13 +572,13 @@ class TaskScreen extends GetView<TaskController> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusText == 'Hoàn thành' ? const Color(0xFFECFDF5) : const Color(0xFFEFF6FF),
+                    color: statusText == 'Hoàn thành' ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     statusText,
                     style: TextStyle(
-                      color: statusText == 'Hoàn thành' ? const Color(0xFF10B981) : const Color(0xFF2563EB),
+                      color: statusText == 'Hoàn thành' ? AppColors.done : AppColors.primary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
@@ -588,13 +588,13 @@ class TaskScreen extends GetView<TaskController> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: timingText == 'QUÁ HẠN' ? const Color(0xFFFEE2E2) : const Color(0xFFECFDF5),
+                    color: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     timingText,
                     style: TextStyle(
-                      color: timingText == 'QUÁ HẠN' ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                      color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
                     ),
@@ -743,7 +743,7 @@ class TaskScreen extends GetView<TaskController> {
                 const SizedBox(height: 6),
                 Text(
                   task.description.isNotEmpty ? task.description : 'Không có mô tả chi tiết.',
-                  style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[700], fontSize: 14),
+                  style: TextStyle(color: isDark ? AppColors.grey[300] : AppColors.grey[700], fontSize: 14),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -761,7 +761,7 @@ class TaskScreen extends GetView<TaskController> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.access_time_outlined, size: 18, color: Colors.grey),
+                    const Icon(Icons.access_time_outlined, size: 18, color: AppColors.grey),
                     const SizedBox(width: 8),
                     Text(
                       'Bắt đầu: ${task.startAt ?? 'N/A'}',
@@ -772,13 +772,13 @@ class TaskScreen extends GetView<TaskController> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_outlined, size: 18, color: task.isOverdue ? Colors.red : Colors.grey),
+                    Icon(Icons.calendar_today_outlined, size: 18, color: task.isOverdue ? AppColors.red : AppColors.grey),
                     const SizedBox(width: 8),
                     Text(
                       'Hạn chót: ${task.endAt ?? 'Không hạn'}',
                       style: TextStyle(
                         fontSize: 13,
-                        color: task.isOverdue ? Colors.red : null,
+                        color: task.isOverdue ? AppColors.red : null,
                         fontWeight: task.isOverdue ? FontWeight.bold : null,
                       ),
                     ),
@@ -805,19 +805,19 @@ class TaskScreen extends GetView<TaskController> {
 
     switch (priority.toLowerCase()) {
       case 'high':
-        color = Colors.red[700]!;
-        bgColor = Colors.red[50]!;
+        color = AppColors.red[700]!;
+        bgColor = AppColors.red[50]!;
         label = 'Khẩn';
         break;
       case 'medium':
-        color = Colors.orange[700]!;
-        bgColor = Colors.orange[50]!;
+        color = AppColors.orange[700]!;
+        bgColor = AppColors.orange[50]!;
         label = 'Trung bình';
         break;
       case 'low':
       default:
-        color = Colors.green[700]!;
-        bgColor = Colors.green[50]!;
+        color = AppColors.green[700]!;
+        bgColor = AppColors.green[50]!;
         label = 'Thường';
         break;
     }
@@ -842,24 +842,24 @@ class TaskScreen extends GetView<TaskController> {
 
     switch (status.toLowerCase()) {
       case 'todo':
-        color = Colors.grey[700]!;
-        bgColor = Colors.grey[100]!;
+        color = AppColors.grey[700]!;
+        bgColor = AppColors.grey[100]!;
         label = 'Chưa làm';
         break;
       case 'in_progress':
-        color = Colors.blue[700]!;
-        bgColor = Colors.blue[50]!;
+        color = AppColors.blue[700]!;
+        bgColor = AppColors.blue[50]!;
         label = 'Đang làm';
         break;
       case 'completed':
       case 'done':
-        color = Colors.green[700]!;
-        bgColor = Colors.green[50]!;
+        color = AppColors.green[700]!;
+        bgColor = AppColors.green[50]!;
         label = 'Đã xong';
         break;
       default:
-        color = Colors.grey[700]!;
-        bgColor = Colors.grey[100]!;
+        color = AppColors.grey[700]!;
+        bgColor = AppColors.grey[100]!;
         label = status;
         break;
     }
@@ -877,3 +877,6 @@ class TaskScreen extends GetView<TaskController> {
     );
   }
 }
+
+
+

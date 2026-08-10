@@ -1,3 +1,4 @@
+﻿import '../untils/app_colors.dart';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -130,7 +131,7 @@ class AuthController extends GetxController {
                 const SizedBox(height: 16),
                 const Text(
                   "Vui lòng chọn tổ chức dưới đây để tiếp tục:",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: AppColors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -171,7 +172,7 @@ class AuthController extends GetxController {
                     Get.back(); // Đóng popup
                     Get.snackbar("Đăng nhập thất bại", "Bạn chưa chọn tổ chức");
                   },
-                  child: const Text("Hủy bỏ", style: TextStyle(color: Colors.red)),
+                  child: const Text("Hủy bỏ", style: TextStyle(color: AppColors.red)),
                 ),
               ],
             ),
@@ -318,3 +319,5 @@ class AuthController extends GetxController {
     }
   }
 }
+
+

@@ -1,14 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/user_controller.dart';
 import '../../controllers/theme_controller.dart';
 import '../../model/profile.dart';
+import '../../helper/custom_snackbar.dart';
+import '../../untils/app_textstyles.dart';
+import '../../../untils/app_colors.dart';
 
-// --- STYLES CƠ BẢN ---
-final TextStyle h4 = const TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
-final TextStyle bodyMedium = const TextStyle(fontSize: 16);
-final TextStyle bodySmall = const TextStyle(fontSize: 14);
 
 
 class ProfileScreen extends GetView<UserController> {
@@ -34,9 +33,9 @@ class ProfileScreen extends GetView<UserController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hồ sơ Người dùng', style: h4.copyWith(color: isDark ? Colors.white : Colors.black)),
+        title: Text('Hồ sơ Người dùng', style: AppTextStyle.h3.copyWith(fontSize: 14, color: isDark ? AppColors.white : AppColors.black)),
         centerTitle: true,
-        backgroundColor: isDark ? Colors.black : Colors.white,
+        backgroundColor: isDark ? AppColors.black : AppColors.white,
       ),
       body: SafeArea(
         // Sử dụng RefreshIndicator để kéo xuống làm mới
@@ -98,15 +97,15 @@ class ProfileScreen extends GetView<UserController> {
         // Ảnh đại diện (Placeholder)
         const CircleAvatar(
           radius: 60,
-          backgroundColor: Colors.blueGrey,
-          child: Icon(Icons.person, size: 60, color: Colors.white),
+          backgroundColor: AppColors.blueGrey,
+          child: Icon(Icons.person, size: 60, color: AppColors.white),
         ),
         const SizedBox(height: 16),
 
         // Tên người dùng
         Text(
           profile.name ?? 'Chưa cập nhật tên',
-          style: h4.copyWith(fontSize: 28),
+          style: AppTextStyle.h2.copyWith(fontSize: 18),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
@@ -114,7 +113,7 @@ class ProfileScreen extends GetView<UserController> {
         // Vai trò (Role)
         Text(
           'Vai trò: ${profile.role?.name ?? 'Khách'}',
-          style: bodyMedium.copyWith(color: Theme.of(context).primaryColor),
+          style: AppTextStyle.bodyLarge.copyWith(fontSize: 11, color: Theme.of(context).primaryColor),
         ),
 
         const Divider(height: 32),
@@ -149,11 +148,11 @@ class ProfileScreen extends GetView<UserController> {
             ),
             title: Text(
               'Chế độ giao diện',
-              style: bodySmall.copyWith(color: Colors.grey),
+              style: AppTextStyle.bodySmall.copyWith(fontSize: 9, color: AppColors.grey),
             ),
             subtitle: Text(
               themeController.isDarkMode ? 'Giao diện tối' : 'Giao diện sáng',
-              style: bodyMedium.copyWith(fontWeight: FontWeight.w500),
+              style: AppTextStyle.bodyLarge.copyWith(fontSize: 11, fontWeight: FontWeight.w500),
             ),
             trailing: Switch(
               value: themeController.isDarkMode,
@@ -170,12 +169,7 @@ class ProfileScreen extends GetView<UserController> {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () {
-              Get.snackbar(
-                  'Thông báo',
-                  'Đang thực hiện đăng xuất...',
-                  backgroundColor: Colors.blue,
-                  snackPosition: SnackPosition.BOTTOM
-              );
+              CustomSnackbar.show('Thông báo', 'Đang thực hiện đăng xuất...');
               // Sử dụng authController đã được truyền vào
               authController.logout();
 
@@ -183,8 +177,8 @@ class ProfileScreen extends GetView<UserController> {
             icon: const Icon(Icons.logout),
             label: const Text('Đăng xuất'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.red,
+              foregroundColor: AppColors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -204,21 +198,21 @@ class ProfileScreen extends GetView<UserController> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.5)),
+        border: Border.all(color: AppColors.red.withOpacity(0.5)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 50),
+          const Icon(Icons.error_outline, color: AppColors.red, size: 50),
           const SizedBox(height: 16),
           Text(
             'Lỗi tải dữ liệu!',
-            style: h4.copyWith(color: Colors.red),
+            style: AppTextStyle.h3.copyWith(fontSize: 14, color: AppColors.red),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: bodyMedium,
+            style: AppTextStyle.bodyMedium.copyWith(fontSize: 11),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -260,12 +254,12 @@ class _InfoItem extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: bodySmall.copyWith(color: Colors.grey),
+                  style: AppTextStyle.bodySmall.copyWith(fontSize: 9, color: AppColors.grey),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: bodyMedium.copyWith(fontWeight: FontWeight.w500),
+                  style: AppTextStyle.bodyLarge.copyWith(fontSize: 11, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -275,3 +269,5 @@ class _InfoItem extends StatelessWidget {
     );
   }
 }
+
+

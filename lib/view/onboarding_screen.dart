@@ -1,3 +1,4 @@
+﻿import '../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/auth_controller.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Text(
                       _item[index].description,
                       textAlign: TextAlign.center,
-                      style: AppTextStyle.withColor(AppTextStyle.bodyLarge, isDark? Colors.grey[400]!: Colors.grey[600]!),
+                      style: AppTextStyle.withColor(AppTextStyle.bodyLarge, isDark? AppColors.grey[400]!: AppColors.grey[600]!),
                     ),
                   )
 
@@ -75,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width:_currentPage == index? 24:8 ,
                       decoration: BoxDecoration(
                         color: _currentPage == index? Theme.of(context).primaryColor:
-                        (isDark?Colors.grey[700]:Colors.grey[300]),
+                        (isDark?AppColors.grey[700]:AppColors.grey[300]),
                         borderRadius: BorderRadius.circular(4),
                       ) ,
                     )
@@ -95,7 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     "Skip",
                     style: AppTextStyle.withColor(
                       AppTextStyle.bodyMedium,
-                      isDark ? Colors.grey[400]! : Colors.grey[600]!,
+                      isDark ? AppColors.grey[400]! : AppColors.grey[600]!,
                     ),
                   ),
                 ),
@@ -143,3 +144,5 @@ class OnboardingItem{
     required this.description
 });
 }
+
+

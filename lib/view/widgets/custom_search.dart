@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:flutter/material.dart';
 
@@ -10,23 +11,23 @@ class CustomSearch extends StatelessWidget {
     return Padding(padding: EdgeInsets.all(16),
       child: TextField(
         style: AppTextStyle.withColor(
-        AppTextStyle.buttonMedium, Theme.of(context).textTheme.bodyLarge?.color??Colors.black
+        AppTextStyle.buttonMedium, Theme.of(context).textTheme.bodyLarge?.color??AppColors.black
         ),
         decoration: InputDecoration(
           hintText: 'search',
           hintStyle: AppTextStyle.withColor(
-            AppTextStyle.buttonMedium, isDark?Colors.grey[400]!: Colors.grey[600]!,
+            AppTextStyle.buttonMedium, isDark?AppColors.grey[400]!: AppColors.grey[600]!,
         ),
           prefixIcon: Icon(
             Icons.search,
-            color: isDark?Colors.grey[400]!: Colors.grey[600]!,
+            color: isDark?AppColors.grey[400]!: AppColors.grey[600]!,
           ),
           suffixIcon: Icon(
             Icons.tune,
-            color: isDark?Colors.grey[400]!: Colors.grey[600]!,
+            color: isDark?AppColors.grey[400]!: AppColors.grey[600]!,
           ),
           filled: true,
-          fillColor: isDark?Colors.grey[800]!: Colors.grey[100]!,
+          fillColor: isDark?AppColors.grey[800]!: AppColors.grey[100]!,
             border: OutlineInputBorder(
                 borderSide: BorderSide.none,
                 borderRadius: BorderRadius.circular(12)
@@ -34,7 +35,7 @@ class CustomSearch extends StatelessWidget {
             ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: isDark?Colors.grey[400]!: Colors.grey[600]!,
+              color: isDark?AppColors.grey[400]!: AppColors.grey[600]!,
               width: 1,
             ),
             borderRadius: BorderRadius.circular(12),
@@ -55,3 +56,6 @@ class CustomSearch extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/task_controller.dart';
@@ -24,7 +24,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF3F4F6),
+      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       appBar: AppBar(
         leadingWidth: 40,
         leading: IconButton(
@@ -38,9 +38,9 @@ class _StatisticScreenState extends State<StatisticScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: false,
-        backgroundColor: isDark ? Colors.black : Colors.white,
+        backgroundColor: isDark ? AppColors.black : AppColors.white,
         elevation: 0,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
+        foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -76,11 +76,11 @@ class _StatisticScreenState extends State<StatisticScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -118,14 +118,14 @@ class _StatisticScreenState extends State<StatisticScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                              color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(startDate ?? 'Từ ngày', style: TextStyle(fontSize: 11, color: startDate != null ? (isDark ? Colors.white : Colors.black) : Colors.grey), overflow: TextOverflow.ellipsis)),
-                                Icon(Icons.keyboard_arrow_down, size: 14, color: Colors.grey[600]),
+                                Expanded(child: Text(startDate ?? 'Từ ngày', style: TextStyle(fontSize: 11, color: startDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
+                                Icon(Icons.keyboard_arrow_down, size: 14, color: AppColors.grey[600]),
                               ],
                             ),
                           ),
@@ -133,7 +133,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text('-', style: TextStyle(color: Colors.grey)),
+                        child: Text('-', style: TextStyle(color: AppColors.grey)),
                       ),
                       Expanded(
                         child: InkWell(
@@ -152,14 +152,14 @@ class _StatisticScreenState extends State<StatisticScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                              color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(endDate ?? 'Đến ngày', style: TextStyle(fontSize: 11, color: endDate != null ? (isDark ? Colors.white : Colors.black) : Colors.grey), overflow: TextOverflow.ellipsis)),
-                                Icon(Icons.keyboard_arrow_down, size: 14, color: Colors.grey[600]),
+                                Expanded(child: Text(endDate ?? 'Đến ngày', style: TextStyle(fontSize: 11, color: endDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
+                                Icon(Icons.keyboard_arrow_down, size: 14, color: AppColors.grey[600]),
                               ],
                             ),
                           ),
@@ -173,7 +173,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.business_outlined, size: 18, color: Colors.grey[600]),
+                Icon(Icons.business_outlined, size: 18, color: AppColors.grey[600]),
                 const SizedBox(width: 8),
                 const Text('Đơn vị:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 24),
@@ -181,7 +181,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                      color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -189,7 +189,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
                         value: taskController.selectedDepartmentId.value,
                         hint: const Text('Tất cả phòng ban', style: TextStyle(fontSize: 12)),
                         isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey[600]),
+                        icon: Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.grey[600]),
                         items: [
                           const DropdownMenuItem<int>(
                             value: null,
@@ -222,10 +222,10 @@ class _StatisticScreenState extends State<StatisticScreen> {
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2D2D2D) : bgColor,
+        color: isDark ? AppColors.cardItemDark : bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+          color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05),
           width: 0.5,
         ),
       ),
@@ -238,7 +238,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isDark ? Colors.grey[400] : textColor.withOpacity(0.8),
+                  color: isDark ? AppColors.grey[400] : textColor.withOpacity(0.8),
                   fontSize: 8,
                   fontWeight: FontWeight.w600,
                 ),
@@ -249,7 +249,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
               Text(
                 value,
                 style: TextStyle(
-                  color: isDark ? Colors.white : textColor,
+                  color: isDark ? AppColors.white : textColor,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
@@ -264,21 +264,21 @@ class _StatisticScreenState extends State<StatisticScreen> {
   // --- TRẠNG THÁI XỬ LÝ GRID ---
   Widget _buildStatusGrid(bool isDark) {
     return Obx(() {
-      final stats = taskController.stats;
-      final total = stats['total'] ?? 0;
-      final todo = (stats['todo'] ?? 0) as int;
-      final inProgress = (stats['in_progress'] ?? 0) as int;
-      final pendingApproval = (stats['pending_approval'] ?? 0) as int;
-      final done = (stats['done'] ?? 0) as int;
-      final paused = (stats['paused'] ?? 0) as int;
-      final cancelled = (stats['cancelled'] ?? 0) as int;
+      final stats = taskController.stats.value;
+      final total = stats.total;
+      final todo = stats.todo;
+      final inProgress = stats.inProgress;
+      final pendingApproval = stats.pendingApproval;
+      final done = stats.done;
+      final paused = stats.paused;
+      final cancelled = stats.cancelled;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'TRẠNG THÁI XỬ LÝ',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
           ),
           const SizedBox(height: 12),
           Column(
@@ -287,17 +287,17 @@ class _StatisticScreenState extends State<StatisticScreen> {
                 children: [
                   Expanded(
                     flex: 2,
-                    child: _buildStatCardItem('Tổng công việc', total.toString(), const Color(0xFF8B5CF6), const Color(0xFFF5F3FF), isDark),
+                    child: _buildStatCardItem('Tổng công việc', total.toString(), AppColors.todo, AppColors.bgPurpleLight, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     flex: 1,
-                    child: _buildStatCardItem('Chưa thực hiện', todo.toString(), const Color(0xFF4B5563), const Color(0xFFF3F4F6), isDark),
+                    child: _buildStatCardItem('Chưa thực hiện', todo.toString(), AppColors.textGrayDark, AppColors.lightBg, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     flex: 1,
-                    child: _buildStatCardItem('Đang thực hiện', inProgress.toString(), const Color(0xFF0EA5E9), const Color(0xFFF0F9FF), isDark),
+                    child: _buildStatCardItem('Đang thực hiện', inProgress.toString(), AppColors.inProgress, AppColors.bgBlueLight, isDark),
                   ),
                 ],
               ),
@@ -305,19 +305,19 @@ class _StatisticScreenState extends State<StatisticScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCardItem('Chờ duyệt', pendingApproval.toString(), const Color(0xFFD946EF), const Color(0xFFFDF4FF), isDark),
+                    child: _buildStatCardItem('Chờ duyệt', pendingApproval.toString(), AppColors.pendingApproval, AppColors.bgPurpleVeryLight, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Hoàn thành', done.toString(), const Color(0xFF10B981), const Color(0xFFECFDF5), isDark),
+                    child: _buildStatCardItem('Hoàn thành', done.toString(), AppColors.done, AppColors.badgeGreenBg, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Tạm dừng', paused.toString(), const Color(0xFFF59E0B), const Color(0xFFFFFBEB), isDark),
+                    child: _buildStatCardItem('Tạm dừng', paused.toString(), AppColors.paused, AppColors.bgYellowLight, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Đã hủy', cancelled.toString(), const Color(0xFF6B7280), const Color(0xFFF9FAFB), isDark),
+                    child: _buildStatCardItem('Đã hủy', cancelled.toString(), AppColors.cancelled, AppColors.bgGrayLight, isDark),
                   ),
                 ],
               ),
@@ -331,21 +331,21 @@ class _StatisticScreenState extends State<StatisticScreen> {
   // --- TIẾN ĐỘ CÔNG VIỆC GRID ---
   Widget _buildTimingGrid(bool isDark) {
     return Obx(() {
-      final stats = taskController.stats;
-      final timing = stats['timing_stats'] ?? {};
-      final upcoming = (timing['upcoming'] ?? 0) as int;
-      final early = (timing['early'] ?? 0) as int;
-      final onTime = (timing['on_time'] ?? 0) as int;
-      final late = (timing['late'] ?? 0) as int;
-      final overdue = (timing['overdue'] ?? 0) as int;
-      final timingCancelled = (timing['cancelled'] ?? 0) as int;
+      final stats = taskController.stats.value;
+      final timing = stats.timingStats;
+      final upcoming = timing.upcoming;
+      final early = timing.early;
+      final onTime = timing.onTime;
+      final late = timing.late;
+      final overdue = timing.overdue;
+      final timingCancelled = timing.cancelled;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'TIẾN ĐỘ CÔNG VIỆC',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
           ),
           const SizedBox(height: 12),
           Column(
@@ -353,15 +353,15 @@ class _StatisticScreenState extends State<StatisticScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCardItem('Chưa đến hạn', upcoming.toString(), const Color(0xFF0D9488), const Color(0xFFF0FDFA), isDark),
+                    child: _buildStatCardItem('Chưa đến hạn', upcoming.toString(), AppColors.textTeal, AppColors.bgTealLight, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Sớm hạn', early.toString(), const Color(0xFF047857), const Color(0xFFECFDF5), isDark),
+                    child: _buildStatCardItem('Sớm hạn', early.toString(), AppColors.textGreenDark, AppColors.badgeGreenBg, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Đúng hạn', onTime.toString(), const Color(0xFF1D4ED8), const Color(0xFFEFF6FF), isDark),
+                    child: _buildStatCardItem('Đúng hạn', onTime.toString(), AppColors.textBlueDark, AppColors.badgeBlueBg, isDark),
                   ),
                 ],
               ),
@@ -369,15 +369,15 @@ class _StatisticScreenState extends State<StatisticScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCardItem('Trễ hạn', late.toString(), const Color(0xFFBE123C), const Color(0xFFFFF1F2), isDark),
+                    child: _buildStatCardItem('Trễ hạn', late.toString(), AppColors.textRedDark, AppColors.bgRedVeryLight, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Quá hạn', overdue.toString(), const Color(0xFF991B1B), const Color(0xFFFEF2F2), isDark),
+                    child: _buildStatCardItem('Quá hạn', overdue.toString(), AppColors.textRedVeryDark, AppColors.bgRedLight, isDark),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildStatCardItem('Đã hủy', timingCancelled.toString(), const Color(0xFF6B7280), const Color(0xFFF9FAFB), isDark),
+                    child: _buildStatCardItem('Đã hủy', timingCancelled.toString(), AppColors.cancelled, AppColors.bgGrayLight, isDark),
                   ),
                 ],
               ),
@@ -391,25 +391,25 @@ class _StatisticScreenState extends State<StatisticScreen> {
   // --- DOUGHNUT CHARTS SECTION ---
   Widget _buildDoughnutChartsSection(bool isDark) {
     return Obx(() {
-      final stats = taskController.stats;
-      final total = stats['total'] ?? 0;
+      final stats = taskController.stats.value;
+      final total = stats.total;
 
       // Status Stats values
-      final todo = (stats['todo'] ?? 0) as int;
-      final inProgress = (stats['in_progress'] ?? 0) as int;
-      final pendingApproval = (stats['pending_approval'] ?? 0) as int;
-      final done = (stats['done'] ?? 0) as int;
-      final paused = (stats['paused'] ?? 0) as int;
-      final cancelled = (stats['cancelled'] ?? 0) as int;
+      final todo = stats.todo;
+      final inProgress = stats.inProgress;
+      final pendingApproval = stats.pendingApproval;
+      final done = stats.done;
+      final paused = stats.paused;
+      final cancelled = stats.cancelled;
 
       // Timing Stats values
-      final timing = stats['timing_stats'] ?? {};
-      final upcoming = (timing['upcoming'] ?? 0) as int;
-      final early = (timing['early'] ?? 0) as int;
-      final onTime = (timing['on_time'] ?? 0) as int;
-      final late = (timing['late'] ?? 0) as int;
-      final overdue = (timing['overdue'] ?? 0) as int;
-      final timingCancelled = (timing['cancelled'] ?? 0) as int;
+      final timing = stats.timingStats;
+      final upcoming = timing.upcoming;
+      final early = timing.early;
+      final onTime = timing.onTime;
+      final late = timing.late;
+      final overdue = timing.overdue;
+      final timingCancelled = timing.cancelled;
 
       // Calculate percentages helper
       String getPercentStr(int value, int totalVal) {
@@ -421,27 +421,27 @@ class _StatisticScreenState extends State<StatisticScreen> {
       // Doughnut Sections for Status Structure
       final List<PieChartSectionData> statusSections = [];
       if (total == 0) {
-        statusSections.add(PieChartSectionData(color: Colors.grey[300], value: 1, radius: 12, showTitle: false));
+        statusSections.add(PieChartSectionData(color: AppColors.grey[300], value: 1, radius: 12, showTitle: false));
       } else {
-        if (todo > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF8B5CF6), value: todo.toDouble(), radius: 12, showTitle: false));
-        if (inProgress > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF0EA5E9), value: inProgress.toDouble(), radius: 12, showTitle: false));
-        if (pendingApproval > 0) statusSections.add(PieChartSectionData(color: const Color(0xFFD946EF), value: pendingApproval.toDouble(), radius: 12, showTitle: false));
-        if (done > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF10B981), value: done.toDouble(), radius: 12, showTitle: false));
-        if (paused > 0) statusSections.add(PieChartSectionData(color: const Color(0xFFF59E0B), value: paused.toDouble(), radius: 12, showTitle: false));
-        if (cancelled > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF6B7280), value: cancelled.toDouble(), radius: 12, showTitle: false));
+        if (todo > 0) statusSections.add(PieChartSectionData(color: AppColors.todo, value: todo.toDouble(), radius: 12, showTitle: false));
+        if (inProgress > 0) statusSections.add(PieChartSectionData(color: AppColors.inProgress, value: inProgress.toDouble(), radius: 12, showTitle: false));
+        if (pendingApproval > 0) statusSections.add(PieChartSectionData(color: AppColors.pendingApproval, value: pendingApproval.toDouble(), radius: 12, showTitle: false));
+        if (done > 0) statusSections.add(PieChartSectionData(color: AppColors.done, value: done.toDouble(), radius: 12, showTitle: false));
+        if (paused > 0) statusSections.add(PieChartSectionData(color: AppColors.paused, value: paused.toDouble(), radius: 12, showTitle: false));
+        if (cancelled > 0) statusSections.add(PieChartSectionData(color: AppColors.cancelled, value: cancelled.toDouble(), radius: 12, showTitle: false));
       }
 
       // Doughnut Sections for Timing Structure
       final List<PieChartSectionData> timingSections = [];
       if (total == 0) {
-        timingSections.add(PieChartSectionData(color: Colors.grey[300], value: 1, radius: 12, showTitle: false));
+        timingSections.add(PieChartSectionData(color: AppColors.grey[300], value: 1, radius: 12, showTitle: false));
       } else {
-        if (upcoming > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF0EA5E9), value: upcoming.toDouble(), radius: 12, showTitle: false));
-        if (early > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF10B981), value: early.toDouble(), radius: 12, showTitle: false));
-        if (onTime > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF4F46E5), value: onTime.toDouble(), radius: 12, showTitle: false));
-        if (late > 0) timingSections.add(PieChartSectionData(color: const Color(0xFFEC4899), value: late.toDouble(), radius: 12, showTitle: false));
-        if (overdue > 0) timingSections.add(PieChartSectionData(color: const Color(0xFFEF4444), value: overdue.toDouble(), radius: 12, showTitle: false));
-        if (timingCancelled > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF6B7280), value: timingCancelled.toDouble(), radius: 12, showTitle: false));
+        if (upcoming > 0) timingSections.add(PieChartSectionData(color: AppColors.inProgress, value: upcoming.toDouble(), radius: 12, showTitle: false));
+        if (early > 0) timingSections.add(PieChartSectionData(color: AppColors.done, value: early.toDouble(), radius: 12, showTitle: false));
+        if (onTime > 0) timingSections.add(PieChartSectionData(color: AppColors.onTime, value: onTime.toDouble(), radius: 12, showTitle: false));
+        if (late > 0) timingSections.add(PieChartSectionData(color: AppColors.late, value: late.toDouble(), radius: 12, showTitle: false));
+        if (overdue > 0) timingSections.add(PieChartSectionData(color: AppColors.overdue, value: overdue.toDouble(), radius: 12, showTitle: false));
+        if (timingCancelled > 0) timingSections.add(PieChartSectionData(color: AppColors.cancelled, value: timingCancelled.toDouble(), radius: 12, showTitle: false));
       }
 
       return Row(
@@ -451,11 +451,11 @@ class _StatisticScreenState extends State<StatisticScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? AppColors.cardDark : AppColors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: AppColors.black.withOpacity(0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -479,16 +479,16 @@ class _StatisticScreenState extends State<StatisticScreen> {
                       ''
                       ''
                       'u Trạng thái', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('Theo trạng thái xử lý', style: TextStyle(color: Colors.grey[500], fontSize: 10)),
+                  Text('Theo trạng thái xử lý', style: TextStyle(color: AppColors.grey[500], fontSize: 10)),
                   const SizedBox(height: 16),
                   Center(child: _buildDoughnut(statusSections, total)),
                   const SizedBox(height: 16),
-                  _buildLegendItem('Chưa làm', '$todo (${getPercentStr(todo, total)})', const Color(0xFF8B5CF6)),
-                  _buildLegendItem('Đang làm', '$inProgress (${getPercentStr(inProgress, total)})', const Color(0xFF0EA5E9)),
-                  _buildLegendItem('Chờ duyệt', '$pendingApproval (${getPercentStr(pendingApproval, total)})', const Color(0xFFD946EF)),
-                  _buildLegendItem('Hoàn thành', '$done (${getPercentStr(done, total)})', const Color(0xFF10B981)),
-                  _buildLegendItem('Tạm dừng', '$paused (${getPercentStr(paused, total)})', const Color(0xFFF59E0B)),
-                  _buildLegendItem('Đã hủy', '$cancelled (${getPercentStr(cancelled, total)})', const Color(0xFF6B7280)),
+                  _buildLegendItem('Chưa làm', '$todo (${getPercentStr(todo, total)})', AppColors.todo),
+                  _buildLegendItem('Đang làm', '$inProgress (${getPercentStr(inProgress, total)})', AppColors.inProgress),
+                  _buildLegendItem('Chờ duyệt', '$pendingApproval (${getPercentStr(pendingApproval, total)})', AppColors.pendingApproval),
+                  _buildLegendItem('Hoàn thành', '$done (${getPercentStr(done, total)})', AppColors.done),
+                  _buildLegendItem('Tạm dừng', '$paused (${getPercentStr(paused, total)})', AppColors.paused),
+                  _buildLegendItem('Đã hủy', '$cancelled (${getPercentStr(cancelled, total)})', AppColors.cancelled),
                 ],
               ),
             ),
@@ -501,11 +501,11 @@ class _StatisticScreenState extends State<StatisticScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? AppColors.cardDark : AppColors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: AppColors.black.withOpacity(0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -515,16 +515,16 @@ class _StatisticScreenState extends State<StatisticScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Cơ cấu Tiến độ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('Theo hạn chót xử lý', style: TextStyle(color: Colors.grey[500], fontSize: 10)),
+                  Text('Theo hạn chót xử lý', style: TextStyle(color: AppColors.grey[500], fontSize: 10)),
                   const SizedBox(height: 16),
                   Center(child: _buildDoughnut(timingSections, total)),
                   const SizedBox(height: 16),
-                  _buildLegendItem('Chưa đến hạn', '$upcoming (${getPercentStr(upcoming, total)})', const Color(0xFF0EA5E9)),
-                  _buildLegendItem('Sớm hạn', '$early (${getPercentStr(early, total)})', const Color(0xFF10B981)),
-                  _buildLegendItem('Đúng hạn', '$onTime (${getPercentStr(onTime, total)})', const Color(0xFF4F46E5)),
-                  _buildLegendItem('Trễ hạn', '$late (${getPercentStr(late, total)})', const Color(0xFFEC4899)),
-                  _buildLegendItem('Quá hạn', '$overdue (${getPercentStr(overdue, total)})', const Color(0xFFEF4444)),
-                  _buildLegendItem('Đã hủy', '$timingCancelled (${getPercentStr(timingCancelled, total)})', const Color(0xFF6B7280)),
+                  _buildLegendItem('Chưa đến hạn', '$upcoming (${getPercentStr(upcoming, total)})', AppColors.inProgress),
+                  _buildLegendItem('Sớm hạn', '$early (${getPercentStr(early, total)})', AppColors.done),
+                  _buildLegendItem('Đúng hạn', '$onTime (${getPercentStr(onTime, total)})', AppColors.onTime),
+                  _buildLegendItem('Trễ hạn', '$late (${getPercentStr(late, total)})', AppColors.late),
+                  _buildLegendItem('Quá hạn', '$overdue (${getPercentStr(overdue, total)})', AppColors.overdue),
+                  _buildLegendItem('Đã hủy', '$timingCancelled (${getPercentStr(timingCancelled, total)})', AppColors.cancelled),
                 ],
               ),
             ),
@@ -554,7 +554,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
           children: [
             Text(
               'Tổng',
-              style: TextStyle(fontSize: 9, color: Colors.grey[500], fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 9, color: AppColors.grey[500], fontWeight: FontWeight.w500),
             ),
             Text(
               total.toString(),
@@ -580,7 +580,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 9, color: AppColors.grey, fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -600,11 +600,11 @@ class _StatisticScreenState extends State<StatisticScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -625,7 +625,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
                 return Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                    color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -641,32 +641,32 @@ class _StatisticScreenState extends State<StatisticScreen> {
           const SizedBox(height: 16),
           const Text(
             '1. PHÂN BỐ THEO TRẠNG THÁI XỬ LÝ',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
           ),
           const SizedBox(height: 12),
 
-          _buildSegmentRow('UBND Phường', 5, 25, 24, [const Color(0xFF8B5CF6), const Color(0xFF0EA5E9), const Color(0xFF10B981)]),
-          _buildSegmentRow('Công an Phường', 2, 10, 8, [const Color(0xFF8B5CF6), const Color(0xFF0EA5E9), const Color(0xFF10B981)]),
-          _buildSegmentRow('Y tế Phường', 1, 8, 4, [const Color(0xFF8B5CF6), const Color(0xFF0EA5E9), const Color(0xFF10B981)]),
-          _buildSegmentRow('Đội QLĐT', 3, 12, 10, [const Color(0xFF8B5CF6), const Color(0xFF0EA5E9), const Color(0xFF10B981)]),
-          _buildSegmentRow('Tư pháp', 2, 6, 8, [const Color(0xFF8B5CF6), const Color(0xFF0EA5E9), const Color(0xFF10B981)]),
+          _buildSegmentRow('UBND Phường', 5, 25, 24, [AppColors.todo, AppColors.inProgress, AppColors.done]),
+          _buildSegmentRow('Công an Phường', 2, 10, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
+          _buildSegmentRow('Y tế Phường', 1, 8, 4, [AppColors.todo, AppColors.inProgress, AppColors.done]),
+          _buildSegmentRow('Đội QLĐT', 3, 12, 10, [AppColors.todo, AppColors.inProgress, AppColors.done]),
+          _buildSegmentRow('Tư pháp', 2, 6, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
 
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Colors.black12),
+          const Divider(height: 1, color: AppColors.black12),
           const SizedBox(height: 16),
 
           const Text(
             '2. PHÂN BỐ THEO TIẾN ĐỘ THỜI GIAN',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
           ),
           const SizedBox(height: 12),
 
-          _buildSegmentRow('Mục 1', 6, 3, 1, [const Color(0xFF10B981), const Color(0xFFEF4444), const Color(0xFFEC4899)]),
-          _buildSegmentRow('Mục 2', 1, 3, 1, [const Color(0xFF0EA5E9), const Color(0xFF10B981), const Color(0xFFEC4899)]),
-          _buildSegmentRow('Mục 3', 1, 3, 1, [const Color(0xFF0EA5E9), const Color(0xFF10B981), const Color(0xFFEC4899)]),
-          _buildSegmentRow('Mục 4', 2, 1, 3, [const Color(0xFF0EA5E9), const Color(0xFF4F46E5), const Color(0xFFEF4444)]),
-          _buildSegmentRow('Mục 5', 1, 3, 2, [const Color(0xFF0EA5E9), const Color(0xFF10B981), const Color(0xFFEC4899), const Color(0xFFEF4444)], 1),
-          _buildSegmentRow('Mục 6', 3, 4, 0, [const Color(0xFF10B981), const Color(0xFFEF4444)]),
+          _buildSegmentRow('Mục 1', 6, 3, 1, [AppColors.done, AppColors.overdue, AppColors.late]),
+          _buildSegmentRow('Mục 2', 1, 3, 1, [AppColors.inProgress, AppColors.done, AppColors.late]),
+          _buildSegmentRow('Mục 3', 1, 3, 1, [AppColors.inProgress, AppColors.done, AppColors.late]),
+          _buildSegmentRow('Mục 4', 2, 1, 3, [AppColors.inProgress, AppColors.onTime, AppColors.overdue]),
+          _buildSegmentRow('Mục 5', 1, 3, 2, [AppColors.inProgress, AppColors.done, AppColors.late, AppColors.overdue], 1),
+          _buildSegmentRow('Mục 6', 3, 4, 0, [AppColors.done, AppColors.overdue]),
 
           const SizedBox(height: 16),
           _buildTimingLegendGrid(),
@@ -683,13 +683,13 @@ class _StatisticScreenState extends State<StatisticScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildDotLegend('Chưa đến hạn', const Color(0xFF0EA5E9)),
+              _buildDotLegend('Chưa đến hạn', AppColors.inProgress),
               const SizedBox(width: 8),
-              _buildDotLegend('Sớm hạn', const Color(0xFF10B981)),
+              _buildDotLegend('Sớm hạn', AppColors.done),
               const SizedBox(width: 8),
-              _buildDotLegend('Đúng hạn', const Color(0xFF4F46E5)),
+              _buildDotLegend('Đúng hạn', AppColors.onTime),
               const SizedBox(width: 8),
-              _buildDotLegend('Trễ hạn', const Color(0xFFEC4899)),
+              _buildDotLegend('Trễ hạn', AppColors.late),
             ],
           ),
         ),
@@ -697,9 +697,9 @@ class _StatisticScreenState extends State<StatisticScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildDotLegend('Quá hạn', const Color(0xFFEF4444)),
+            _buildDotLegend('Quá hạn', AppColors.overdue),
             const SizedBox(width: 24),
-            _buildDotLegend('Đã hủy', const Color(0xFF6B7280)),
+            _buildDotLegend('Đã hủy', AppColors.cancelled),
           ],
         )
       ],
@@ -716,7 +716,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w500)),
+        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.grey, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -727,20 +727,20 @@ class _StatisticScreenState extends State<StatisticScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? (isDark ? const Color(0xFF1E1E1E) : Colors.white) : Colors.transparent,
+          color: isActive ? (isDark ? AppColors.cardDark : AppColors.white) : AppColors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: isActive ? const Color(0xFF2563EB) : Colors.grey[600]),
+            Icon(icon, size: 12, color: isActive ? AppColors.primary : AppColors.grey[600]),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
-                color: isActive ? const Color(0xFF2563EB) : Colors.grey[600],
+                color: isActive ? AppColors.primary : AppColors.grey[600],
               ),
             ),
           ],
@@ -758,7 +758,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
             width: 90,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.black87),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -785,3 +785,6 @@ class _StatisticScreenState extends State<StatisticScreen> {
     );
   }
 }
+
+
+

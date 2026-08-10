@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/task_controller.dart';
@@ -17,26 +18,26 @@ class StatusInfoCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Obx(() {
-      final stats = taskController.stats;
+      final stats = taskController.stats.value;
       final orgs = authController.getAvailableOrganizations();
       final currentOrgId = authController.currentOrganizationId.value;
       final currentOrg = orgs.firstWhereOrNull((x) => x.id == currentOrgId);
 
-      final total = stats['total'] ?? 0;
-      final todo = stats['todo'] ?? 0;
-      final inProgress = stats['in_progress'] ?? 0;
-      final pendingApproval = stats['pending_approval'] ?? 0;
-      final done = stats['done'] ?? 0;
-      final paused = stats['paused'] ?? 0;
-      final cancelled = stats['cancelled'] ?? 0;
+      final total = stats.total;
+      final todo = stats.todo;
+      final inProgress = stats.inProgress;
+      final pendingApproval = stats.pendingApproval;
+      final done = stats.done;
+      final paused = stats.paused;
+      final cancelled = stats.cancelled;
 
-      final timing = stats['timing_stats'] ?? {};
-      final upcoming = timing['upcoming'] ?? 0;
-      final early = timing['early'] ?? 0;
-      final onTime = timing['on_time'] ?? 0;
-      final late = timing['late'] ?? 0;
-      final overdue = timing['overdue'] ?? 0;
-      final timingCancelled = timing['cancelled'] ?? 0;
+      final timing = stats.timingStats;
+      final upcoming = timing.upcoming;
+      final early = timing.early;
+      final onTime = timing.onTime;
+      final late = timing.late;
+      final overdue = timing.overdue;
+      final timingCancelled = timing.cancelled;
 
       // Tính tỷ lệ phần trăm hoàn thành: done / total
       final double donePercent = total > 0 ? (done / total) * 100 : 0.0;
@@ -45,15 +46,11 @@ class StatusInfoCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-            begin: Alignment.bottomRight,
-            end: Alignment.topLeft,
-          ),
+          color: AppColors.white.withOpacity(0.3),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1E3A8A).withOpacity(0.3),
+              color: AppColors.darkBlue.withOpacity(0.3),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -75,14 +72,14 @@ class StatusInfoCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: AppColors.white.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white24),
+                          border: Border.all(color: AppColors.white24),
                         ),
                         child: Text(
                           'BÁO CÁO CÔNG VIỆC',
                           style: AppTextStyle.bodySmall.copyWith(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -94,7 +91,7 @@ class StatusInfoCard extends StatelessWidget {
                       Text(
                         'Tiến độ tổng quan',
                         style: AppTextStyle.h2.copyWith(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 22,
                         ),
@@ -108,7 +105,7 @@ class StatusInfoCard extends StatelessWidget {
                     Text(
                       '${donePercent.round()}%',
                       style: AppTextStyle.h1.copyWith(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
@@ -116,7 +113,7 @@ class StatusInfoCard extends StatelessWidget {
                     Text(
                       'Hoàn thành',
                       style: AppTextStyle.bodySmall.copyWith(
-                        color: Colors.white.withOpacity(0.8),
+                        color: AppColors.white.withOpacity(0.8),
                         fontSize: 10,
                       ),
                     ),
@@ -131,7 +128,7 @@ class StatusInfoCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? AppColors.cardDark : AppColors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
@@ -148,17 +145,17 @@ class StatusInfoCard extends StatelessWidget {
                         children: [
                           Expanded(
                             flex: 2,
-                            child: _buildGridItem('Tổng số', total.toString(), const Color(0xFF8B5CF6), const Color(0xFFF5F3FF), isDark),
+                            child: _buildGridItem('Tổng số', total.toString(), AppColors.todo, AppColors.bgPurpleLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             flex: 1,
-                            child: _buildGridItem('Chưa làm', todo.toString(), const Color(0xFF4B5563), const Color(0xFFF3F4F6), isDark),
+                            child: _buildGridItem('Chưa làm', todo.toString(), AppColors.textGrayDark, AppColors.lightBg, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             flex: 1,
-                            child: _buildGridItem('Đang làm', inProgress.toString(), const Color(0xFF0EA5E9), const Color(0xFFF0F9FF), isDark),
+                            child: _buildGridItem('Đang làm', inProgress.toString(), AppColors.inProgress, AppColors.bgBlueLight, isDark),
                           ),
                         ],
                       ),
@@ -166,19 +163,19 @@ class StatusInfoCard extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildGridItem('Chờ duyệt', pendingApproval.toString(), const Color(0xFFD946EF), const Color(0xFFFDF4FF), isDark),
+                            child: _buildGridItem('Chờ duyệt', pendingApproval.toString(), AppColors.pendingApproval, AppColors.bgPurpleVeryLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Hoàn thành', done.toString(), const Color(0xFF10B981), const Color(0xFFECFDF5), isDark),
+                            child: _buildGridItem('Hoàn thành', done.toString(), AppColors.done, AppColors.badgeGreenBg, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Tạm dừng', paused.toString(), const Color(0xFFF59E0B), const Color(0xFFFFFBEB), isDark),
+                            child: _buildGridItem('Tạm dừng', paused.toString(), AppColors.paused, AppColors.bgYellowLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Đã hủy', cancelled.toString(), const Color(0xFF6B7280), const Color(0xFFF9FAFB), isDark),
+                            child: _buildGridItem('Đã hủy', cancelled.toString(), AppColors.cancelled, AppColors.bgGrayLight, isDark),
                           ),
                         ],
                       ),
@@ -196,15 +193,15 @@ class StatusInfoCard extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildGridItem('Chưa đến hạn', upcoming.toString(), const Color(0xFF0D9488), const Color(0xFFF0FDFA), isDark),
+                            child: _buildGridItem('Chưa đến hạn', upcoming.toString(), AppColors.textTeal, AppColors.bgTealLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Sớm hạn', early.toString(), const Color(0xFF047857), const Color(0xFFECFDF5), isDark),
+                            child: _buildGridItem('Sớm hạn', early.toString(), AppColors.textGreenDark, AppColors.badgeGreenBg, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Đúng hạn', onTime.toString(), const Color(0xFF1D4ED8), const Color(0xFFEFF6FF), isDark),
+                            child: _buildGridItem('Đúng hạn', onTime.toString(), AppColors.textBlueDark, AppColors.badgeBlueBg, isDark),
                           ),
                         ],
                       ),
@@ -212,15 +209,15 @@ class StatusInfoCard extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildGridItem('Trễ hạn', late.toString(), const Color(0xFFBE123C), const Color(0xFFFFF1F2), isDark),
+                            child: _buildGridItem('Trễ hạn', late.toString(), AppColors.textRedDark, AppColors.bgRedVeryLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Quá hạn', overdue.toString(), const Color(0xFF991B1B), const Color(0xFFFEF2F2), isDark),
+                            child: _buildGridItem('Quá hạn', overdue.toString(), AppColors.textRedVeryDark, AppColors.bgRedLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: _buildGridItem('Đã hủy', timingCancelled.toString(), const Color(0xFF6B7280), const Color(0xFFF9FAFB), isDark),
+                            child: _buildGridItem('Đã hủy', timingCancelled.toString(), AppColors.cancelled, AppColors.bgGrayLight, isDark),
                           ),
                         ],
                       ),
@@ -239,7 +236,7 @@ class StatusInfoCard extends StatelessWidget {
     return Text(
       title,
       style: AppTextStyle.labelMedium.copyWith(
-        color: isDark ? Colors.grey[400] : Colors.grey[500],
+        color: isDark ? AppColors.grey[400] : AppColors.grey[500],
         fontWeight: FontWeight.bold,
         fontSize: 10,
         letterSpacing: 0.5,
@@ -252,10 +249,10 @@ class StatusInfoCard extends StatelessWidget {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2D2D2D) : bgColor,
+        color: isDark ? AppColors.cardItemDark : bgColor,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.02),
+          color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.02),
           width: 0.5,
         ),
       ),
@@ -268,7 +265,7 @@ class StatusInfoCard extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: isDark ? Colors.grey[400] : textColor.withOpacity(0.8),
+                  color: isDark ? AppColors.grey[400] : textColor.withOpacity(0.8),
                   fontSize: 8.5,
                   fontWeight: FontWeight.w500,
                 ),
@@ -279,7 +276,7 @@ class StatusInfoCard extends StatelessWidget {
               Text(
                 value,
                 style: TextStyle(
-                  color: isDark ? Colors.white : textColor,
+                  color: isDark ? AppColors.white : textColor,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
@@ -291,3 +288,7 @@ class StatusInfoCard extends StatelessWidget {
     );
   }
 }
+
+
+
+

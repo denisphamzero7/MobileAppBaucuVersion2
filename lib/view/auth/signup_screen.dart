@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
@@ -51,7 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   onPressed: () => Get.back(),
                   icon: Icon(
                     Icons.arrow_back_ios,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: isDark ? AppColors.white : AppColors.black,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -67,7 +68,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   'Signup to get started',
                   style: AppTextStyle.withColor(
                     AppTextStyle.bodyLarge,
-                    isDark ? Colors.grey[400]! : Colors.grey[600]!,
+                    isDark ? AppColors.grey[400]! : AppColors.grey[600]!,
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -160,7 +161,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       'Sign Up',
                       style: AppTextStyle.withColor(
                         AppTextStyle.buttonMedium,
-                        Colors.white,
+                        AppColors.white,
                       ),
                     ),
                   ),
@@ -176,7 +177,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       "Already have an account?",
                       style: AppTextStyle.withColor(
                         AppTextStyle.bodyMedium,
-                        isDark ? Colors.grey[400]! : Colors.grey[600]!,
+                        isDark ? AppColors.grey[400]! : AppColors.grey[600]!,
                       ),
                     ),
                     TextButton(
@@ -219,3 +220,5 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 }
+
+

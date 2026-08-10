@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/auth_controller.dart';
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white30, width: 1.5),
+                  border: Border.all(color: AppColors.badgeRedBg, width: 1.5),
                   image: DecorationImage(
                     image: avatarProvider,
                     fit: BoxFit.cover,
@@ -130,20 +130,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           'XIN CHÀO',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: AppColors.white.withOpacity(0.7),
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.waving_hand, color: Color(0xFFFBBF24), size: 12),
+                        const Icon(Icons.waving_hand, color: AppColors.textOrangeAlert, size: 12),
                       ],
                     ),
                     Text(
                       user?.name ?? 'Admin',
                       style: AppTextStyle.bodyLarge.copyWith(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -156,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 10),
 
           // Overview Statistics Card Overlay
-          StatusInfoCard(whiteColor: Colors.white),
+          StatusInfoCard(whiteColor: AppColors.white),
         ],
       ),
     );
@@ -165,25 +165,22 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- 2. TWO DOUGHNUT CHARTS SIDE-BY-SIDE ---
   Widget _buildDoughnutChartsSection(bool isDark) {
     return Obx(() {
-      final stats = taskController.stats;
-      final total = stats['total'] ?? 0;
+      final stats = taskController.stats.value;
+      final total = stats.total;
+      final todo = stats.todo;
+      final inProgress = stats.inProgress;
+      final pendingApproval = stats.pendingApproval;
+      final done = stats.done;
+      final paused = stats.paused;
+      final cancelled = stats.cancelled;
 
-      // Status Stats values
-      final todo = (stats['todo'] ?? 0) as int;
-      final inProgress = (stats['in_progress'] ?? 0) as int;
-      final pendingApproval = (stats['pending_approval'] ?? 0) as int;
-      final done = (stats['done'] ?? 0) as int;
-      final paused = (stats['paused'] ?? 0) as int;
-      final cancelled = (stats['cancelled'] ?? 0) as int;
-
-      // Timing Stats values
-      final timing = stats['timing_stats'] ?? {};
-      final upcoming = (timing['upcoming'] ?? 0) as int;
-      final early = (timing['early'] ?? 0) as int;
-      final onTime = (timing['on_time'] ?? 0) as int;
-      final late = (timing['late'] ?? 0) as int;
-      final overdue = (timing['overdue'] ?? 0) as int;
-      final timingCancelled = (timing['cancelled'] ?? 0) as int;
+      final timing = stats.timingStats;
+      final upcoming = timing.upcoming;
+      final early = timing.early;
+      final onTime = timing.onTime;
+      final late = timing.late;
+      final overdue = timing.overdue;
+      final timingCancelled = timing.cancelled;
 
       // Calculate percentages helper
       String getPercentStr(int value, int totalVal) {
@@ -195,27 +192,27 @@ class _HomeScreenState extends State<HomeScreen> {
       // Doughnut Sections for Status Structure
       final List<PieChartSectionData> statusSections = [];
       if (total == 0) {
-        statusSections.add(PieChartSectionData(color: Colors.grey[300], value: 1, radius: 12, showTitle: false));
+        statusSections.add(PieChartSectionData(color: AppColors.grey[300], value: 1, radius: 12, showTitle: false));
       } else {
-        if (todo > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF8B5CF6), value: todo.toDouble(), radius: 12, showTitle: false));
-        if (inProgress > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF0EA5E9), value: inProgress.toDouble(), radius: 12, showTitle: false));
-        if (pendingApproval > 0) statusSections.add(PieChartSectionData(color: const Color(0xFFD946EF), value: pendingApproval.toDouble(), radius: 12, showTitle: false));
-        if (done > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF10B981), value: done.toDouble(), radius: 12, showTitle: false));
-        if (paused > 0) statusSections.add(PieChartSectionData(color: const Color(0xFFF59E0B), value: paused.toDouble(), radius: 12, showTitle: false));
-        if (cancelled > 0) statusSections.add(PieChartSectionData(color: const Color(0xFF6B7280), value: cancelled.toDouble(), radius: 12, showTitle: false));
+        if (todo > 0) statusSections.add(PieChartSectionData(color: AppColors.todo, value: todo.toDouble(), radius: 12, showTitle: false));
+        if (inProgress > 0) statusSections.add(PieChartSectionData(color: AppColors.inProgress, value: inProgress.toDouble(), radius: 12, showTitle: false));
+        if (pendingApproval > 0) statusSections.add(PieChartSectionData(color: AppColors.pendingApproval, value: pendingApproval.toDouble(), radius: 12, showTitle: false));
+        if (done > 0) statusSections.add(PieChartSectionData(color: AppColors.done, value: done.toDouble(), radius: 12, showTitle: false));
+        if (paused > 0) statusSections.add(PieChartSectionData(color: AppColors.paused, value: paused.toDouble(), radius: 12, showTitle: false));
+        if (cancelled > 0) statusSections.add(PieChartSectionData(color: AppColors.cancelled, value: cancelled.toDouble(), radius: 12, showTitle: false));
       }
 
       // Doughnut Sections for Timing Structure
       final List<PieChartSectionData> timingSections = [];
       if (total == 0) {
-        timingSections.add(PieChartSectionData(color: Colors.grey[300], value: 1, radius: 12, showTitle: false));
+        timingSections.add(PieChartSectionData(color: AppColors.grey[300], value: 1, radius: 12, showTitle: false));
       } else {
-        if (upcoming > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF0EA5E9), value: upcoming.toDouble(), radius: 12, showTitle: false));
-        if (early > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF10B981), value: early.toDouble(), radius: 12, showTitle: false));
-        if (onTime > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF4F46E5), value: onTime.toDouble(), radius: 12, showTitle: false));
-        if (late > 0) timingSections.add(PieChartSectionData(color: const Color(0xFFEC4899), value: late.toDouble(), radius: 12, showTitle: false));
-        if (overdue > 0) timingSections.add(PieChartSectionData(color: const Color(0xFFEF4444), value: overdue.toDouble(), radius: 12, showTitle: false));
-        if (timingCancelled > 0) timingSections.add(PieChartSectionData(color: const Color(0xFF6B7280), value: timingCancelled.toDouble(), radius: 12, showTitle: false));
+        if (upcoming > 0) timingSections.add(PieChartSectionData(color: AppColors.inProgress, value: upcoming.toDouble(), radius: 12, showTitle: false));
+        if (early > 0) timingSections.add(PieChartSectionData(color: AppColors.done, value: early.toDouble(), radius: 12, showTitle: false));
+        if (onTime > 0) timingSections.add(PieChartSectionData(color: AppColors.onTime, value: onTime.toDouble(), radius: 12, showTitle: false));
+        if (late > 0) timingSections.add(PieChartSectionData(color: AppColors.late, value: late.toDouble(), radius: 12, showTitle: false));
+        if (overdue > 0) timingSections.add(PieChartSectionData(color: AppColors.overdue, value: overdue.toDouble(), radius: 12, showTitle: false));
+        if (timingCancelled > 0) timingSections.add(PieChartSectionData(color: AppColors.cancelled, value: timingCancelled.toDouble(), radius: 12, showTitle: false));
       }
 
       return Row(
@@ -225,11 +222,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? AppColors.cardDark : AppColors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: AppColors.black.withOpacity(0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -239,16 +236,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Cơ cấu Trạng thái', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('Theo trạng thái xử lý', style: TextStyle(color: Colors.grey[500], fontSize: 10)),
+                  Text('Theo trạng thái xử lý', style: TextStyle(color: AppColors.grey[500], fontSize: 10)),
                   const SizedBox(height: 16),
                   Center(child: _buildDoughnut(statusSections, total)),
                   const SizedBox(height: 16),
-                  _buildLegendItem('Chưa làm', '$todo (${getPercentStr(todo, total)})', const Color(0xFF8B5CF6)),
-                  _buildLegendItem('Đang làm', '$inProgress (${getPercentStr(inProgress, total)})', const Color(0xFF0EA5E9)),
-                  _buildLegendItem('Chờ duyệt', '$pendingApproval (${getPercentStr(pendingApproval, total)})', const Color(0xFFD946EF)),
-                  _buildLegendItem('Hoàn thành', '$done (${getPercentStr(done, total)})', const Color(0xFF10B981)),
-                  _buildLegendItem('Tạm dừng', '$paused (${getPercentStr(paused, total)})', const Color(0xFFF59E0B)),
-                  _buildLegendItem('Đã hủy', '$cancelled (${getPercentStr(cancelled, total)})', const Color(0xFF6B7280)),
+                  _buildLegendItem('Chưa làm', '$todo (${getPercentStr(todo, total)})', AppColors.todo),
+                  _buildLegendItem('Đang làm', '$inProgress (${getPercentStr(inProgress, total)})', AppColors.inProgress),
+                  _buildLegendItem('Chờ duyệt', '$pendingApproval (${getPercentStr(pendingApproval, total)})', AppColors.pendingApproval),
+                  _buildLegendItem('Hoàn thành', '$done (${getPercentStr(done, total)})', AppColors.done),
+                  _buildLegendItem('Tạm dừng', '$paused (${getPercentStr(paused, total)})', AppColors.paused),
+                  _buildLegendItem('Đã hủy', '$cancelled (${getPercentStr(cancelled, total)})', AppColors.cancelled),
                 ],
               ),
             ),
@@ -261,11 +258,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? AppColors.cardDark : AppColors.white,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: AppColors.black.withOpacity(0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -275,16 +272,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Cơ cấu Tiến độ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('Theo hạn chót xử lý', style: TextStyle(color: Colors.grey[500], fontSize: 10)),
+                  Text('Theo hạn chót xử lý', style: TextStyle(color: AppColors.grey[500], fontSize: 10)),
                   const SizedBox(height: 16),
                   Center(child: _buildDoughnut(timingSections, total)),
                   const SizedBox(height: 16),
-                  _buildLegendItem('Chưa đến hạn', '$upcoming (${getPercentStr(upcoming, total)})', const Color(0xFF0EA5E9)),
-                  _buildLegendItem('Sớm hạn', '$early (${getPercentStr(early, total)})', const Color(0xFF10B981)),
-                  _buildLegendItem('Đúng hạn', '$onTime (${getPercentStr(onTime, total)})', const Color(0xFF4F46E5)),
-                  _buildLegendItem('Trễ hạn', '$late (${getPercentStr(late, total)})', const Color(0xFFEC4899)),
-                  _buildLegendItem('Quá hạn', '$overdue (${getPercentStr(overdue, total)})', const Color(0xFFEF4444)),
-                  _buildLegendItem('Đã hủy', '$timingCancelled (${getPercentStr(timingCancelled, total)})', const Color(0xFF6B7280)),
+                  _buildLegendItem('Chưa đến hạn', '$upcoming (${getPercentStr(upcoming, total)})', AppColors.inProgress),
+                  _buildLegendItem('Sớm hạn', '$early (${getPercentStr(early, total)})', AppColors.done),
+                  _buildLegendItem('Đúng hạn', '$onTime (${getPercentStr(onTime, total)})', AppColors.onTime),
+                  _buildLegendItem('Trễ hạn', '$late (${getPercentStr(late, total)})', AppColors.late),
+                  _buildLegendItem('Quá hạn', '$overdue (${getPercentStr(overdue, total)})', AppColors.overdue),
+                  _buildLegendItem('Đã hủy', '$timingCancelled (${getPercentStr(timingCancelled, total)})', AppColors.cancelled),
                 ],
               ),
             ),
@@ -314,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               'Tổng',
-              style: TextStyle(fontSize: 9, color: Colors.grey[500], fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 9, color: AppColors.grey[500], fontWeight: FontWeight.w500),
             ),
             Text(
               total.toString(),
@@ -340,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 9, color: AppColors.grey, fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -360,11 +357,11 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -387,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                    color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -403,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           const Text(
             '1. PHÂN BỐ THEO TRẠNG THÁI XỬ LÝ',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
           ),
           const SizedBox(height: 12),
 
@@ -415,12 +412,12 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildSegmentRow('Tư pháp', 2, 6, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
 
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Colors.black12),
+          const Divider(height: 1, color: AppColors.black12),
           const SizedBox(height: 16),
 
           const Text(
             '2. PHÂN BỐ THEO TIẾN ĐỘ THỜI GIAN',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
           ),
           const SizedBox(height: 12),
 
@@ -448,13 +445,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildDotLegend('Chưa đến hạn', const Color(0xFF0EA5E9)),
+              _buildDotLegend('Chưa đến hạn', AppColors.inProgress),
               const SizedBox(width: 8),
-              _buildDotLegend('Sớm hạn', const Color(0xFF10B981)),
+              _buildDotLegend('Sớm hạn', AppColors.done),
               const SizedBox(width: 8),
-              _buildDotLegend('Đúng hạn', const Color(0xFF4F46E5)),
+              _buildDotLegend('Đúng hạn', AppColors.onTime),
               const SizedBox(width: 8),
-              _buildDotLegend('Trễ hạn', const Color(0xFFEC4899)),
+              _buildDotLegend('Trễ hạn', AppColors.late),
             ],
           ),
         ),
@@ -462,9 +459,9 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildDotLegend('Quá hạn', const Color(0xFFEF4444)),
+            _buildDotLegend('Quá hạn', AppColors.overdue),
             const SizedBox(width: 24),
-            _buildDotLegend('Đã hủy', const Color(0xFF6B7280)),
+            _buildDotLegend('Đã hủy', AppColors.cancelled),
           ],
         )
       ],
@@ -481,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w500)),
+        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.grey, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -492,12 +489,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? (isDark ? const Color(0xFF1E1E1E) : Colors.white) : Colors.transparent,
+          color: isActive ? (isDark ? AppColors.cardDark : AppColors.white) : AppColors.transparent,
           borderRadius: BorderRadius.circular(10),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.black.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -510,7 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               icon,
               size: 12,
-              color: isActive ? const Color(0xFF2563EB) : Colors.grey[600],
+              color: isActive ? AppColors.primary : AppColors.grey[600],
             ),
             const SizedBox(width: 4),
             Text(
@@ -518,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
-                color: isActive ? const Color(0xFF2563EB) : Colors.grey[600],
+                color: isActive ? AppColors.primary : AppColors.grey[600],
               ),
             ),
           ],
@@ -536,7 +533,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 90,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.black87),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -569,11 +566,11 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -595,19 +592,19 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSpacing: 10,
             childAspectRatio: 2.8,
             children: [
-              _buildDirectoryButton('Công việc đang giao', Icons.send_outlined, const Color(0xFFEFF6FF), const Color(0xFF2563EB), () {
+              _buildDirectoryButton('Công việc đang giao', Icons.send_outlined, AppColors.badgeBlueBg, AppColors.primary, () {
                 Get.find<NavigationController>().changeIndex(3);
               }, isDark),
-              _buildDirectoryButton('Công việc được giao', Icons.mail_outline, const Color(0xFFECFDF5), const Color(0xFF10B981), () {
+              _buildDirectoryButton('Công việc được giao', Icons.mail_outline, AppColors.badgeGreenBg, AppColors.done, () {
                 Get.find<NavigationController>().changeIndex(3);
               }, isDark),
-              _buildDirectoryButton('Thống kê & Báo cáo', Icons.pie_chart_outline, const Color(0xFFF5F3FF), const Color(0xFF8B5CF6), () {
+              _buildDirectoryButton('Thống kê & Báo cáo', Icons.pie_chart_outline, AppColors.bgPurpleLight, AppColors.todo, () {
                 Get.find<NavigationController>().changeIndex(3);
               }, isDark),
-              _buildDirectoryButton('Đơn thư & Kiến nghị', Icons.description_outlined, const Color(0xFFFFFBEB), const Color(0xFFF59E0B), () {
+              _buildDirectoryButton('Đơn thư & Kiến nghị', Icons.description_outlined, AppColors.bgYellowLight, AppColors.paused, () {
                 Get.find<NavigationController>().changeIndex(4);
               }, isDark),
-              _buildDirectoryButton('Thông tin cá nhân', Icons.person_outline, const Color(0xFFEFF6FF), const Color(0xFF0EA5E9), () {
+              _buildDirectoryButton('Thông tin cá nhân', Icons.person_outline, AppColors.badgeBlueBg, AppColors.inProgress, () {
                 Get.to(() => const ProfileScreen());
               }, isDark),
             ],
@@ -623,12 +620,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2D2D2D) : Colors.white,
+          color: isDark ? AppColors.cardItemDark : AppColors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04)),
+          border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.04)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.01),
+              color: AppColors.black.withOpacity(0.01),
               blurRadius: 4,
               offset: const Offset(0, 2),
             )
@@ -639,16 +636,16 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : bgColor,
+                color: isDark ? AppColors.white10 : bgColor,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: isDark ? Colors.white : iconColor, size: 18),
+              child: Icon(icon, color: isDark ? AppColors.white : iconColor, size: 18),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.black87),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -665,11 +662,11 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppColors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -689,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () => Get.find<NavigationController>().changeIndex(3),
                 child: const Text(
                   'Xem tất cả >',
-                  style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 11),
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 11),
                 ),
               ),
             ],
@@ -778,12 +775,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2D2D2D) : Colors.white,
+        color: isDark ? AppColors.cardItemDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04)),
+        border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.04)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.01),
+            color: AppColors.black.withOpacity(0.01),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -798,7 +795,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: Color(0xFFF59E0B),
+              color: AppColors.paused,
               shape: BoxShape.circle,
             ),
           ),
@@ -810,7 +807,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.black87),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -823,25 +820,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white10 : const Color(0xFFF3F4F6),
+                          color: isDark ? AppColors.white10 : AppColors.lightBg,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(assignee, style: TextStyle(fontSize: 9, color: Colors.grey[700])),
+                        child: Text(assignee, style: TextStyle(fontSize: 9, color: AppColors.grey[700])),
                       ),
                       const SizedBox(width: 6),
-                      const Icon(Icons.circle, size: 3, color: Colors.grey),
+                      const Icon(Icons.circle, size: 3, color: AppColors.grey),
                       const SizedBox(width: 6),
-                      Text('Hạn: $deadline', style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                      Text('Hạn: $deadline', style: const TextStyle(fontSize: 9, color: AppColors.grey)),
                       const SizedBox(width: 6),
-                      const Icon(Icons.circle, size: 3, color: Colors.grey),
+                      const Icon(Icons.circle, size: 3, color: AppColors.grey),
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppColors.badgeBlueBg,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text('• $percent%', style: const TextStyle(fontSize: 9, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                        child: Text('• $percent%', style: const TextStyle(fontSize: 9, color: AppColors.primary, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -857,13 +854,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusText == 'Hoàn thành' ? const Color(0xFFECFDF5) : const Color(0xFFEFF6FF),
+                  color: statusText == 'Hoàn thành' ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   statusText,
                   style: TextStyle(
-                    color: statusText == 'Hoàn thành' ? const Color(0xFF10B981) : const Color(0xFF2563EB),
+                    color: statusText == 'Hoàn thành' ? AppColors.done : AppColors.primary,
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
@@ -873,13 +870,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: timingText == 'QUÁ HẠN' ? const Color(0xFFFEE2E2) : const Color(0xFFECFDF5),
+                  color: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   timingText,
                   style: TextStyle(
-                    color: timingText == 'QUÁ HẠN' ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                    color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
                     fontSize: 8,
                     fontWeight: FontWeight.bold,
                   ),
@@ -892,3 +889,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+

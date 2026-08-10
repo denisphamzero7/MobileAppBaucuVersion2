@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -41,7 +42,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   onPressed: () => Get.back(),
                   icon: Icon(
                     Icons.arrow_back_ios,
-                    color: isDark ? Colors.white : Colors.black,
+                    color: isDark ? AppColors.white : AppColors.black,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -57,7 +58,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   'Enter your email to reset your password',
                   style: AppTextStyle.withColor(
                     AppTextStyle.bodyLarge,
-                    isDark ? Colors.grey[400]! : Colors.grey[600]!,
+                    isDark ? AppColors.grey[400]! : AppColors.grey[600]!,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -104,7 +105,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       'Send reset link',
                       style: AppTextStyle.withColor(
                         AppTextStyle.buttonMedium,
-                        Colors.white,
+                        AppColors.white,
                       ),
                     ),
                   ),
@@ -147,3 +148,5 @@ class _ForgotPasswordState extends State<ForgotPassword> {
     );
   }
 }
+
+

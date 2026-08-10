@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 class SkeletonLoader extends StatelessWidget {
@@ -9,8 +10,8 @@ class SkeletonLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
-        baseColor: isDark? Colors.grey[800]!: Colors.grey[300]!,
-        highlightColor: isDark?Colors.grey[700]!:Colors.grey[100]!,
+        baseColor: isDark? AppColors.grey[800]!: AppColors.grey[300]!,
+        highlightColor: isDark?AppColors.grey[700]!:AppColors.grey[100]!,
         child: child
     );
 
@@ -36,10 +37,13 @@ class SkeletonBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: AppColors.black,
         borderRadius: BorderRadius.circular(radius)
       ),
     );
   }
 }
+
+
+
 

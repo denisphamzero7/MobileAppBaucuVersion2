@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:flutter/material.dart';
 
@@ -45,11 +46,11 @@ class _CustomTextfieldState extends State<CustomTextfield> {
             labelText:widget.label,
             labelStyle: AppTextStyle.withColor(
                 AppTextStyle.bodyMedium,
-                isDark?Colors.grey[400]!: Colors.grey[600]!
+                isDark?AppColors.grey[400]!: AppColors.grey[600]!
             ),
             prefixIcon: Icon(
               widget.prefixIcon,
-              color: isDark? Colors.grey[400]: Colors.grey[600],
+              color: isDark? AppColors.grey[400]: AppColors.grey[600],
             ),
             suffixIcon: widget.isPassword ?
                 IconButton(
@@ -64,13 +65,13 @@ class _CustomTextfieldState extends State<CustomTextfield> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                color: isDark ? AppColors.grey[700]! : AppColors.grey[300]!,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                color: isDark ? AppColors.grey[700]! : AppColors.grey[300]!,
               ),
           ),
             focusedBorder: OutlineInputBorder(
@@ -95,3 +96,6 @@ class _CustomTextfieldState extends State<CustomTextfield> {
     );
   }
 }
+
+
+

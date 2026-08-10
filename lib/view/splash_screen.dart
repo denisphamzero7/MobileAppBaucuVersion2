@@ -1,3 +1,4 @@
+﻿import '../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/auth_controller.dart';
 
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ class SplashScreen extends StatelessWidget {
             Positioned.fill(
               child: Opacity(
                 opacity: 0.05,
-                child: const GridPattern(color: Colors.white),
+                child: const GridPattern(color: AppColors.white),
               ),
             ),
             // main content (Icon, Title, Subtitle)
@@ -69,7 +70,7 @@ class SplashScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -96,7 +97,7 @@ class SplashScreen extends StatelessWidget {
                         Text(
                           "FASHION",
                           style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: 32,
                               fontWeight: FontWeight.w400,
                               letterSpacing: 8
@@ -105,7 +106,7 @@ class SplashScreen extends StatelessWidget {
                         Text(
                           "STORE",
                           style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: 32,
                               fontWeight: FontWeight.w400,
                               letterSpacing: 8
@@ -136,7 +137,7 @@ class SplashScreen extends StatelessWidget {
                   'Style Meets Simplicity',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: AppColors.white.withOpacity(0.9),
                     fontSize: 14,
                     letterSpacing: 2,
                     fontWeight: FontWeight.w300,
@@ -187,3 +188,5 @@ class GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+

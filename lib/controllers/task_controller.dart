@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:get/get.dart';
 import '../model/task_model.dart';
+import '../model/task_stats_model.dart';
 import '../service/task_service.dart';
 import '../service/petition_service.dart';
 import 'package:intl/intl.dart';
@@ -13,7 +14,7 @@ class TaskController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
-  final RxMap<String, dynamic> stats = <String, dynamic>{}.obs;
+  final Rx<TaskStatsModel> stats = TaskStatsModel.empty().obs;
   final RxBool isStatsLoading = false.obs;
 
   // Filters for stats
@@ -95,8 +96,8 @@ class TaskController extends GetxController {
         departmentId: selectedDepartmentId.value,
       );
       if (response != null && response['success'] == true && response['data'] != null) {
-        stats.value = response['data'] as Map<String, dynamic>;
-        log("✅ Tải thống kê công việc thành công: ${stats.value}");
+        stats.value = TaskStatsModel.fromJson(response['data'] as Map<String, dynamic>);
+        log("✅ Tải thống kê công việc thành công: ${stats.value.total}");
       } else {
         _setMockStats();
       }
@@ -109,7 +110,7 @@ class TaskController extends GetxController {
   }
 
   void _setMockStats() {
-    stats.value = {
+    stats.value = TaskStatsModel.fromJson({
       "total": 61,
       "todo": 17,
       "in_progress": 18,
@@ -125,7 +126,7 @@ class TaskController extends GetxController {
         "overdue": 17,
         "cancelled": 0
       }
-    };
+    });
   }
 
   Future<void> refreshTasks() async {

@@ -1,3 +1,4 @@
+﻿import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../untils/app_textstyles.dart'; // Import file style của bạn
 
@@ -26,11 +27,11 @@ class CustomCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           // Nếu không truyền màu thì dùng màu trắng hoặc xám đậm
-          color: color ?? (isDark ? Colors.grey[800] : Colors.white),
+          color: color ?? (isDark ? AppColors.grey[800] : AppColors.white),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -54,7 +55,7 @@ class CustomCard extends StatelessWidget {
               text,
               textAlign: TextAlign.center,
               style: AppTextStyle.labelMedium.copyWith(
-                color: isDark ? Colors.white70 : Colors.black87,
+                color: isDark ? AppColors.white70 : AppColors.black87,
               ),
             ),
           ],
@@ -63,3 +64,5 @@ class CustomCard extends StatelessWidget {
     );
   }
 }
+
+
