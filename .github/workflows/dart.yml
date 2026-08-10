@@ -1,29 +1,58 @@
-name: Flutter CI
+name: Build and Release
 
 on:
-  push:
-    branches: [ "main", "mobile" ]
-  pull_request:
-    branches: [ "main", "mobile" ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Phiên bản Release (VD: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write # Cấp quyền tạo Release
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Build & Release
+    runs-on: macos-latest # Bắt buộc phải dùng MacOS để build iOS
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # Setup Flutter SDK instead of just Dart
-      - uses: subosito/flutter-action@v2
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze project source
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Build Android APK
+        run: flutter build apk --release
 
-      # - name: Run tests
-      #   run: flutter test
+      - name: Build iOS (Unsigned)
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p Payload
+          mv build/ios/iphoneos/Runner.app Payload/
+          zip -qq -r -9 app_baucu.ipa Payload
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}-b${{ github.run_number }}
+          name: Release ${{ github.event.inputs.version }} (Build ${{ github.run_number }})
+          draft: false
+          prerelease: false
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            app_baucu.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
