@@ -7,9 +7,10 @@ name: Dart
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "mobile" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "mobile" ]
+  workflow_dispatch: # Thêm trigger này để cho phép chạy thủ công từ giao diện GitHub
 
 jobs:
   build:
@@ -39,4 +40,4 @@ jobs:
       # package:test for this step to succeed. Note that Flutter projects will
       # want to change this to 'flutter test'.
       - name: Run tests
-        run: dart test
+        run: flutter test # Đổi thành flutter test vì đây là dự án Flutter
