@@ -39,6 +39,9 @@ jobs:
 
       - name: Build iOS (Unsigned)
         run: |
+          flutter build ios --config-only
+          sed -i '' "s/^# platform :ios.*/platform :ios, '15.5'/g" ios/Podfile || true
+          sed -i '' "s/^platform :ios.*/platform :ios, '15.5'/g" ios/Podfile || true
           flutter build ios --release --no-codesign
           mkdir -p Payload
           mv build/ios/iphoneos/Runner.app Payload/
