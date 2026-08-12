@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/user_controller.dart';
@@ -7,6 +7,7 @@ import '../../model/profile.dart';
 import '../../helper/custom_snackbar.dart';
 import '../../untils/app_textstyles.dart';
 import '../../../untils/app_colors.dart';
+import '../widgets/skeleton_loader.dart';
 
 
 
@@ -47,18 +48,7 @@ class ProfileScreen extends GetView<UserController> {
 
             // Obx để lắng nghe thay đổi từ Controller
             child: Obx(() {
-              if (controller.isLoading.value && controller.userProfile.value == null) {
-                // Hiển thị loading chỉ khi chưa có dữ liệu nào (lần tải đầu tiên)
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 80.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-
-              if (controller.errorMessage.isNotEmpty) {
-                // Hiển thị lỗi nếu có
+              if (controller.errorMessage.isNotEmpty && !controller.isLoading.value) {
                 return Center(
                   child: _buildErrorWidget(
                       context,
@@ -68,19 +58,11 @@ class ProfileScreen extends GetView<UserController> {
                 );
               }
 
-              final profile = controller.userProfile.value;
-              if (profile == null) {
-                // Trường hợp profile là null và không phải loading
-                return Center(
-                  child: _buildErrorWidget(
-                      context,
-                      'Không tìm thấy dữ liệu hồ sơ.',
-                      controller.fetchProfile
-                  ),
-                );
+              if (controller.isLoading.value || controller.userProfile.value == null) {
+                return _buildSkeletonLoader(context);
               }
 
-              // 2. TRUYỀN AuthController XUỐNG HÀM HIỂN THỊ
+              final profile = controller.userProfile.value!;
               return _buildProfileData(context, profile, authController);
             }),
           ),
@@ -132,7 +114,7 @@ class ProfileScreen extends GetView<UserController> {
         _InfoItem(
           icon: Icons.security,
           label: 'Admin',
-          value: profile.role?.name?.toLowerCase() == 'admin' ? 'Có' : 'Không',
+          value: profile.role?.name.toLowerCase() == 'admin' ? 'Có' : 'Không',
         ),
         
         const Divider(height: 16),
@@ -157,7 +139,7 @@ class ProfileScreen extends GetView<UserController> {
             trailing: Switch(
               value: themeController.isDarkMode,
               onChanged: (val) => themeController.toggleTheme(),
-              activeColor: Theme.of(context).primaryColor,
+              activeThumbColor: Theme.of(context).primaryColor,
             ),
           ),
         ),
@@ -169,10 +151,14 @@ class ProfileScreen extends GetView<UserController> {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () {
-              CustomSnackbar.show('Thông báo', 'Đang thực hiện đăng xuất...');
-              // Sử dụng authController đã được truyền vào
-              authController.logout();
-
+              Get.snackbar('Thông báo', 'Đang thực hiện đăng xuất...', snackPosition: SnackPosition.TOP);
+              
+              // Gọi logout qua UserController để xoá state profile cũ
+              final userController = Get.find<UserController>();
+              userController.logout();
+              
+              // Reset cờ _hasFetched để khi login lại nó fetch API
+              ProfileScreen._hasFetched = false;
             },
             icon: const Icon(Icons.logout),
             label: const Text('Đăng xuất'),
@@ -187,6 +173,44 @@ class ProfileScreen extends GetView<UserController> {
           ),
         ),
       ],
+    );
+  }
+
+  // Widget Skeleton Loader
+  Widget _buildSkeletonLoader(BuildContext context) {
+    return SkeletonLoader(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SkeletonBox(width: 120, height: 120, radius: 60), // Giả lập Avatar tròn
+          const SizedBox(height: 16),
+          const SkeletonBox(width: 150, height: 20, radius: 4),
+          const SizedBox(height: 8),
+          const SkeletonBox(width: 100, height: 14, radius: 4),
+          const Divider(height: 32),
+          for (int i = 0; i < 4; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SkeletonBox(width: 24, height: 24, radius: 4),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SkeletonBox(width: 80, height: 10, radius: 4),
+                        const SizedBox(height: 6),
+                        const SkeletonBox(width: double.infinity, height: 14, radius: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -269,5 +293,3 @@ class _InfoItem extends StatelessWidget {
     );
   }
 }
-
-

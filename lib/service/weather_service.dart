@@ -34,7 +34,7 @@ class WeatherService {
       return null;
     } catch (e) {
       // ... (Phần xử lý lỗi giữ nguyên)
-      throw e; // Ném lại lỗi để Controller xử lý
+      rethrow; // Ném lại lỗi để Controller xử lý
     }
   }
 }

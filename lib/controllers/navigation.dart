@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'task_controller.dart';
-import 'notification_controller.dart';
 
 class NavigationController extends GetxController {
   final RxInt currentIndex = 0.obs;

@@ -1,4 +1,4 @@
-﻿import '../untils/app_colors.dart';
+import '../untils/app_colors.dart';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,6 +21,9 @@ class AuthController extends GetxController {
 
   // Biến để lưu thông tin User hiện tại
   final Rx<User?> currentUser = Rx<User?>(null);
+
+  // Biến lưu danh sách quyền CASL
+  final RxList<Map<String, dynamic>> userAbilities = <Map<String, dynamic>>[].obs;
 
   @override
   void onInit() {
@@ -50,6 +53,11 @@ class AuthController extends GetxController {
       }
     }
 
+    var savedAbilities = _storage.read('abilities');
+    if (savedAbilities != null) {
+      userAbilities.value = List<Map<String, dynamic>>.from(savedAbilities);
+    }
+
     // Check Login (yêu cầu có cả Token và Tổ chức đã chọn)
     if (token != null && token.isNotEmpty && orgId != null) {
       isLoggedIn.value = true;
@@ -75,8 +83,8 @@ class AuthController extends GetxController {
 
       // Gọi API
       final response = await _authService.login(email, password);
-      if (response != null && response.data != null) {
-        final LoginData data = response.data!;
+      if (response != null) {
+        final LoginData data = response.data;
 
         if (data.availableOrganizations.isEmpty) {
           Get.snackbar("Đăng nhập thất bại", "Tài khoản không thuộc bất kỳ tổ chức nào.", snackPosition: SnackPosition.BOTTOM);
@@ -205,6 +213,9 @@ class AuthController extends GetxController {
         await _storage.write('userInfo', loginData.user.toJson());
         await _storage.write('userId', loginData.user.id.toString());
 
+        userAbilities.value = loginData.abilities; 
+        await _storage.write('abilities', loginData.abilities);
+
         // --- ONESIGNAL LOGIN ---
         OneSignal.login(loginData.user.id.toString());
 
@@ -212,6 +223,10 @@ class AuthController extends GetxController {
         isLoggedIn.value = true;
 
         Get.snackbar("Thành công", "Đăng nhập thành công!");
+        
+        // Thêm delay 1s để người dùng kịp đọc thông báo trước khi chuyển trang
+        await Future.delayed(const Duration(seconds: 1));
+        
         Get.offAllNamed('/home');
         return true;
       } else {
@@ -275,11 +290,13 @@ class AuthController extends GetxController {
     await _storage.remove('organizationId');
     await _storage.remove('userInfo');
     await _storage.remove('userId');
+    await _storage.remove('abilities');
 
     // Reset State
     isLoggedIn.value = false;
     currentUser.value = null;
     currentOrganizationId.value = null;
+    userAbilities.clear();
 
     // Về trang Login
     Get.offAllNamed('/login');
@@ -317,6 +334,12 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Kiểm tra quyền theo chuẩn CASL
+  bool can(String action, String subject) {
+    return userAbilities.any((ability) => 
+        ability['action'] == action && ability['subject'] == subject);
   }
 }
 

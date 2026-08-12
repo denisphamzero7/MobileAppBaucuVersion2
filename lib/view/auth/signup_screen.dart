@@ -1,10 +1,9 @@
-﻿import '../../untils/app_colors.dart';
+import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../untils/app_textstyles.dart';
 import '../widgets/custom_textfield.dart';
-import 'signin_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

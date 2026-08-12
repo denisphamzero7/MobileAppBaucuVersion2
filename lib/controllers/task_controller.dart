@@ -36,8 +36,8 @@ class TaskController extends GetxController {
   Future<void> fetchDepartments() async {
     try {
       final response = await _petitionService.getAvailableDepartments();
-      if (response != null && response.statusCode == 200 && response.data != null) {
-        departments.value = response.data!;
+      if (response != null && response.statusCode == 200) {
+        departments.value = response.data;
       }
     } catch (e) {
       log("❌ Lỗi khi tải danh sách phòng ban: $e");
@@ -70,8 +70,8 @@ class TaskController extends GetxController {
 
     try {
       final response = await _taskService.getTasks();
-      if (response != null && response.statusCode == 200 && response.data != null) {
-        tasksList.value = response.data!;
+      if (response != null && response.statusCode == 200) {
+        tasksList.value = response.data;
         log("✅ Tải danh sách công việc thành công. Số lượng: ${tasksList.length}");
       } else {
         final msg = response?.message ?? "Không thể tải danh sách công việc.";

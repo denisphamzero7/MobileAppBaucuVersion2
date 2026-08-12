@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'dart:developer';
 
 import '../model/profile.dart';
@@ -35,10 +34,10 @@ class UserController extends GetxController {
     try {
       final response = await _userService.getProfile();
 
-      if (response != null && response.statusCode == 200 && response.data != null) {
+      if (response != null && response.statusCode == 200) {
         // Cập nhật dữ liệu thành công
         userProfile.value = response.data;
-        log("✅ Tải hồ sơ thành công cho User: ${response.data!.name}");
+        log("✅ Tải hồ sơ thành công cho User: ${response.data.name}");
       } else {
         // Xử lý lỗi (ví dụ: status code không phải 200)
         final msg = response?.message ?? 'Không thể tải dữ liệu hồ sơ.';
@@ -62,11 +61,17 @@ class UserController extends GetxController {
   }
 
   // ⚠️ HÀM LOGOUT MỚI
-  void logout() {
-    // Gọi hàm logout từ AuthController
-    _authController.logout();
+  Future<void> logout() async {
+    // Hiển thị loading để tránh việc nháy giao diện "Không có dữ liệu"
+    isLoading.value = true;
+    
+    // Thêm delay 1s để người dùng nhìn thấy Skeleton Loading và thông báo Đăng xuất
+    await Future.delayed(const Duration(seconds: 1));
+    
+    // Gọi hàm logout từ AuthController và đợi nó hoàn thành (chuyển trang)
+    await _authController.logout();
 
-    // Reset trạng thái của Profile Controller ngay lập tức
+    // Reset trạng thái của Profile Controller
     userProfile.value = null;
     isLoading.value = false;
     errorMessage.value = '';

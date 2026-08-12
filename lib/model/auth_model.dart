@@ -65,6 +65,7 @@ class LoginData {
   final int? currentOrganizationId;
   final List<String> roles;
   final List<String> permissions;
+  final List<Map<String, dynamic>> abilities;
 
   LoginData({
     required this.accessToken,
@@ -74,6 +75,7 @@ class LoginData {
     this.currentOrganizationId,
     required this.roles,
     required this.permissions,
+    required this.abilities,
   });
 
   factory LoginData.fromJson(Map<String, dynamic> json) {
@@ -89,6 +91,7 @@ class LoginData {
       currentOrganizationId: json["current_organization_id"] as int?,
       roles: rolesList.map((x) => x.toString()).toList(),
       permissions: permsList.map((x) => x.toString()).toList(),
+      abilities: json["abilities"] != null ? List<Map<String, dynamic>>.from(json["abilities"]) : [],
     );
   }
 
@@ -100,5 +103,6 @@ class LoginData {
     "current_organization_id": currentOrganizationId,
     "roles": roles,
     "permissions": permissions,
+    "abilities": abilities,
   };
 }

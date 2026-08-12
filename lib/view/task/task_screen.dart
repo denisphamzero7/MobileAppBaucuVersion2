@@ -1,13 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
 
 import 'package:app_baucu_version1/controllers/task_controller.dart';
-import 'package:app_baucu_version1/controllers/auth_controller.dart';
 import 'package:app_baucu_version1/controllers/navigation.dart';
 import 'package:app_baucu_version1/model/task_model.dart';
-import 'package:app_baucu_version1/model/auth_model.dart';
 import 'package:app_baucu_version1/untils/app_colors.dart';
 
 class TaskScreen extends GetView<TaskController> {

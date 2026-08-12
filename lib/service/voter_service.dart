@@ -2,7 +2,6 @@
 
 import '../core/api_constants.dart';
 import '../helper/scan_voter_request.dart';
-import '../model/auth_model.dart';
 import '../model/base_response.dart';
 import '../helper/dio_helper.dart';
 

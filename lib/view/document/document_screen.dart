@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
 import '../../untils/app_colors.dart';
@@ -47,8 +47,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
 
   Future<void> _fetchDepartments() async {
     final response = await _petitionService.getAvailableDepartments();
-    if (response != null && response.data != null) {
-      departments.assignAll(response.data!);
+    if (response != null) {
+      departments.assignAll(response.data);
     }
   }
 

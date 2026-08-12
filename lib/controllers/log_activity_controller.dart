@@ -23,8 +23,8 @@ class LogActivityController extends GetxController {
     try {
       isLoading.value = true;
       final response = await _service.getLogs();
-      if (response != null && response.data != null && response.data!.isNotEmpty) {
-        logs.assignAll(response.data!);
+      if (response != null && response.data.isNotEmpty) {
+        logs.assignAll(response.data);
       } else {
         _setMockLogs();
       }

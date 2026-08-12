@@ -1,9 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/task_controller.dart';
-import '../../controllers/theme_controller.dart';
 import '../../controllers/navigation.dart';
 import '../../untils/app_textstyles.dart';
 import '../../untils/app_colors.dart';

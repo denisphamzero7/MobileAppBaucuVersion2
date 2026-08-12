@@ -18,7 +18,7 @@ class NotificationController extends GetxController {
     try {
       isLoading.value = true;
       final response = await _notificationService.getNotifications();
-      if (response != null && response.data != null) {
+      if (response != null) {
         notifications.assignAll(response.data);
       }
     } catch (e) {

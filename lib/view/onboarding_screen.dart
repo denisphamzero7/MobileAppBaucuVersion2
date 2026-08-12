@@ -1,9 +1,8 @@
-﻿import '../untils/app_colors.dart';
+import '../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/auth_controller.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import 'auth/signin_screen.dart';
 
