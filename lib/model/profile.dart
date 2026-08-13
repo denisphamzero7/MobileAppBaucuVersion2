@@ -2,6 +2,7 @@ class ProfileData {
   final String id;
   final String name;
   final String email;
+  final String? avatar;
   final Role? role;
   final List<String> permissions;
 
@@ -9,6 +10,7 @@ class ProfileData {
     required this.id,
     required this.name,
     required this.email,
+    this.avatar,
     this.role,
     required this.permissions,
   });
@@ -22,6 +24,7 @@ class ProfileData {
       id: (userJson['id'] ?? '').toString(),
       name: userJson['name'] as String? ?? 'Chưa cập nhật tên',
       email: userJson['email'] as String? ?? 'N/A',
+      avatar: userJson['avatar'] as String?,
       role: rolesList.isNotEmpty ? Role(name: rolesList.first.toString()) : null,
       permissions: permsList.map((item) => item.toString()).toList(),
     );

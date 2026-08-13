@@ -24,7 +24,7 @@ class UserService {
       return null;
     } catch (e) {
       print("Error in repository getProfile: $e");
-      return null;
+      rethrow;
     }
   }
 

@@ -7,6 +7,7 @@ import '../../model/profile.dart';
 import '../../helper/custom_snackbar.dart';
 import '../../untils/app_textstyles.dart';
 import '../../../untils/app_colors.dart';
+import '../../core/api_constants.dart';
 import '../widgets/skeleton_loader.dart';
 
 
@@ -76,11 +77,24 @@ class ProfileScreen extends GetView<UserController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Ảnh đại diện (Placeholder)
-        const CircleAvatar(
-          radius: 60,
-          backgroundColor: AppColors.blueGrey,
-          child: Icon(Icons.person, size: 60, color: AppColors.white),
+        // Ảnh đại diện
+        Container(
+          width: 120,
+          height: 120,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.blueGrey,
+          ),
+          child: ClipOval(
+            child: (profile.avatar != null && profile.avatar!.isNotEmpty)
+                ? Image.network(
+                    ApiConstants.baseUrl.replaceAll(RegExp(r'/api/?$'), '') + profile.avatar!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.person, size: 60, color: AppColors.white),
+                  )
+                : const Icon(Icons.person, size: 60, color: AppColors.white),
+          ),
         ),
         const SizedBox(height: 16),
 

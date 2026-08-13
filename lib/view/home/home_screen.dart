@@ -8,6 +8,7 @@ import '../../untils/app_textstyles.dart';
 import '../../untils/app_colors.dart';
 import '../widgets/Status_info_card.dart';
 import '../user/user_screen.dart';
+import '../../core/api_constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -112,11 +113,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.badgeRedBg, width: 1.5),
-                  image: DecorationImage(
-                    image: avatarProvider,
-                    fit: BoxFit.cover,
-                    onError: (err, stack) {},
-                  ),
+                  color: AppColors.blueGrey,
+                ),
+                child: ClipOval(
+                  child: (user != null && user.avatar.isNotEmpty)
+                      ? Image.network(
+                          user.avatar.startsWith('http')
+                              ? user.avatar
+                              : '${ApiConstants.baseUrl.replaceAll(RegExp(r'/api/?$'), '')}${user.avatar}',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.person, color: AppColors.white, size: 30),
+                        )
+                      : const Icon(Icons.person, color: AppColors.white, size: 30),
                 ),
               ),
               const SizedBox(width: 12),

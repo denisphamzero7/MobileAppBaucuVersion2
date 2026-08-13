@@ -89,13 +89,11 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context);
+    // Bỏ qua lỗi SSL Certificate nếu dùng IP nội bộ hoặc HTTPS tự ký
     client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-    client.findProxy = (uri) {
-      if (uri.host == 'danatec-test.theworkpc.com') {
-        return 'PROXY 127.0.0.1:8080';
-      }
-      return 'DIRECT';
-    };
+    
+    // ĐÃ XÓA TÍNH NĂNG ÉP PROXY (findProxy) 127.0.0.1:8080
+    // Để khi bạn gọi URL https://danatec-test.theworkpc.com/... nó sẽ kết nối trực tiếp Internet thay vì tìm proxy ảo trong điện thoại
     return client;
   }
 }
