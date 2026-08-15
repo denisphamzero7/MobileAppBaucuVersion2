@@ -54,4 +54,22 @@ class UserService {
       return null;
     }
   }
-}
+
+  Future<bool> changePassword(String newPassword, String confirmPassword) async {
+    try {
+      final response = await _http.put(
+        url: 'users/me',
+        data: {
+          'password': newPassword,
+          'password_confirmation': confirmPassword,
+        },
+      );
+      print("in kết quả đổi mật khẩu: $response");
+      return true;
+    } catch (e) {
+      print("Error in changePassword: $e");
+      rethrow;
+    }
+  }
+}
+

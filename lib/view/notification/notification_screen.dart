@@ -1,10 +1,12 @@
-﻿import '../../untils/app_colors.dart';
+import '../../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/notification_controller.dart';
 import 'package:app_baucu_version1/model/notification.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+
+import '../widgets/skeleton_loader.dart';
 
 class NotificationScreen extends GetView<NotificationController> {
   const NotificationScreen({super.key});
@@ -20,11 +22,18 @@ class NotificationScreen extends GetView<NotificationController> {
     });
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: isDark ? AppColors.black : AppColors.white,
         elevation: 0,
-        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: isDark ? AppColors.white : AppColors.black87,
+          ),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           "Thông báo",
           style: AppTextStyle.h3.copyWith(
@@ -47,7 +56,18 @@ class NotificationScreen extends GetView<NotificationController> {
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.notifications.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: 5,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, __) => const SkeletonLoader(
+              child: SkeletonBox(
+                width: double.infinity,
+                height: 80,
+                radius: 12,
+              ),
+            ),
+          );
         }
 
         if (controller.notifications.isEmpty) {

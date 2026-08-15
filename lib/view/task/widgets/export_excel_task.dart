@@ -24,6 +24,11 @@ class ExportExcelTask extends GetView<TaskController> {
       final userId = Get.find<AuthController>().currentUser.value?.id;
       final queryParams = <String, dynamic>{};
       
+      if (type == 'received' && userId != null) {
+        queryParams['assignee_id'] = userId;
+      } else if (type == 'sent' && userId != null) {
+        queryParams['assigner_id'] = userId;
+      }
       if (type != null && type!.isNotEmpty) {
         queryParams['type'] = type;
       }

@@ -1,5 +1,7 @@
 import 'dart:developer';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../model/base_response.dart';
 import '../model/task_model.dart';
 import '../model/task_stats_model.dart';
@@ -9,7 +11,6 @@ import '../service/user_service.dart';
 import '../service/petition_service.dart';
 import 'package:intl/intl.dart';
 import 'auth_controller.dart';
-
 
 class TaskController extends GetxController {
   final TaskService _taskService = TaskService();
@@ -47,9 +48,12 @@ class TaskController extends GetxController {
     selectedTaskIds.assignAll(ids);
   }
 
-
   final Rx<TaskStatsModel> stats = TaskStatsModel.empty().obs;
   final RxBool isStatsLoading = false.obs;
+
+  // Stats for the active tab (sent / received)
+  final Rx<TaskStatsModel> tabStats = TaskStatsModel.empty().obs;
+  final RxBool isTabStatsLoading = false.obs;
 
   // Filters for stats
   final RxnString startDate = RxnString(null);
@@ -67,27 +71,30 @@ class TaskController extends GetxController {
     fetchStats();
   }
 
+  Future<void> fetchTabStats({String? type}) async {
+    isTabStatsLoading.value = true;
+    try {
+      final userId = Get.find<AuthController>().currentUser.value?.id;
+      final response = await _taskService.getTaskStats(
+        type: type,
+        userId: userId,
+      );
+      if (response != null && response['data'] is Map<String, dynamic>) {
+        tabStats.value = TaskStatsModel.fromJson(response['data'] as Map<String, dynamic>);
+        log("✅ Tải thống kê tab ($type) thành công: Tổng ${tabStats.value.total}");
+      }
+    } catch (e) {
+      log("❌ Lỗi khi tải thống kê tab ($type): $e");
+    } finally {
+      isTabStatsLoading.value = false;
+    }
+  }
+
   Future<void> fetchDepartments() async {
     try {
       final response = await _petitionService.getAvailableDepartments();
       if (response != null && response.statusCode == 200) {
         departments.value = response.data;
-
-        // Log dữ liệu của "Hòa Cường" theo yêu cầu
-        final hoaCuongDepts = departments.where((d) {
-          final name = d.name.toLowerCase();
-          return name.contains('hòa cường') || name.contains('hoa cuong');
-        }).toList();
-
-        if (hoaCuongDepts.isNotEmpty) {
-          log("========= DỮ LIỆU HÒA CƯỜNG =========");
-          for (var d in hoaCuongDepts) {
-            log("ID: ${d.id} | Tên: ${d.name}");
-          }
-          log("=====================================");
-        } else {
-          log("⚠️ Không tìm thấy phòng ban nào tên Hòa Cư{String? type}ờng trong danh sách trả về!");
-        }
       }
     } catch (e) {
       log("❌ Lỗi khi tải danh sách phòng ban: $e");
@@ -124,6 +131,7 @@ class TaskController extends GetxController {
       isLoading.value = true;
       currentPage.value = 1;
       hasMoreTasks.value = true;
+      fetchTabStats(type: type);
     }
     errorMessage.value = '';
 
@@ -139,42 +147,86 @@ class TaskController extends GetxController {
         if (isRefresh) {
           tasksList.value = response.data;
         } else {
-          tasksList.addAll(response.data);
+          final existingIds = tasksList.map((t) => t.id).toSet();
+          final newTasks = response.data.where((t) => !existingIds.contains(t.id)).toList();
+          tasksList.addAll(newTasks);
         }
 
         if (response.data.length < 10) {
           hasMoreTasks.value = false;
+        } else {
+          hasMoreTasks.value = true;
         }
 
-        log("✅ Tải danh sách công việc (${type ?? 'tất cả'}) trang ${currentPage.value} thành công (UserID: $userId). Tổng hiện tại: ${tasksList.length}");
+        log("✅ Tải danh sách công việc (${type ?? 'tất cả'}) trang ${currentPage.value} thành công (nhận ${response.data.length} mục). Tổng hiện tại: ${tasksList.length}");
       } else {
+        if (isRefresh) {
+          tasksList.clear();
+        }
+        hasMoreTasks.value = false;
         final msg = response?.message ?? "Không thể tải danh sách công việc.";
-        errorMessage.value = msg;
-        log("❌ Lỗi tải công việc: $msg");
+        if (msg.contains("quyền") || msg.toLowerCase().contains("unauthorized") || msg.contains("403")) {
+          errorMessage.value = '';
+        } else {
+          errorMessage.value = msg;
+        }
+        log("ℹ️ Tải danh sách công việc: $msg");
       }
     } catch (e) {
+      if (isRefresh) {
+        tasksList.clear();
+      }
+      hasMoreTasks.value = false;
       final errorMsg = e.toString().replaceAll("Exception: ", "");
-      errorMessage.value = errorMsg;
-      log("❌ Ngoại lệ khi tải công việc: $e");
+      if (errorMsg.contains("quyền") || errorMsg.toLowerCase().contains("unauthorized") || errorMsg.contains("403")) {
+        errorMessage.value = '';
+      } else {
+        errorMessage.value = errorMsg;
+      }
+      log("ℹ️ Ngoại lệ khi tải công việc: $e");
     } finally {
       isLoading.value = false;
       isLoadingMore.value = false;
     }
   }
 
-    Future<void> deleteTask(int id) async {
-    isLoading.value = true;
-    final success = await _taskService.deleteTask(id);
-    if (success) {
-      tasksList.removeWhere((t) => t.id == id);
-      Get.snackbar('Thành công', 'Đã xóa công việc');
-    } else {
-      Get.snackbar('Lỗi', 'Không thể xóa công việc');
+
+  Future<void> deleteTask(int id) async {
+    final backupIndex = tasksList.indexWhere((t) => t.id == id);
+    TaskModel? backupTask;
+    if (backupIndex != -1) {
+      backupTask = tasksList[backupIndex];
+      tasksList.removeAt(backupIndex);
     }
-    isLoading.value = false;
+
+    try {
+      final success = await _taskService.deleteTask(id);
+      if (success) {
+        Get.snackbar(
+          'Thành công',
+          'Đã xóa công việc thành công',
+          backgroundColor: Colors.green.shade600,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 2),
+        );
+        fetchStats();
+      } else {
+        if (backupTask != null && backupIndex != -1) {
+          tasksList.insert(backupIndex, backupTask);
+        }
+        Get.snackbar('Lỗi', 'Không thể xóa công việc', backgroundColor: Colors.red.shade100);
+      }
+    } catch (e) {
+      if (backupTask != null && backupIndex != -1) {
+        tasksList.insert(backupIndex, backupTask);
+      }
+      Get.snackbar('Lỗi', 'Lỗi khi xóa công việc: $e', backgroundColor: Colors.red.shade100);
+    }
   }
 
-    Future<void> exportTasks({String? type}) async {
+
+  Future<void> exportTasks({String? type}) async {
     isLoading.value = true;
     try {
       final response = await _taskService.exportTasks(
@@ -182,8 +234,6 @@ class TaskController extends GetxController {
         userId: Get.find<AuthController>().currentUser.value?.id,
       );
       if (response != null) {
-        // Since we don't have download bytes parsing yet, we can assume API returns URL or bytes.
-        // For simplicity, we just notify success or open it.
         Get.snackbar("Thành công", "Đã xuất dữ liệu thành công");
       } else {
         Get.snackbar("Lỗi", "Không thể xuất dữ liệu");
@@ -226,16 +276,9 @@ class TaskController extends GetxController {
       if (response != null && response is Map<String, dynamic> && response['data'] is List) {
         departmentStatsList.value = response['data'] as List;
         log("✅ Tải thống kê theo phòng ban thành công: ${departmentStatsList.length} phòng");
-        log("========= API STATS BY DEPARTMENT DATA =========");
-        for (var item in departmentStatsList) {
-          log("Dept: ${item['department_name']} | Data: $item");
-        }
-        log("===============================================");
-      } else if (response is List) {
-        departmentStatsList.value = response;
       }
     } catch (e) {
-      log("❌ Lỗi tải thống kê theo phòng ban: $e");
+      log("❌ Lỗi khi tải thống kê theo phòng ban: $e");
     }
   }
 
@@ -248,57 +291,34 @@ class TaskController extends GetxController {
       if (response != null && response is Map<String, dynamic> && response['data'] is List) {
         itemTypeStatsList.value = response['data'] as List;
         log("✅ Tải thống kê theo loại công việc thành công: ${itemTypeStatsList.length} loại");
-      } else if (response is List) {
-        itemTypeStatsList.value = response;
       }
     } catch (e) {
-      log("❌ Lỗi tải thống kê theo loại công việc: $e");
+      log("❌ Lỗi khi tải thống kê theo loại công việc: $e");
     }
   }
 
   Future<void> fetchStats() async {
     isStatsLoading.value = true;
     try {
-      fetchDepartmentStats();
-      fetchItemTypeStats();
       final response = await _taskService.getTaskStats(
         startDate: startDate.value,
         endDate: endDate.value,
         departmentId: selectedDepartmentId.value,
       );
-      if (response != null && response['success'] == true && response['data'] != null) {
+      if (response != null && response['data'] is Map<String, dynamic>) {
         stats.value = TaskStatsModel.fromJson(response['data'] as Map<String, dynamic>);
-        log("✅ Tải thống kê công việc thành công: ${stats.value.total}");
-      } else {
-        _setMockStats();
       }
+      await Future.wait([
+        fetchDepartmentStats(),
+        fetchItemTypeStats(),
+      ]);
     } catch (e) {
-      log("❌ Lỗi khi tải thống kê công việc: $e");
-      _setMockStats();
+      log("❌ Lỗi tải thống kê: $e");
     } finally {
       isStatsLoading.value = false;
     }
   }
 
-  void _setMockStats() {
-    stats.value = TaskStatsModel.fromJson({
-      "total": 61,
-      "todo": 17,
-      "in_progress": 18,
-      "pending_approval": 1,
-      "done": 25,
-      "paused": 0,
-      "cancelled": 0,
-      "timing_stats": {
-        "upcoming": 19,
-        "early": 21,
-        "on_time": 1,
-        "late": 3,
-        "overdue": 17,
-        "cancelled": 0
-      }
-    });
-  }
 
   Future<void> fetchMetadata() async {
     isLoadingMetadata.value = true;
@@ -306,6 +326,7 @@ class TaskController extends GetxController {
       final results = await Future.wait([
         _taskService.getTaskAssignmentDocuments(),
         _taskService.getTaskItemTypes(),
+        _taskService.getTaskDepartments(),
         _userService.getUsers(),
       ]);
 
@@ -319,11 +340,34 @@ class TaskController extends GetxController {
         itemTypes.value = typesRes.data;
       }
 
-      final usersRes = results[2] as BaseResponse<List<User>>?;
-      if (usersRes != null && usersRes.statusCode == 200) {
-        usersList.value = usersRes.data;
+      final deptsRes = results[2] as BaseResponse<List<DepartmentModel>>?;
+      if (deptsRes != null && deptsRes.statusCode == 200 && deptsRes.data.isNotEmpty) {
+        departments.value = deptsRes.data;
       }
-      log("✅ Tải metadata tạo công việc thành công: ${taskDocuments.length} docs, ${itemTypes.length} types, ${usersList.length} users");
+
+      final usersRes = results[3] as BaseResponse<List<User>>?;
+      final globalUsers = (usersRes != null && usersRes.statusCode == 200) ? usersRes.data : <User>[];
+
+      // Tải danh sách nhân viên hợp lệ đã đăng ký trong các phòng ban Task Assignment
+      final List<User> validTaskUsers = [];
+      for (var dept in departments) {
+        final deptUsersRes = await _taskService.getDepartmentUsers(dept.id);
+        if (deptUsersRes != null && deptUsersRes.statusCode == 200) {
+          validTaskUsers.addAll(deptUsersRes.data);
+        }
+      }
+
+      if (validTaskUsers.isNotEmpty) {
+        final uniqueUsers = <int, User>{};
+        for (var u in validTaskUsers) {
+          uniqueUsers[u.id] = u;
+        }
+        usersList.value = uniqueUsers.values.toList();
+      } else {
+        usersList.value = globalUsers;
+      }
+
+      log("✅ Tải metadata tạo công việc thành công: ${taskDocuments.length} docs, ${itemTypes.length} types, ${departments.length} depts, ${usersList.length} task users");
     } catch (e) {
       log("❌ Lỗi khi tải metadata công việc: $e");
     } finally {
@@ -335,18 +379,17 @@ class TaskController extends GetxController {
     try {
       final response = await _taskService.createTask(payload);
       if (response != null && (response.statusCode == 200 || response.statusCode == 201)) {
-        Get.snackbar('Thành công', 'Đã tạo công việc mới thành công', backgroundColor: Get.theme.primaryColor.withOpacity(0.2));
         fetchTasks();
         fetchStats();
         return true;
       } else {
         final msg = response?.message ?? 'Không thể tạo công việc';
-        Get.snackbar('Lỗi', msg);
+        Get.snackbar('Lỗi', msg, backgroundColor: Colors.red.shade100);
         return false;
       }
     } catch (e) {
       final errorMsg = e.toString().replaceAll("Exception: ", "");
-      Get.snackbar('Lỗi', errorMsg);
+      Get.snackbar('Lỗi', errorMsg, backgroundColor: Colors.red.shade100);
       return false;
     }
   }
@@ -355,18 +398,17 @@ class TaskController extends GetxController {
     try {
       final response = await _taskService.updateTask(id, payload);
       if (response != null && response.statusCode == 200) {
-        Get.snackbar('Thành công', 'Đã cập nhật công việc thành công', backgroundColor: Get.theme.primaryColor.withOpacity(0.2));
         fetchTasks();
         fetchStats();
         return true;
       } else {
         final msg = response?.message ?? 'Không thể cập nhật công việc';
-        Get.snackbar('Lỗi', msg);
+        Get.snackbar('Lỗi', msg, backgroundColor: Colors.red.shade100);
         return false;
       }
     } catch (e) {
       final errorMsg = e.toString().replaceAll("Exception: ", "");
-      Get.snackbar('Lỗi', errorMsg);
+      Get.snackbar('Lỗi', errorMsg, backgroundColor: Colors.red.shade100);
       return false;
     }
   }

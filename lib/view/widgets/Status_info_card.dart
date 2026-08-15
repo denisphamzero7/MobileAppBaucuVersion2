@@ -1,4 +1,4 @@
-﻿import '../../untils/app_colors.dart';
+import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/task_controller.dart';
@@ -19,28 +19,27 @@ class StatusInfoCard extends StatelessWidget {
 
     return Obx(() {
       final stats = taskController.stats.value;
-      final orgs = authController.getAvailableOrganizations();
-      final currentOrgId = authController.currentOrganizationId.value;
-      final currentOrg = orgs.firstWhereOrNull((x) => x.id == currentOrgId);
+      final actualTasks = taskController.tasksList;
 
-      final total = stats.total;
-      final todo = stats.todo;
-      final inProgress = stats.inProgress;
-      final pendingApproval = stats.pendingApproval;
-      final done = stats.done;
-      final paused = stats.paused;
-      final cancelled = stats.cancelled;
+      final total = stats.total > 0 ? stats.total : actualTasks.length;
+      final todo = stats.total > 0 ? stats.todo : actualTasks.where((t) => t.processingStatus == 'todo').length;
+      final inProgress = stats.total > 0 ? stats.inProgress : actualTasks.where((t) => t.processingStatus == 'in_progress').length;
+      final pendingApproval = stats.total > 0 ? stats.pendingApproval : actualTasks.where((t) => t.processingStatus == 'pending_approval').length;
+      final done = stats.total > 0 ? stats.done : actualTasks.where((t) => t.processingStatus == 'done' || t.processingStatus == 'completed').length;
+      final paused = stats.total > 0 ? stats.paused : actualTasks.where((t) => t.processingStatus == 'paused').length;
+      final cancelled = stats.total > 0 ? stats.cancelled : actualTasks.where((t) => t.processingStatus == 'cancelled').length;
 
       final timing = stats.timingStats;
-      final upcoming = timing.upcoming;
-      final early = timing.early;
-      final onTime = timing.onTime;
-      final late = timing.late;
-      final overdue = timing.overdue;
-      final timingCancelled = timing.cancelled;
+      final upcoming = stats.total > 0 ? timing.upcoming : actualTasks.where((t) => t.timingStatus == 'upcoming').length;
+      final early = stats.total > 0 ? timing.early : actualTasks.where((t) => t.timingStatus == 'early').length;
+      final onTime = stats.total > 0 ? timing.onTime : actualTasks.where((t) => t.timingStatus == 'on_time').length;
+      final late = stats.total > 0 ? timing.late : actualTasks.where((t) => t.timingStatus == 'late').length;
+      final overdue = stats.total > 0 ? timing.overdue : actualTasks.where((t) => t.isOverdue || t.timingStatus == 'overdue').length;
+      final timingCancelled = stats.total > 0 ? timing.cancelled : actualTasks.where((t) => t.timingStatus == 'cancelled').length;
 
       // Tính tỷ lệ phần trăm hoàn thành: done / total
       final double donePercent = total > 0 ? (done / total) * 100 : 0.0;
+
 
       return Container(
         width: double.infinity,

@@ -81,7 +81,11 @@ class DioHelper {
 
         // c. Khi gặp Lỗi (Mạng, 401, 500...)
         onError: (DioException e, handler) {
-          log("❌ [ERR] << ${e.response?.statusCode} ${e.requestOptions.path} | ${e.message}");
+          if (e.response?.statusCode == 403) {
+            log("ℹ️ [403 Forbidden] << ${e.requestOptions.path} (Tài khoản không có quyền xem/thao tác mục này)");
+          } else {
+            log("❌ [ERR] << ${e.response?.statusCode} ${e.requestOptions.path} | ${e.message}");
+          }
 
           // Xử lý đặc biệt: Nếu lỗi 401 (Unauthorized) -> Token hết hạn hoặc sai
           if (e.response?.statusCode == 401) {
@@ -90,6 +94,7 @@ class DioHelper {
 
           return handler.next(e);
         },
+
       ),
     );
   }
@@ -205,15 +210,30 @@ class DioHelper {
     } else if (e.type == DioExceptionType.connectionError) {
       msg = "Không có kết nối mạng.";
     } else if (e.response != null) {
-      // Server có phản hồi (ví dụ 400, 404, 500)
+      // Server có phản hồi (ví dụ 400, 422, 404, 500)
       final data = e.response?.data;
 
-      // Kiểm tra cấu trúc JSON trả về từ Server của bạn
-      // Ví dụ: { "message": "Email đã tồn tại", "statusCode": 400 }
-      if (data is Map<String, dynamic> && data.containsKey('message')) {
-        msg = data['message'];
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('errors') && data['errors'] is Map) {
+          final errorsMap = data['errors'] as Map<String, dynamic>;
+          final errorList = <String>[];
+          errorsMap.forEach((key, value) {
+            if (value is List) {
+              errorList.addAll(value.map((v) => v.toString()));
+            } else if (value != null) {
+              errorList.add(value.toString());
+            }
+          });
+          if (errorList.isNotEmpty) {
+            msg = errorList.join('\n');
+          } else if (data.containsKey('message')) {
+            msg = data['message'].toString();
+          }
+        } else if (data.containsKey('message')) {
+          msg = data['message'].toString();
+        }
       } else if (data is String) {
-        msg = data; // Trường hợp server trả về string thô
+        msg = data;
       } else {
         msg = "Lỗi máy chủ (${e.response?.statusCode})";
       }

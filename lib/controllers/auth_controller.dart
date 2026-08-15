@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-// import 'package:onesignal_flutter/onesignal_flutter.dart' hide User;
 
 import '../model/auth_model.dart';
 import '../service/auth_service.dart';
@@ -54,17 +53,14 @@ class AuthController extends GetxController {
 
   // 1. Load trạng thái khi mở App (Auto Login)
   void _loadInitialState() {
-    // Check First Time
     isFirstTime.value = _storage.read('isFirstTime') ?? true;
 
-    // Lấy Token và ID tổ chức
     String? token = _storage.read('accessToken');
     var orgId = _storage.read('organizationId');
     if (orgId != null) {
       currentOrganizationId.value = int.tryParse(orgId.toString());
     }
 
-    // Lấy thông tin User đã lưu để khôi phục lại State
     var savedUser = _storage.read('userInfo');
     if (savedUser != null) {
       try {
@@ -79,40 +75,24 @@ class AuthController extends GetxController {
       userAbilities.value = (savedAbilities as List).map((e) => Map<String, dynamic>.from(e)).toList();
     }
 
-    // Check Login (yêu cầu có cả Token và Tổ chức đã chọn)
     if (token != null && token.isNotEmpty && orgId != null) {
       isLoggedIn.value = true;
-
-      // --- ONESIGNAL (Auto Login) ---
-      String? userId = currentUser.value?.id.toString() ?? _storage.read('userId');
-
-      if (userId != null && userId.isNotEmpty) {
-        // Tạm ẩn OneSignal
-        // OneSignal.login(userId);
-        // log("🔔 [OneSignal] Auto-login với UserID: $userId");
-      } else {
-        // log("⚠️ [OneSignal] Auto-login nhưng không tìm thấy 'userId' đã lưu.");
-      }
     } else {
       isLoggedIn.value = false;
     }
   }
 
-    // 2. Hàm Đăng Nhập
+  // 2. Hàm Đăng Nhập
   Future<LoginData?> login(String email, String password) async {
     try {
       isLoading.value = true;
-
-      // Gọi API
       final response = await _authService.login(email, password);
       if (response != null) {
         final LoginData data = response.data;
-
         if (data.availableOrganizations.isEmpty) {
           Get.snackbar("Đăng nhập thất bại", "Tài khoản không thuộc bất kỳ tổ chức nào.", snackPosition: SnackPosition.BOTTOM);
           return null;
         }
-
         return data;
       } else {
         Get.snackbar("Đăng nhập thất bại", "Không thể lấy thông tin đăng nhập từ hệ thống.", snackPosition: SnackPosition.BOTTOM);
@@ -130,17 +110,13 @@ class AuthController extends GetxController {
   }
 
   // Gọi API chuyển đổi và xác thực tổ chức
-      Future<bool> switchOrganizationAfterLogin(int orgId, LoginData loginData) async {
+  Future<bool> switchOrganizationAfterLogin(int orgId, LoginData loginData) async {
     try {
-      // Lưu tạm thời token cũ để gửi request switch
       await _storage.write('accessToken', loginData.accessToken);
 
       final response = await _authService.switchOrganization(orgId);
       if (response != null && response.statusCode == 200) {
         final newData = response.data;
-        
-        // NẾU API switch trả về access_token rỗng, có nghĩa là API chỉ trả về user info / abilities chứ không cấp token mới
-        // Trong trường hợp đó, ta PHẢI giữ lại token cũ.
         final String finalToken = (newData != null && newData.accessToken.isNotEmpty) 
             ? newData.accessToken 
             : loginData.accessToken;
@@ -149,7 +125,6 @@ class AuthController extends GetxController {
         await _storage.write('organizationId', orgId);
         currentOrganizationId.value = orgId;
 
-        // Nếu API switch không trả về availableOrganizations (rỗng), thì giữ lại cái cũ
         final orgsList = (newData != null && newData.availableOrganizations.isNotEmpty) 
             ? newData.availableOrganizations 
             : loginData.availableOrganizations;
@@ -166,6 +141,13 @@ class AuthController extends GetxController {
         await _storage.write('abilities', abilities);
 
         isLoggedIn.value = true;
+
+        if (Get.isRegistered<TaskController>()) {
+          final taskCtrl = Get.find<TaskController>();
+          taskCtrl.refreshTasks();
+          taskCtrl.fetchDepartments();
+        }
+
         Get.offAllNamed('/home');
         return true;
       } else {
@@ -179,8 +161,6 @@ class AuthController extends GetxController {
       return false;
     }
   }
-
-
 
   // 2.1. Hàm Đăng Ký
   Future<bool> register({
@@ -215,17 +195,10 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       await _authService.logout();
-      log("API Logout thành công (hoặc bỏ qua)");
     } catch (e) {
       log("Logout API lỗi: $e");
     }
 
-    // ONESIGNAL LOGOUT
-    // Tạm ẩn OneSignal
-    // OneSignal.logout();
-    // log("🔔 [OneSignal] Đã Logout");
-
-    // Xóa dữ liệu Local
     await _storage.remove('accessToken');
     await _storage.remove('refreshToken');
     await _storage.remove('organizationId');
@@ -233,15 +206,18 @@ class AuthController extends GetxController {
     await _storage.remove('userId');
     await _storage.remove('abilities');
 
-    // Reset State
     isLoggedIn.value = false;
     currentUser.value = null;
     currentOrganizationId.value = null;
     userAbilities.clear();
 
-    // Về trang Login
+    if (Get.isRegistered<TaskController>()) {
+      Get.delete<TaskController>(force: true);
+    }
+
     Get.offAllNamed('/login');
   }
+
 
   void setFirstTimeDone() {
     isFirstTime.value = false;
@@ -261,7 +237,6 @@ class AuthController extends GetxController {
         await _storage.write('organizationId', orgId);
         currentOrganizationId.value = orgId;
         
-        // Làm mới TaskController (Làm mới danh sách, phòng ban và thống kê)
         if (Get.isRegistered<TaskController>()) {
           final taskCtrl = Get.find<TaskController>();
           taskCtrl.fetchDepartments();
@@ -280,11 +255,48 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Kiểm tra quyền theo chuẩn CASL
+  bool get isSuperAdmin {
+    final user = currentUser.value;
+    if (user == null) return false;
+    final name = user.name.toLowerCase();
+    final username = user.userName.toLowerCase();
+    final email = user.email.toLowerCase();
+    if (name.contains('admin') || username.contains('admin') || email.contains('admin')) {
+      return true;
+    }
+    final roles = _storage.read('roles') as List? ?? [];
+    return roles.any((r) => r.toString().toLowerCase().contains('admin'));
+  }
+
+  /// Kiểm tra quyền theo chuẩn CASL (hỗ trợ wildcard: manage, all, Super Admin)
   bool can(String action, String subject) {
-    return userAbilities.any((ability) => 
-        ability['action'] == action && ability['subject'] == subject);
+    if (isSuperAdmin) return true; // Super Admin luôn có toàn quyền
+    if (userAbilities.isEmpty) return true; // Mặc định cho phép nếu chưa cấu hình
+
+    final normalizedAction = action.toLowerCase().trim();
+    final normalizedSubject = subject.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+
+    return userAbilities.any((ability) {
+      final act = (ability['action']?.toString() ?? '').toLowerCase().trim();
+      final subj = (ability['subject']?.toString() ?? '').toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+
+      final isActionMatch = act == 'manage' || 
+          act == 'all' || 
+          act == '*' || 
+          act == normalizedAction ||
+          (normalizedAction == 'create' && (act == 'store' || act == 'add' || act == 'import')) ||
+          (normalizedAction == 'read' && (act == 'view' || act == 'show' || act == 'index' || act == 'export')) ||
+          (normalizedAction == 'update' && (act == 'edit' || act == 'put' || act == 'patch')) ||
+          (normalizedAction == 'destroy' && (act == 'delete' || act == 'bulk-delete' || act == 'remove'));
+
+      final isSubjectMatch = subj == 'all' || 
+          subj == '*' || 
+          subj == normalizedSubject ||
+          subj.contains('task') ||
+          normalizedSubject.contains(subj);
+
+      return isActionMatch && isSubjectMatch;
+    });
   }
 }
-
 

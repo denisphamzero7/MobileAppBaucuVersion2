@@ -21,12 +21,36 @@ class TaskCardWidget extends GetView<TaskController> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine status text
+    final authCtrl = Get.find<AuthController>();
+    final bool canUpdate = authCtrl.can('update', 'TaskAssignmentItems');
+    final bool canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
+
+    // Determine status text and colors
     String statusText = 'Đang thực hiện';
-    if (task.processingStatus == 'todo') statusText = 'Chưa thực hiện';
-    if (task.processingStatus == 'done') statusText = 'Hoàn thành';
-    if (task.processingStatus == 'paused') statusText = 'Tạm dừng';
-    if (task.processingStatus == 'cancelled') statusText = 'Đã hủy';
+    Color statusColor = AppColors.primary;
+    Color statusBgColor = AppColors.badgeBlueBg;
+
+    if (task.processingStatus == 'todo') {
+      statusText = 'Chưa thực hiện';
+      statusColor = AppColors.textGrayDark;
+      statusBgColor = isDark ? AppColors.white10 : AppColors.lightBg;
+    } else if (task.processingStatus == 'pending_approval' || task.processingStatus == 'pending') {
+      statusText = 'Chờ duyệt';
+      statusColor = AppColors.pendingApproval;
+      statusBgColor = isDark ? AppColors.cardItemDark : AppColors.bgPurpleLight;
+    } else if (task.processingStatus == 'done' || task.processingStatus == 'completed') {
+      statusText = 'Hoàn thành';
+      statusColor = AppColors.done;
+      statusBgColor = AppColors.badgeGreenBg;
+    } else if (task.processingStatus == 'paused') {
+      statusText = 'Tạm dừng';
+      statusColor = AppColors.paused;
+      statusBgColor = AppColors.bgYellowLight;
+    } else if (task.processingStatus == 'cancelled') {
+      statusText = 'Đã hủy';
+      statusColor = AppColors.overdue;
+      statusBgColor = AppColors.badgeRedBg;
+    }
 
     // Determine timing text
     String timingText = 'ĐÚNG HẠN';
@@ -143,20 +167,39 @@ class TaskCardWidget extends GetView<TaskController> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusText == 'Hoàn thành' ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    statusText,
-                    style: TextStyle(
-                      color: statusText == 'Hoàn thành' ? AppColors.done : AppColors.primary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusBgColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (canUpdate) ...[
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () => Get.to(() => CreateTaskScreen(taskToUpdate: task)),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.white10 : AppColors.badgeBlueBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(Icons.edit_outlined, size: 14, color: AppColors.primary),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Container(
@@ -179,15 +222,6 @@ class TaskCardWidget extends GetView<TaskController> {
           ],
         ),
       ),
-    );
-    
-    final authCtrl = Get.find<AuthController>();
-    final canUpdate = authCtrl.can('update', 'TaskAssignmentItems');
-    final canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
-    
-    final wrappedCard = GestureDetector(
-      onTap: canUpdate ? () => Get.to(() => CreateTaskScreen(taskToUpdate: task)) : null,
-      child: card,
     );
 
     return Obx(() {
@@ -231,11 +265,12 @@ class TaskCardWidget extends GetView<TaskController> {
           onDismissed: (direction) {
             controller.deleteTask(task.id);
           },
-          child: wrappedCard,
+          child: card,
         );
       } else {
-        return wrappedCard;
+        return card;
       }
     });
   }
 }
+

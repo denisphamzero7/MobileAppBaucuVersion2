@@ -19,9 +19,55 @@ class ImportExcelButton extends StatefulWidget {
     this.icon,
   }) : super(key: key);
 
+  static Future<void> pickAndUpload({
+    required String uploadUrl,
+    VoidCallback? onSuccess,
+  }) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xls', 'xlsx'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        File file = File(result.files.single.path!);
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+
+        try {
+          String fileName = file.path.split('/').last;
+          final dio = DioHelper().dio;
+          FormData formData = FormData.fromMap({
+            "file": await MultipartFile.fromFile(file.path, filename: fileName),
+          });
+
+          final response = await dio.post(uploadUrl, data: formData);
+          if (Get.isDialogOpen == true) Get.back();
+
+          if (response.statusCode == 200) {
+            Get.snackbar("Thành công", "Đã nhập dữ liệu thành công!");
+            if (onSuccess != null) {
+              onSuccess();
+            }
+          } else {
+            Get.snackbar("Lỗi", "Không thể nhập dữ liệu. HTTP ${response.statusCode}");
+          }
+        } catch (e) {
+          if (Get.isDialogOpen == true) Get.back();
+          Get.snackbar("Lỗi", "Đã xảy ra lỗi khi tải file lên: $e");
+        }
+      }
+    } catch (e) {
+      Get.snackbar("Lỗi", "Không thể chọn file: $e");
+    }
+  }
+
   @override
   State<ImportExcelButton> createState() => _ImportExcelButtonState();
 }
+
 
 class _ImportExcelButtonState extends State<ImportExcelButton> {
   bool _isUploading = false;

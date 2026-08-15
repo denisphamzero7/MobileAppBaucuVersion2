@@ -10,10 +10,11 @@ import '../../model/profile.dart';
 import '../../untils/app_textstyles.dart';
 import '../../../untils/app_colors.dart';
 import '../../core/api_constants.dart';
-import '../widgets/skeleton_loader.dart';
 import '../widgets/organization_selection_dialog.dart';
+import '../widgets/skeleton_loader.dart';
 
 class ProfileScreen extends StatefulWidget {
+
   const ProfileScreen({super.key});
 
   @override
@@ -24,11 +25,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UserController userController = Get.find<UserController>();
   final AuthController authController = Get.find<AuthController>();
   late final LogActivityController logController;
-  
-  
+
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final RxBool _obscureNewPassword = true.obs;
+  final RxBool _obscureConfirmPassword = true.obs;
+
+  @override
+  void dispose() {
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
+
     super.initState();
     if (!Get.isRegistered<LogActivityController>()) {
       logController = Get.put(LogActivityController());
@@ -181,21 +193,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Đăng nhập lần cuối:',
-                style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7)),
-              ),
-              Text(
-                '08/08/2026 10:33:24', // Có thể thay bằng profile.lastLoginAt nếu model có
-                style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           GestureDetector(
+
             onTap: () => _showOrganizationSelection(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -485,11 +484,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           Obx(() {
             if (logController.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 4,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, __) => const SkeletonLoader(
+                  child: SkeletonBox(
+                    width: double.infinity,
+                    height: 50,
+                    radius: 10,
+                  ),
+                ),
+              );
             }
             if (logController.logs.isEmpty) {
               return const Center(child: Text("Không có hoạt động nào", style: TextStyle(color: Colors.grey)));
             }
+
             return ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -591,6 +603,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey),
           ),
           const SizedBox(height: 16),
+          
+          // Khối Đổi mật khẩu
+          Text(
+            'Đổi mật khẩu',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Mật khẩu mới
+          Obx(() => TextField(
+            controller: _newPasswordController,
+            obscureText: _obscureNewPassword.value,
+            style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+            decoration: InputDecoration(
+              hintText: 'Mật khẩu mới',
+              hintStyle: const TextStyle(fontSize: 12, color: AppColors.grey),
+              prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureNewPassword.value ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 18,
+                  color: AppColors.grey,
+                ),
+                onPressed: () => _obscureNewPassword.toggle(),
+              ),
+              filled: true,
+              fillColor: isDark ? AppColors.cardItemDark : AppColors.lightBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          )),
+          const SizedBox(height: 10),
+
+          // Xác nhận mật khẩu
+          Obx(() => TextField(
+            controller: _confirmPasswordController,
+            obscureText: _obscureConfirmPassword.value,
+            style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+            decoration: InputDecoration(
+              hintText: 'Xác nhận mật khẩu',
+              hintStyle: const TextStyle(fontSize: 12, color: AppColors.grey),
+              prefixIcon: const Icon(Icons.lock_reset_outlined, size: 18, color: AppColors.primary),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirmPassword.value ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 18,
+                  color: AppColors.grey,
+                ),
+                onPressed: () => _obscureConfirmPassword.toggle(),
+              ),
+              filled: true,
+              fillColor: isDark ? AppColors.cardItemDark : AppColors.lightBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          )),
+          const SizedBox(height: 12),
+
+          // Nút Đổi mật khẩu
+          Obx(() => SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: userController.isChangingPassword.value
+                  ? null
+                  : () async {
+                      final success = await userController.changePassword(
+                        _newPasswordController.text.trim(),
+                        _confirmPasswordController.text.trim(),
+                      );
+                      if (success) {
+                        _newPasswordController.clear();
+                        _confirmPasswordController.clear();
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: userController.isChangingPassword.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text(
+                      'Đổi mật khẩu',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+            ),
+          )),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+
           GetBuilder<ThemeController>(
             builder: (themeController) => ListTile(
               contentPadding: EdgeInsets.zero,
@@ -636,10 +754,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+
   Widget _buildSkeletonLoader(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return Column(
+      children: [
+        const SkeletonLoader(
+          child: SkeletonBox(
+            width: double.infinity,
+            height: 180,
+            radius: 16,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const SkeletonLoader(
+          child: SkeletonBox(
+            width: double.infinity,
+            height: 48,
+            radius: 12,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 4,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (_, __) => const SkeletonLoader(
+            child: SkeletonBox(
+              width: double.infinity,
+              height: 60,
+              radius: 12,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
+
+
 
 class _InfoItem extends StatelessWidget {
   final IconData icon;

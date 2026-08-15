@@ -4,8 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/task_controller.dart';
 import '../../controllers/navigation.dart';
 import '../../untils/app_colors.dart';
+import '../../core/widgets/app_refresher.dart';
+import '../widgets/skeleton_loader.dart';
 
 class StatisticScreen extends StatefulWidget {
+
   const StatisticScreen({super.key});
 
   @override
@@ -18,6 +21,25 @@ class _StatisticScreenState extends State<StatisticScreen> {
       : Get.put(TaskController());
 
   final RxInt activeDistributionTab = 0.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshStats();
+    });
+  }
+
+  Future<void> _refreshStats() async {
+    await Future.wait([
+      taskController.fetchStats(),
+      taskController.fetchDepartmentStats(),
+      taskController.fetchItemTypeStats(),
+      taskController.fetchTasks(),
+      taskController.fetchDepartments(),
+    ]);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -43,46 +65,60 @@ class _StatisticScreenState extends State<StatisticScreen> {
         foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await taskController.fetchStats();
-            await taskController.fetchTasks();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+        child: AppRefresher(
+          onRefresh: _refreshStats,
+          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+          child: Obx(() {
+            if (taskController.isStatsLoading.value && taskController.stats.value.total == 0) {
+
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 48, radius: 14)),
+                  SizedBox(height: 12),
+                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 110, radius: 14)),
+                  SizedBox(height: 16),
+                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 110, radius: 14)),
+                  SizedBox(height: 16),
+                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 160, radius: 14)),
+                ],
+              );
+            }
+
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTopFilters(isDark),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildStatusGrid(isDark),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 _buildTimingGrid(isDark),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 _buildDoughnutChartsSection(isDark),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 _buildDetailedDistributionSection(isDark),
               ],
-            ),
-          ),
+            );
+          }),
         ),
       ),
+
     );
   }
 
   // --- FILTERS SECTION ---
   Widget _buildTopFilters(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -94,10 +130,10 @@ class _StatisticScreenState extends State<StatisticScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.primary),
-                const SizedBox(width: 8),
-                const Text('Khoảng thời gian:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 8),
+                Icon(Icons.calendar_today_outlined, size: 15, color: AppColors.primary),
+                const SizedBox(width: 6),
+                const Text('Khoảng thời gian:', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Row(
                     children: [
@@ -113,27 +149,28 @@ class _StatisticScreenState extends State<StatisticScreen> {
                             if (picked != null) {
                               DateTime? currentEnd = endDate != null ? DateTime.tryParse(endDate) : null;
                               taskController.setDateRange(picked, currentEnd);
+                              _refreshStats();
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
                               color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(startDate ?? 'Từ ngày', style: TextStyle(fontSize: 11, color: startDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
-                                Icon(Icons.keyboard_arrow_down, size: 14, color: AppColors.grey[600]),
+                                Expanded(child: Text(startDate ?? 'Từ ngày', style: TextStyle(fontSize: 10, color: startDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
+                                Icon(Icons.keyboard_arrow_down, size: 12, color: AppColors.grey[600]),
                               ],
                             ),
                           ),
                         ),
                       ),
                       const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text('-', style: TextStyle(color: AppColors.grey)),
+                        padding: EdgeInsets.symmetric(horizontal: 3),
+                        child: Text('-', style: TextStyle(color: AppColors.grey, fontSize: 10)),
                       ),
                       Expanded(
                         child: InkWell(
@@ -147,19 +184,20 @@ class _StatisticScreenState extends State<StatisticScreen> {
                             if (picked != null) {
                               DateTime? currentStart = startDate != null ? DateTime.tryParse(startDate) : null;
                               taskController.setDateRange(currentStart, picked);
+                              _refreshStats();
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
                               color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(endDate ?? 'Đến ngày', style: TextStyle(fontSize: 11, color: endDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
-                                Icon(Icons.keyboard_arrow_down, size: 14, color: AppColors.grey[600]),
+                                Expanded(child: Text(endDate ?? 'Đến ngày', style: TextStyle(fontSize: 10, color: endDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
+                                Icon(Icons.keyboard_arrow_down, size: 12, color: AppColors.grey[600]),
                               ],
                             ),
                           ),
@@ -170,40 +208,41 @@ class _StatisticScreenState extends State<StatisticScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.business_outlined, size: 18, color: AppColors.grey[600]),
-                const SizedBox(width: 8),
-                const Text('Đơn vị:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 24),
+                Icon(Icons.business_outlined, size: 15, color: AppColors.grey[600]),
+                const SizedBox(width: 6),
+                const Text('Đơn vị:', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
                         value: (taskController.selectedDepartmentId.value != null && taskController.departments.any((d) => d.id == taskController.selectedDepartmentId.value)) ? taskController.selectedDepartmentId.value : null,
-                        hint: const Text('Tất cả phòng ban', style: TextStyle(fontSize: 12)),
+                        hint: const Text('Tất cả phòng ban', style: TextStyle(fontSize: 11)),
                         isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.grey[600]),
+                        icon: Icon(Icons.keyboard_arrow_down, size: 14, color: AppColors.grey[600]),
                         items: [
                           const DropdownMenuItem<int>(
                             value: null,
-                            child: Text('Tất cả phòng ban', style: TextStyle(fontSize: 12)),
+                            child: Text('Tất cả phòng ban', style: TextStyle(fontSize: 11)),
                           ),
                           ...{for (var d in taskController.departments) d.id: d}.values.map((dept) {
                             return DropdownMenuItem<int>(
                               value: dept.id,
-                              child: Text(dept.name, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                              child: Text(dept.name, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis),
                             );
                           }),
                         ],
                         onChanged: (value) {
                           taskController.setDepartment(value);
+                          _refreshStats();
                         },
                       ),
                     ),
@@ -219,13 +258,13 @@ class _StatisticScreenState extends State<StatisticScreen> {
 
   Widget _buildStatCardItem(String label, String value, Color textColor, Color bgColor, bool isDark) {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardItemDark : bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05),
+          color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.04),
           width: 0.5,
         ),
       ),
@@ -238,19 +277,19 @@ class _StatisticScreenState extends State<StatisticScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isDark ? AppColors.grey[400] : textColor.withOpacity(0.8),
+                  color: isDark ? AppColors.grey[400] : textColor.withOpacity(0.85),
                   fontSize: 8,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: TextStyle(
                   color: isDark ? AppColors.white : textColor,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -278,9 +317,9 @@ class _StatisticScreenState extends State<StatisticScreen> {
         children: [
           const Text(
             'TRẠNG THÁI XỬ LÝ',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: AppColors.grey, letterSpacing: 0.5),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Column(
             children: [
               Row(
@@ -289,33 +328,33 @@ class _StatisticScreenState extends State<StatisticScreen> {
                     flex: 2,
                     child: _buildStatCardItem('Tổng công việc', total.toString(), AppColors.todo, AppColors.bgPurpleLight, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 1,
                     child: _buildStatCardItem('Chưa thực hiện', todo.toString(), AppColors.textGrayDark, AppColors.lightBg, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 1,
                     child: _buildStatCardItem('Đang thực hiện', inProgress.toString(), AppColors.inProgress, AppColors.bgBlueLight, isDark),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: _buildStatCardItem('Chờ duyệt', pendingApproval.toString(), AppColors.pendingApproval, AppColors.bgPurpleVeryLight, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Hoàn thành', done.toString(), AppColors.done, AppColors.badgeGreenBg, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Tạm dừng', paused.toString(), AppColors.paused, AppColors.bgYellowLight, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Đã hủy', cancelled.toString(), AppColors.cancelled, AppColors.bgGrayLight, isDark),
                   ),
@@ -345,9 +384,9 @@ class _StatisticScreenState extends State<StatisticScreen> {
         children: [
           const Text(
             'TIẾN ĐỘ CÔNG VIỆC',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: AppColors.grey, letterSpacing: 0.5),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Column(
             children: [
               Row(
@@ -355,27 +394,27 @@ class _StatisticScreenState extends State<StatisticScreen> {
                   Expanded(
                     child: _buildStatCardItem('Chưa đến hạn', upcoming.toString(), AppColors.textTeal, AppColors.bgTealLight, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Sớm hạn', early.toString(), AppColors.textGreenDark, AppColors.badgeGreenBg, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Đúng hạn', onTime.toString(), AppColors.textBlueDark, AppColors.badgeBlueBg, isDark),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: _buildStatCardItem('Trễ hạn', late.toString(), AppColors.textRedDark, AppColors.bgRedVeryLight, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Quá hạn', overdue.toString(), AppColors.textRedVeryDark, AppColors.bgRedLight, isDark),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildStatCardItem('Đã hủy', timingCancelled.toString(), AppColors.cancelled, AppColors.bgGrayLight, isDark),
                   ),
@@ -387,6 +426,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
       );
     });
   }
+
 
   // --- DOUGHNUT CHARTS SECTION ---
   Widget _buildDoughnutChartsSection(bool isDark) {
@@ -431,9 +471,12 @@ class _StatisticScreenState extends State<StatisticScreen> {
         if (cancelled > 0) statusSections.add(PieChartSectionData(color: AppColors.cancelled, value: cancelled.toDouble(), radius: 12, showTitle: false));
       }
 
+      final timingTotal = upcoming + early + onTime + late + overdue + timingCancelled;
+
+
       // Doughnut Sections for Timing Structure
       final List<PieChartSectionData> timingSections = [];
-      if (total == 0) {
+      if (timingTotal == 0) {
         timingSections.add(PieChartSectionData(color: AppColors.grey[300], value: 1, radius: 12, showTitle: false));
       } else {
         if (upcoming > 0) timingSections.add(PieChartSectionData(color: AppColors.inProgress, value: upcoming.toDouble(), radius: 12, showTitle: false));
@@ -464,27 +507,13 @@ class _StatisticScreenState extends State<StatisticScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Cơ cấ'
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      ''
-                      'u Trạng thái', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text('Cơ cấu Trạng thái', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   Text('Theo trạng thái xử lý', style: TextStyle(color: AppColors.grey[500], fontSize: 10)),
                   const SizedBox(height: 16),
                   Center(child: _buildDoughnut(statusSections, total)),
                   const SizedBox(height: 16),
-                  _buildLegendItem('Chưa làm', '$todo (${getPercentStr(todo, total)})', AppColors.todo),
-                  _buildLegendItem('Đang làm', '$inProgress (${getPercentStr(inProgress, total)})', AppColors.inProgress),
+                  _buildLegendItem('Chưa thực hiện', '$todo (${getPercentStr(todo, total)})', AppColors.todo),
+                  _buildLegendItem('Đang thực hiện', '$inProgress (${getPercentStr(inProgress, total)})', AppColors.inProgress),
                   _buildLegendItem('Chờ duyệt', '$pendingApproval (${getPercentStr(pendingApproval, total)})', AppColors.pendingApproval),
                   _buildLegendItem('Hoàn thành', '$done (${getPercentStr(done, total)})', AppColors.done),
                   _buildLegendItem('Tạm dừng', '$paused (${getPercentStr(paused, total)})', AppColors.paused),
@@ -517,14 +546,14 @@ class _StatisticScreenState extends State<StatisticScreen> {
                   const Text('Cơ cấu Tiến độ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   Text('Theo hạn chót xử lý', style: TextStyle(color: AppColors.grey[500], fontSize: 10)),
                   const SizedBox(height: 16),
-                  Center(child: _buildDoughnut(timingSections, total)),
+                  Center(child: _buildDoughnut(timingSections, timingTotal)),
                   const SizedBox(height: 16),
-                  _buildLegendItem('Chưa đến hạn', '$upcoming (${getPercentStr(upcoming, total)})', AppColors.inProgress),
-                  _buildLegendItem('Sớm hạn', '$early (${getPercentStr(early, total)})', AppColors.done),
-                  _buildLegendItem('Đúng hạn', '$onTime (${getPercentStr(onTime, total)})', AppColors.onTime),
-                  _buildLegendItem('Trễ hạn', '$late (${getPercentStr(late, total)})', AppColors.late),
-                  _buildLegendItem('Quá hạn', '$overdue (${getPercentStr(overdue, total)})', AppColors.overdue),
-                  _buildLegendItem('Đã hủy', '$timingCancelled (${getPercentStr(timingCancelled, total)})', AppColors.cancelled),
+                  _buildLegendItem('Chưa đến hạn', '$upcoming (${getPercentStr(upcoming, timingTotal)})', AppColors.inProgress),
+                  _buildLegendItem('Sớm hạn', '$early (${getPercentStr(early, timingTotal)})', AppColors.done),
+                  _buildLegendItem('Đúng hạn', '$onTime (${getPercentStr(onTime, timingTotal)})', AppColors.onTime),
+                  _buildLegendItem('Trễ hạn', '$late (${getPercentStr(late, timingTotal)})', AppColors.late),
+                  _buildLegendItem('Quá hạn', '$overdue (${getPercentStr(overdue, timingTotal)})', AppColors.overdue),
+                  _buildLegendItem('Đã hủy', '$timingCancelled (${getPercentStr(timingCancelled, timingTotal)})', AppColors.cancelled),
                 ],
               ),
             ),
@@ -639,39 +668,177 @@ class _StatisticScreenState extends State<StatisticScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            '1. PHÂN BỐ THEO TRẠNG THÁI XỬ LÝ',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
-          ),
-          const SizedBox(height: 12),
+          Obx(() {
+            final isDept = activeDistributionTab.value == 0;
+            return Column(
 
-          _buildSegmentRow('UBND Phường', 5, 25, 24, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Công an Phường', 2, 10, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Y tế Phường', 1, 8, 4, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Đội QLĐT', 3, 12, 10, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Tư pháp', 2, 6, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '1. PHÂN BỐ THEO TRẠNG THÁI XỬ LÝ',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
+                ),
+                const SizedBox(height: 12),
 
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: AppColors.black12),
-          const SizedBox(height: 16),
+                if (isDept) ...[
+                  if (taskController.departmentStatsList.isNotEmpty)
+                    ...taskController.departmentStatsList
+                        .where((item) => ((item['total'] ?? 0) as num) > 0)
+                        .map((item) {
+                      final name = (item['department_name'] ?? item['name'] ?? item['department'] ?? 'Phòng ban').toString();
+                      final todo = ((item['todo'] ?? item['todo_count'] ?? 0) as num).toInt();
+                      final inProgress = ((item['in_progress'] ?? item['in_progress_count'] ?? 0) as num).toInt();
+                      final pending = ((item['pending_approval'] ?? item['pending'] ?? 0) as num).toInt();
+                      final done = ((item['done'] ?? item['completed'] ?? item['done_count'] ?? 0) as num).toInt();
+                      final paused = ((item['paused'] ?? 0) as num).toInt();
+                      final cancelled = ((item['cancelled'] ?? 0) as num).toInt();
+                      return _buildSegmentRow(name, [
+                        {'count': todo, 'color': AppColors.todo},
+                        {'count': inProgress, 'color': AppColors.inProgress},
+                        {'count': pending, 'color': AppColors.pendingApproval},
+                        {'count': done, 'color': AppColors.done},
+                        {'count': paused, 'color': AppColors.paused},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Chưa có dữ liệu phòng ban', []),
+                  ]
+                ] else ...[
+                  if (taskController.itemTypeStatsList.isNotEmpty)
+                    ...taskController.itemTypeStatsList
+                        .where((item) => ((item['total'] ?? 0) as num) > 0)
+                        .map((item) {
+                      final name = (item['task_assignment_item_type_name'] ?? item['item_type_name'] ?? item['type_name'] ?? item['name'] ?? item['title'] ?? 'Loại công việc').toString();
+                      final todo = ((item['todo'] ?? item['todo_count'] ?? 0) as num).toInt();
+                      final inProgress = ((item['in_progress'] ?? item['in_progress_count'] ?? 0) as num).toInt();
+                      final pending = ((item['pending_approval'] ?? item['pending'] ?? 0) as num).toInt();
+                      final done = ((item['done'] ?? item['completed'] ?? item['done_count'] ?? 0) as num).toInt();
+                      final paused = ((item['paused'] ?? 0) as num).toInt();
+                      final cancelled = ((item['cancelled'] ?? 0) as num).toInt();
+                      return _buildSegmentRow(name, [
+                        {'count': todo, 'color': AppColors.todo},
+                        {'count': inProgress, 'color': AppColors.inProgress},
+                        {'count': pending, 'color': AppColors.pendingApproval},
+                        {'count': done, 'color': AppColors.done},
+                        {'count': paused, 'color': AppColors.paused},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Chưa có dữ liệu loại công việc', []),
+                  ]
+                ],
 
-          const Text(
-            '2. PHÂN BỐ THEO TIẾN ĐỘ THỜI GIAN',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
-          ),
-          const SizedBox(height: 12),
+                const SizedBox(height: 12),
+                _buildStatusLegendGrid(),
 
-          _buildSegmentRow('Mục 1', 6, 3, 1, [AppColors.done, AppColors.overdue, AppColors.late]),
-          _buildSegmentRow('Mục 2', 1, 3, 1, [AppColors.inProgress, AppColors.done, AppColors.late]),
-          _buildSegmentRow('Mục 3', 1, 3, 1, [AppColors.inProgress, AppColors.done, AppColors.late]),
-          _buildSegmentRow('Mục 4', 2, 1, 3, [AppColors.inProgress, AppColors.onTime, AppColors.overdue]),
-          _buildSegmentRow('Mục 5', 1, 3, 2, [AppColors.inProgress, AppColors.done, AppColors.late, AppColors.overdue], 1),
-          _buildSegmentRow('Mục 6', 3, 4, 0, [AppColors.done, AppColors.overdue]),
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: AppColors.black12),
+                const SizedBox(height: 16),
 
-          const SizedBox(height: 16),
-          _buildTimingLegendGrid(),
+                const Text(
+                  '2. PHÂN BỐ THEO TIẾN ĐỘ THỜI GIAN',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
+                ),
+                const SizedBox(height: 12),
+
+                if (isDept) ...[
+                  if (taskController.departmentStatsList.isNotEmpty)
+                    ...taskController.departmentStatsList
+                        .where((item) => ((item['total'] ?? 0) as num) > 0)
+                        .map((item) {
+                      final name = (item['department_name'] ?? item['name'] ?? item['department'] ?? 'Phòng ban').toString();
+                      final timing = (item['timing_stats'] is Map<String, dynamic>)
+                          ? item['timing_stats'] as Map<String, dynamic>
+                          : <String, dynamic>{};
+                      final upcoming = ((timing['upcoming'] ?? item['upcoming'] ?? 0) as num).toInt();
+                      final early = ((timing['early'] ?? item['early'] ?? 0) as num).toInt();
+                      final onTime = ((timing['on_time'] ?? item['on_time'] ?? 0) as num).toInt();
+                      final lateVal = ((timing['late'] ?? item['late'] ?? 0) as num).toInt();
+                      final overdue = ((timing['overdue'] ?? item['overdue'] ?? 0) as num).toInt();
+                      final cancelled = ((timing['cancelled'] ?? item['cancelled'] ?? 0) as num).toInt();
+
+                      return _buildSegmentRow(name, [
+                        {'count': upcoming, 'color': AppColors.inProgress},
+                        {'count': early, 'color': AppColors.early},
+                        {'count': onTime, 'color': AppColors.onTime},
+                        {'count': lateVal, 'color': AppColors.late},
+                        {'count': overdue, 'color': AppColors.overdue},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Chưa có dữ liệu tiến độ', []),
+                  ]
+                ] else ...[
+                  if (taskController.itemTypeStatsList.isNotEmpty)
+                    ...taskController.itemTypeStatsList
+                        .where((item) => ((item['total'] ?? 0) as num) > 0)
+                        .map((item) {
+                      final name = (item['task_assignment_item_type_name'] ?? item['item_type_name'] ?? item['type_name'] ?? item['name'] ?? item['title'] ?? 'Loại công việc').toString();
+                      final timing = (item['timing_stats'] is Map<String, dynamic>)
+                          ? item['timing_stats'] as Map<String, dynamic>
+                          : <String, dynamic>{};
+                      final upcoming = ((timing['upcoming'] ?? item['upcoming'] ?? 0) as num).toInt();
+                      final early = ((timing['early'] ?? item['early'] ?? 0) as num).toInt();
+                      final onTime = ((timing['on_time'] ?? item['on_time'] ?? 0) as num).toInt();
+                      final lateVal = ((timing['late'] ?? item['late'] ?? 0) as num).toInt();
+                      final overdue = ((timing['overdue'] ?? item['overdue'] ?? 0) as num).toInt();
+                      final cancelled = ((timing['cancelled'] ?? item['cancelled'] ?? 0) as num).toInt();
+
+                      return _buildSegmentRow(name, [
+                        {'count': upcoming, 'color': AppColors.inProgress},
+                        {'count': early, 'color': AppColors.early},
+                        {'count': onTime, 'color': AppColors.onTime},
+                        {'count': lateVal, 'color': AppColors.late},
+                        {'count': overdue, 'color': AppColors.overdue},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Chưa có dữ liệu tiến độ', []),
+                  ]
+                ],
+
+                const SizedBox(height: 12),
+                _buildTimingLegendGrid(),
+              ],
+            );
+          }),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatusLegendGrid() {
+    return Column(
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildDotLegend('Chưa thực hiện', AppColors.todo),
+              const SizedBox(width: 8),
+              _buildDotLegend('Đang thực hiện', AppColors.inProgress),
+              const SizedBox(width: 8),
+              _buildDotLegend('Chờ duyệt', AppColors.pendingApproval),
+              const SizedBox(width: 8),
+              _buildDotLegend('Hoàn thành', AppColors.done),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildDotLegend('Tạm dừng', AppColors.paused),
+            const SizedBox(width: 24),
+            _buildDotLegend('Đã hủy', AppColors.cancelled),
+          ],
+        )
+      ],
     );
   }
 
@@ -749,7 +916,8 @@ class _StatisticScreenState extends State<StatisticScreen> {
     );
   }
 
-  Widget _buildSegmentRow(String label, int val1, int val2, int val3, List<Color> colors, [int val4 = 0]) {
+  Widget _buildSegmentRow(String label, List<Map<String, dynamic>> segments) {
+    final total = segments.fold<int>(0, (sum, s) => sum + ((s['count'] ?? 0) as num).toInt());
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -769,14 +937,18 @@ class _StatisticScreenState extends State<StatisticScreen> {
               height: 10,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(5),
-                child: Row(
-                  children: [
-                    if (val1 > 0 && colors.isNotEmpty) Expanded(flex: val1, child: Container(color: colors[0])),
-                    if (val2 > 0 && colors.length > 1) Expanded(flex: val2, child: Container(color: colors[1])),
-                    if (val3 > 0 && colors.length > 2) Expanded(flex: val3, child: Container(color: colors[2])),
-                    if (val4 > 0 && colors.length > 3) Expanded(flex: val4, child: Container(color: colors[3])),
-                  ],
-                ),
+                child: total == 0
+                    ? Container(color: AppColors.grey.withOpacity(0.12))
+                    : Row(
+                        children: segments.where((s) => ((s['count'] ?? 0) as num) > 0).map((s) {
+                          final count = ((s['count'] ?? 0) as num).toInt();
+                          final color = s['color'] as Color;
+                          return Expanded(
+                            flex: count,
+                            child: Container(color: color),
+                          );
+                        }).toList(),
+                      ),
               ),
             ),
           ),
@@ -785,6 +957,5 @@ class _StatisticScreenState extends State<StatisticScreen> {
     );
   }
 }
-
 
 

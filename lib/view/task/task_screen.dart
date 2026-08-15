@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -7,14 +7,18 @@ import 'package:app_baucu_version1/controllers/navigation.dart';
 import 'package:app_baucu_version1/model/task_model.dart';
 import 'package:app_baucu_version1/untils/app_colors.dart';
 import 'create_task_screen.dart';
-import '../../core/widgets/can_access.dart';
-import '../../controllers/auth_controller.dart';
-import 'widgets/export_excel_task.dart';
-import 'widgets/import_excel_task.dart';
+import '../../core/widgets/import_excel_button.dart';
+import '../../core/widgets/export_excel_button.dart';
+import '../widgets/quick_action_bottom_sheet.dart';
 
+import '../../controllers/auth_controller.dart';
+import '../../core/widgets/can_access.dart';
+import '../widgets/skeleton_loader.dart';
 import 'widgets/stat_card_widget.dart';
 import 'widgets/task_card_widget.dart';
+
 class TaskScreen extends GetView<TaskController> {
+
   final String? type; // 'sent' or 'received' or null
   TaskScreen({super.key, this.type});
 
@@ -22,6 +26,104 @@ class TaskScreen extends GetView<TaskController> {
   final RxString selectedStatusFilter = 'all'.obs;
   final RxString selectedTimingFilter = 'all'.obs;
   final RxString searchText = ''.obs;
+
+  void _openQuickActions(BuildContext context) {
+    final authCtrl = Get.find<AuthController>();
+    final userId = authCtrl.currentUser.value?.id;
+    final queryParams = <String, dynamic>{};
+
+    if (type == 'received' && userId != null) {
+      queryParams['assignee_id'] = userId;
+    } else if (type == 'sent' && userId != null) {
+      queryParams['assigner_id'] = userId;
+    }
+    if (type != null && type!.isNotEmpty) {
+      queryParams['type'] = type;
+    }
+    if (searchText.value.isNotEmpty) queryParams['search'] = searchText.value;
+    if (selectedStatusFilter.value != 'all') queryParams['processing_status'] = selectedStatusFilter.value;
+    if (selectedTimingFilter.value != 'all') queryParams['timing_status'] = selectedTimingFilter.value;
+
+    final fileNamePrefix = type == 'received'
+        ? 'CongViecDuocGiao'
+        : (type == 'sent' ? 'CongViecDangGiao' : 'DanhSachCongViec');
+
+    final canCreate = authCtrl.can('create', 'TaskAssignmentItems');
+    final canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
+    final canExport = authCtrl.can('read', 'TaskAssignmentItems');
+
+    final List<QuickActionItem> items = [];
+
+    if (canCreate) {
+      items.add(
+        QuickActionItem(
+          title: 'Tạo việc mới',
+          subtitle: 'Thêm & phân công',
+          icon: Icons.add_task_rounded,
+          color: AppColors.primary,
+          onTap: () => Get.to(() => const CreateTaskScreen()),
+        ),
+      );
+      items.add(
+        QuickActionItem(
+          title: 'Nhập Excel',
+          subtitle: 'Tải danh sách việc',
+          icon: Icons.upload_file_rounded,
+          color: Colors.green,
+          onTap: () {
+            ImportExcelButton.pickAndUpload(
+              uploadUrl: 'task-assignment-items/import',
+              onSuccess: () => controller.refreshTasks(),
+            );
+          },
+        ),
+      );
+    }
+
+    if (canExport) {
+      items.add(
+        QuickActionItem(
+          title: 'Xuất Excel',
+          subtitle: 'Tải báo cáo tệp',
+          icon: Icons.download_rounded,
+          color: Colors.orange,
+          onTap: () {
+            ExportExcelButton.downloadAndSave(
+              url: 'task-assignment-items/export',
+              queryParams: queryParams,
+              fileNamePrefix: fileNamePrefix,
+            );
+          },
+        ),
+      );
+    }
+
+    if (canDelete) {
+      items.add(
+        QuickActionItem(
+          title: controller.isMultiSelectMode.value ? 'Hủy chọn' : 'Chọn nhiều',
+          subtitle: 'Xóa hàng loạt',
+          icon: controller.isMultiSelectMode.value ? Icons.close_rounded : Icons.checklist_rtl_rounded,
+          color: Colors.purple,
+          badge: controller.selectedTaskIds.isNotEmpty ? '${controller.selectedTaskIds.length}' : null,
+          onTap: () => controller.toggleMultiSelectMode(),
+        ),
+      );
+    }
+
+    if (items.isEmpty) {
+      Get.snackbar("Thông báo", "Bạn không có quyền thực hiện thao tác nào.");
+      return;
+    }
+
+    QuickActionBottomSheet.show(
+      context,
+      title: 'Thao tác công việc',
+      subtitle: 'Chọn tác vụ bạn muốn thực hiện',
+      items: items,
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +133,6 @@ class TaskScreen extends GetView<TaskController> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    final storage = GetStorage();
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
@@ -52,61 +153,41 @@ class TaskScreen extends GetView<TaskController> {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: false,
-                actions: [
-          CanAccess(
-            action: 'store', // Giả định quyền tạo/import
-            subject: 'TaskAssignmentItems',
-            child: const ImportExcelTask(),
-          ),
-          CanAccess(
-            action: 'export',
-            subject: 'TaskAssignmentItems',
-            child: ExportExcelTask(
-              type: type,
-              searchText: searchText,
-              selectedStatusFilter: selectedStatusFilter,
-              selectedTimingFilter: selectedTimingFilter,
-            ),
-          ),
-          CanAccess(
-            action: 'store',
-            subject: 'TaskAssignmentItems',
-            child: IconButton(
-              icon: const Icon(Icons.add, size: 22),
-              tooltip: 'Tạo công việc',
-              onPressed: () => Get.to(() => const CreateTaskScreen()),
-            ),
-          ),
-          CanAccess(
-            action: 'bulkDestroy',
-            subject: 'TaskAssignmentItems',
-            child: Obx(() => IconButton(
-              icon: Icon(controller.isMultiSelectMode.value ? Icons.close : Icons.checklist, size: 22),
-              tooltip: 'Chọn nhiều (để xóa)',
-              onPressed: () => controller.toggleMultiSelectMode(),
-            )),
-          ),
+        actions: [
+          Obx(() {
+            if (controller.isMultiSelectMode.value) {
+              return IconButton(
+                icon: const Icon(Icons.close, size: 22),
+                tooltip: 'Thoát chọn nhiều',
+                onPressed: () => controller.toggleMultiSelectMode(),
+              );
+            }
+            return QuickActionButton(
+              tooltip: 'Thao tác nhanh',
+              onPressed: () => _openQuickActions(context),
+            );
+          }),
         ],
         elevation: 0,
         backgroundColor: isDark ? AppColors.black : AppColors.white,
         foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
-            floatingActionButton: Obx(() {
+      floatingActionButton: Obx(() {
         if (controller.isMultiSelectMode.value && controller.selectedTaskIds.isNotEmpty) {
           return FloatingActionButton.extended(
             onPressed: () {
-               Get.defaultDialog(
-                 title: 'Xóa công việc',
-                 middleText: 'Bạn có chắc chắn muốn xóa ${controller.selectedTaskIds.length} công việc này?',
-                 textConfirm: 'Xóa',
-                 textCancel: 'Hủy',
-                 confirmTextColor: Colors.white,
-                 onConfirm: () {
-                   Get.back();
-                   controller.bulkDeleteTasks(controller.selectedTaskIds.toList());
-                   controller.toggleMultiSelectMode();
-                 }
-               );
+              Get.defaultDialog(
+                title: 'Xóa công việc',
+                middleText: 'Bạn có chắc chắn muốn xóa ${controller.selectedTaskIds.length} công việc này?',
+                textConfirm: 'Xóa',
+                textCancel: 'Hủy',
+                confirmTextColor: Colors.white,
+                onConfirm: () {
+                  Get.back();
+                  controller.bulkDeleteTasks(controller.selectedTaskIds.toList());
+                  controller.toggleMultiSelectMode();
+                },
+              );
             },
             backgroundColor: Colors.red,
             icon: const Icon(Icons.delete, color: Colors.white),
@@ -117,24 +198,26 @@ class TaskScreen extends GetView<TaskController> {
       }),
       body: SafeArea(
         child: Obx(() {
-          // 1. Get base tasks list
+          // 1. Get base tasks list & tab stats from server
           final actualTasks = controller.tasksList;
+          final tabStats = controller.tabStats.value;
+          final bool hasTabStats = tabStats.total > 0;
 
-          // Calculate statistics based on active task list
-          final totalCount = actualTasks.length;
-          final todoCount = actualTasks.where((t) => t.processingStatus == 'todo').length;
-          final inProgressCount = actualTasks.where((t) => t.processingStatus == 'in_progress').length;
-          final pendingApprovalCount = actualTasks.where((t) => t.processingStatus == 'pending_approval').length;
-          final doneCount = actualTasks.where((t) => t.processingStatus == 'done' || t.processingStatus == 'completed').length;
-          final pausedCount = actualTasks.where((t) => t.processingStatus == 'paused').length;
-          final cancelledCount = actualTasks.where((t) => t.processingStatus == 'cancelled').length;
+          // Calculate statistics based on server tabStats (fallback to loaded list)
+          final totalCount = hasTabStats ? tabStats.total : actualTasks.length;
+          final todoCount = hasTabStats ? tabStats.todo : actualTasks.where((t) => t.processingStatus == 'todo').length;
+          final inProgressCount = hasTabStats ? tabStats.inProgress : actualTasks.where((t) => t.processingStatus == 'in_progress').length;
+          final pendingApprovalCount = hasTabStats ? tabStats.pendingApproval : actualTasks.where((t) => t.processingStatus == 'pending_approval').length;
+          final doneCount = hasTabStats ? tabStats.done : actualTasks.where((t) => t.processingStatus == 'done' || t.processingStatus == 'completed').length;
+          final pausedCount = hasTabStats ? tabStats.paused : actualTasks.where((t) => t.processingStatus == 'paused').length;
+          final cancelledCount = hasTabStats ? tabStats.cancelled : actualTasks.where((t) => t.processingStatus == 'cancelled').length;
 
-          final upcomingCount = actualTasks.where((t) => t.timingStatus == 'upcoming').length;
-          final earlyCount = actualTasks.where((t) => t.timingStatus == 'early').length;
-          final onTimeCount = actualTasks.where((t) => t.timingStatus == 'on_time').length;
-          final lateCount = actualTasks.where((t) => t.timingStatus == 'late').length;
-          final overdueCount = actualTasks.where((t) => t.isOverdue || t.timingStatus == 'overdue').length;
-          final cancelledTimingCount = actualTasks.where((t) => t.timingStatus == 'cancelled').length;
+          final upcomingCount = hasTabStats ? tabStats.timingStats.upcoming : actualTasks.where((t) => t.timingStatus == 'upcoming').length;
+          final earlyCount = hasTabStats ? tabStats.timingStats.early : actualTasks.where((t) => t.timingStatus == 'early').length;
+          final onTimeCount = hasTabStats ? tabStats.timingStats.onTime : actualTasks.where((t) => t.timingStatus == 'on_time').length;
+          final lateCount = hasTabStats ? tabStats.timingStats.late : actualTasks.where((t) => t.timingStatus == 'late').length;
+          final overdueCount = hasTabStats ? tabStats.timingStats.overdue : actualTasks.where((t) => t.isOverdue || t.timingStatus == 'overdue').length;
+          final cancelledTimingCount = hasTabStats ? tabStats.timingStats.cancelled : actualTasks.where((t) => t.timingStatus == 'cancelled').length;
 
           // 2. Apply search and card filters
           var filteredTasks = List<TaskModel>.from(actualTasks);
@@ -413,7 +496,23 @@ class TaskScreen extends GetView<TaskController> {
                     const SizedBox(height: 10),
 
                     // D. TASKS LIST
-                    if (filteredTasks.isEmpty)
+                    if (controller.isLoading.value && controller.tasksList.isEmpty)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: 4,
+                        itemBuilder: (_, __) => const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6.0),
+                          child: SkeletonLoader(
+                            child: SkeletonBox(
+                              width: double.infinity,
+                              height: 110,
+                              radius: 16,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (filteredTasks.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 40.0),
@@ -444,9 +543,13 @@ class TaskScreen extends GetView<TaskController> {
                           Obx(() {
                             if (controller.isLoadingMore.value) {
                               return const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16.0),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
+                                padding: EdgeInsets.symmetric(vertical: 10.0),
+                                child: SkeletonLoader(
+                                  child: SkeletonBox(
+                                    width: double.infinity,
+                                    height: 80,
+                                    radius: 12,
+                                  ),
                                 ),
                               );
                             }
@@ -454,6 +557,7 @@ class TaskScreen extends GetView<TaskController> {
                           }),
                         ],
                       ),
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
@@ -461,7 +565,7 @@ class TaskScreen extends GetView<TaskController> {
           );
         }),
       ),
+
     );
   }
-
 }

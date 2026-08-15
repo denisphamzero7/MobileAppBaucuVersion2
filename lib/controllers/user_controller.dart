@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import '../model/profile.dart';
 import '../service/user_service.dart';
+import '../untils/app_colors.dart';
 import 'auth_controller.dart'; // ⚠️ Cần import AuthController
 
 class UserController extends GetxController {
@@ -78,4 +79,42 @@ class UserController extends GetxController {
 
     log("🚪 User đã gọi logout.");
   }
-}
+
+  // Đổi mật khẩu
+  final RxBool isChangingPassword = false.obs;
+
+  Future<bool> changePassword(String newPassword, String confirmPassword) async {
+    if (newPassword.isEmpty) {
+      Get.snackbar('Lỗi', 'Vui lòng nhập mật khẩu mới', backgroundColor: AppColors.cardItemDark, snackPosition: SnackPosition.TOP);
+      return false;
+    }
+    if (newPassword.length < 6) {
+      Get.snackbar('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự', backgroundColor: AppColors.cardItemDark, snackPosition: SnackPosition.TOP);
+      return false;
+    }
+    if (newPassword != confirmPassword) {
+      Get.snackbar('Lỗi', 'Mật khẩu xác nhận không khớp', backgroundColor: AppColors.cardItemDark, snackPosition: SnackPosition.TOP);
+      return false;
+    }
+
+    isChangingPassword.value = true;
+    try {
+      final success = await _userService.changePassword(newPassword, confirmPassword);
+      if (success) {
+        Get.snackbar(
+          'Thành công',
+          'Đổi mật khẩu thành công!',
+          snackPosition: SnackPosition.TOP,
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      final errorMsg = e.toString().replaceAll("Exception: ", "");
+      Get.snackbar('Lỗi', errorMsg, snackPosition: SnackPosition.TOP);
+      return false;
+    } finally {
+      isChangingPassword.value = false;
+    }
+  }
+}

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/task_controller.dart';
+import '../../controllers/auth_controller.dart';
 import '../../model/task_model.dart';
 import '../../untils/app_colors.dart';
+import '../widgets/skeleton_loader.dart';
 
 class CreateTaskScreen extends StatefulWidget {
+
   final TaskModel? taskToUpdate;
 
   const CreateTaskScreen({super.key, this.taskToUpdate});
@@ -201,10 +205,56 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // 1. Kiểm tra thời hạn
     if (_deadlineType == 'has_deadline' && _endDate == null) {
       Get.snackbar('Lỗi', 'Vui lòng chọn thời gian kết thúc/hạn chót', backgroundColor: Colors.red[100]);
       return;
     }
+
+    // 2. Kiểm tra người xử lý
+    if (_selectedAssigneeIds.isEmpty) {
+      Get.snackbar('Lỗi', 'Vui lòng chọn ít nhất một người xử lý (người nhận việc)', backgroundColor: Colors.red[100]);
+      return;
+    }
+
+    // 3. Lấy ID người giao việc (User hiện tại)
+    final authController = Get.find<AuthController>();
+    final currentUserId = authController.currentUser.value?.id ??
+        int.tryParse(GetStorage().read('userId')?.toString() ?? '') ??
+        (GetStorage().read('userInfo') != null ? int.tryParse(GetStorage().read('userInfo')['id']?.toString() ?? '') : null) ?? 1;
+
+    // 4. Lấy ID văn bản giao việc (mặc định lấy văn bản đầu tiên hoặc 1)
+    int? docId = _selectedDocumentId;
+    if (docId == null && _controller.taskDocuments.isNotEmpty) {
+      docId = _controller.taskDocuments.first.id;
+    }
+    docId ??= 1;
+
+    // 5. Lấy ID loại công việc (mặc định loại đầu tiên hoặc 1)
+    int? typeId = _selectedItemTypeId;
+    if (typeId == null && _controller.itemTypes.isNotEmpty) {
+      typeId = _controller.itemTypes.first.id;
+    }
+    typeId ??= 1;
+
+    // 6. Tạo mảng users theo cấu trúc chi tiết backend yêu cầu:
+    // [{ "user_id": 5, "department_id": 1, "department_role": "main", "assignment_role": "main" }]
+    final defaultDeptId = _controller.departments.isNotEmpty ? _controller.departments.first.id : 1;
+
+    final usersPayload = _selectedAssigneeIds.map((userId) {
+      final userObj = _controller.usersList.firstWhereOrNull((u) => u.id == userId);
+      final deptId = userObj?.departmentId ?? defaultDeptId;
+      final deptRole = (userObj?.departmentRole == 'cooperate') ? 'cooperate' : 'main';
+      final assignRole = (userObj?.assignmentRole == 'support') ? 'support' : 'main';
+
+      return {
+        'user_id': userId,
+        'department_id': deptId,
+        'department_role': deptRole,
+        'assignment_role': assignRole,
+      };
+    }).toList();
+
 
     setState(() {
       _isLoading = true;
@@ -212,27 +262,29 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     final payload = <String, dynamic>{
       'name': _titleController.text.trim(),
+      'title': _titleController.text.trim(),
       'description': _contentController.text.trim(),
       'priority': _priority,
       'deadline_type': _deadlineType,
       'processing_status': widget.taskToUpdate?.processingStatus ?? 'todo',
+      'task_assignment_document_id': docId,
+      'document_id': docId,
+      'task_assignment_item_type_id': typeId,
+      'type_id': typeId,
+      'assigned_by': currentUserId,
+      'users': usersPayload,
+      'assignee_ids': _selectedAssigneeIds,
+      'user_ids': _selectedAssigneeIds,
     };
 
-    if (_selectedDocumentId != null) {
-      payload['task_assignment_document_id'] = _selectedDocumentId;
-    }
-    if (_selectedItemTypeId != null) {
-      payload['task_assignment_item_type_id'] = _selectedItemTypeId;
-    }
+
+
     if (_startDate != null) {
       payload['start_at'] = DateFormat('yyyy-MM-dd HH:mm:ss').format(_startDate!);
     }
     if (_endDate != null) {
       payload['end_at'] = DateFormat('yyyy-MM-dd HH:mm:ss').format(_endDate!);
       payload['deadline'] = DateFormat('yyyy-MM-dd').format(_endDate!);
-    }
-    if (_selectedAssigneeIds.isNotEmpty) {
-      payload['assignee_ids'] = _selectedAssigneeIds;
     }
 
     bool success = false;
@@ -248,9 +300,23 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       });
       if (success) {
         Get.back();
+        Get.snackbar(
+          'Thành công',
+          widget.taskToUpdate == null ? 'Đã tạo công việc mới thành công!' : 'Đã cập nhật công việc thành công!',
+          backgroundColor: Colors.green.shade600,
+          colorText: Colors.white,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+        );
       }
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -272,17 +338,30 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       body: SafeArea(
         child: Obx(() {
           if (_controller.isLoadingMetadata.value) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 12),
-                  Text('Đang tải thông tin form...', style: TextStyle(color: Colors.grey)),
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ListView(
+                children: const [
+                  SkeletonLoader(
+                    child: SkeletonBox(width: double.infinity, height: 48, radius: 10),
+                  ),
+                  SizedBox(height: 16),
+                  SkeletonLoader(
+                    child: SkeletonBox(width: double.infinity, height: 48, radius: 10),
+                  ),
+                  SizedBox(height: 16),
+                  SkeletonLoader(
+                    child: SkeletonBox(width: double.infinity, height: 100, radius: 10),
+                  ),
+                  SizedBox(height: 16),
+                  SkeletonLoader(
+                    child: SkeletonBox(width: double.infinity, height: 48, radius: 10),
+                  ),
                 ],
               ),
             );
           }
+
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),

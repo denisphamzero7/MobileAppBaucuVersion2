@@ -35,5 +35,7 @@ class ApiConstants {
 
   // === Công việc ===
   static const String taskAssignmentItems = "task-assignment-items";
+  static const String taskAssignmentPetitions = "task-assignment-petitions";
   static const String taskAssignmentPetitionsDepartments = "task-assignment-petitions/available-departments";
-}
+  static const String taskAssignmentPetitionsStats = "task-assignment-petitions/stats";
+}

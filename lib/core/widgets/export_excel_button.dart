@@ -21,9 +21,60 @@ class ExportExcelButton extends StatefulWidget {
     this.fileNamePrefix = 'Export',
   }) : super(key: key);
 
+  static Future<void> downloadAndSave({
+    required String url,
+    Map<String, dynamic>? queryParams,
+    String fileNamePrefix = 'Export',
+  }) async {
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    try {
+      final dio = DioHelper().dio;
+      Directory? dir;
+      if (Platform.isAndroid) {
+        dir = await getExternalStorageDirectory();
+        dir ??= await getApplicationDocumentsDirectory();
+      } else {
+        dir = await getApplicationDocumentsDirectory();
+      }
+
+      final timeStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final savePath = '${dir.path}/${fileNamePrefix}_$timeStamp.xlsx';
+
+      final response = await dio.download(
+        url,
+        savePath,
+        queryParameters: queryParams,
+      );
+
+      if (Get.isDialogOpen == true) Get.back();
+
+      if (response.statusCode == 200) {
+        Get.snackbar(
+          "Thành công",
+          "Đã xuất file thành công.\nLưu tại: $savePath",
+          duration: const Duration(seconds: 5),
+          mainButton: TextButton(
+            onPressed: () => OpenFile.open(savePath),
+            child: const Text("MỞ FILE", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+          ),
+        );
+      } else {
+        Get.snackbar("Lỗi", "Không thể xuất dữ liệu. HTTP ${response.statusCode}");
+      }
+    } catch (e) {
+      if (Get.isDialogOpen == true) Get.back();
+      Get.snackbar("Lỗi", "Đã xảy ra lỗi khi tải file Excel: $e");
+    }
+  }
+
   @override
   State<ExportExcelButton> createState() => _ExportExcelButtonState();
 }
+
 
 class _ExportExcelButtonState extends State<ExportExcelButton> {
   bool _isDownloading = false;
