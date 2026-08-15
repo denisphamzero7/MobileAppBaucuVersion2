@@ -1,10 +1,13 @@
-﻿import '../../untils/app_colors.dart';
+import '../../untils/app_colors.dart';
 import 'package:app_baucu_version1/controllers/auth_controller.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:app_baucu_version1/view/auth/forgot_password.dart';
 import 'package:app_baucu_version1/view/auth/signup_screen.dart';
 import 'package:app_baucu_version1/view/widgets/custom_textfield.dart';
+import '../../model/auth_model.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
+import '../widgets/organization_selection_dialog.dart';
 import 'package:get/get.dart';
 
 class SigninScreen extends StatefulWidget {
@@ -172,14 +175,37 @@ class _SigninScreenState extends State<SigninScreen> {
     );
   }
 
-  void _handleSignIn() {
+    void _handleSignIn() async {
     if (_formKey.currentState!.validate()) {
-      _authController.login(
+      final loginData = await _authController.login(
         _usernameController.text.trim(),
         _passwordController.text.trim(),
       );
+      
+      if (loginData != null) {
+        _showOrganizationSelectionDialog(loginData);
+      }
     }
   }
+
+  void _showOrganizationSelectionDialog(LoginData data) {
+    Get.dialog(
+      OrganizationSelectionDialog(
+        organizations: data.availableOrganizations,
+        isCancellable: false,
+        onSelect: (orgId) async {
+          final success = await _authController.switchOrganizationAfterLogin(orgId, data);
+          if (success) {
+            Get.back();
+          }
+        },
+        onCancel: () {
+          GetStorage().remove('accessToken');
+          Get.back();
+          Get.snackbar("Đăng nhập thất bại", "Bạn chưa chọn tổ chức");
+        },
+      ),
+      barrierDismissible: false,
+    );
+  }
 }
-
-

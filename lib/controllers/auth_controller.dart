@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart' hide User;
+// import 'package:onesignal_flutter/onesignal_flutter.dart' hide User;
 
 import '../model/auth_model.dart';
 import '../service/auth_service.dart';
@@ -24,6 +24,27 @@ class AuthController extends GetxController {
 
   // Biến lưu danh sách quyền CASL
   final RxList<Map<String, dynamic>> userAbilities = <Map<String, dynamic>>[].obs;
+
+  String get currentOrganizationName {
+    if (currentOrganizationId.value == null) return "Chưa chọn tổ chức";
+    var orgsJson = _storage.read('availableOrganizations') as List?;
+    if (orgsJson != null) {
+      for (var json in orgsJson) {
+         if (json['id'] == currentOrganizationId.value) {
+            return json['name'].toString();
+         }
+      }
+    }
+    return "Tổ chức không xác định";
+  }
+
+  List<Organization> get availableOrganizationsList {
+    var orgsJson = _storage.read('availableOrganizations') as List?;
+    if (orgsJson != null) {
+      return orgsJson.map((x) => Organization.fromJson(x as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
 
   @override
   void onInit() {
@@ -55,7 +76,7 @@ class AuthController extends GetxController {
 
     var savedAbilities = _storage.read('abilities');
     if (savedAbilities != null) {
-      userAbilities.value = List<Map<String, dynamic>>.from(savedAbilities);
+      userAbilities.value = (savedAbilities as List).map((e) => Map<String, dynamic>.from(e)).toList();
     }
 
     // Check Login (yêu cầu có cả Token và Tổ chức đã chọn)
@@ -66,18 +87,19 @@ class AuthController extends GetxController {
       String? userId = currentUser.value?.id.toString() ?? _storage.read('userId');
 
       if (userId != null && userId.isNotEmpty) {
-        OneSignal.login(userId);
-        log("🔔 [OneSignal] Auto-login với UserID: $userId");
+        // Tạm ẩn OneSignal
+        // OneSignal.login(userId);
+        // log("🔔 [OneSignal] Auto-login với UserID: $userId");
       } else {
-        log("⚠️ [OneSignal] Auto-login nhưng không tìm thấy 'userId' đã lưu.");
+        // log("⚠️ [OneSignal] Auto-login nhưng không tìm thấy 'userId' đã lưu.");
       }
     } else {
       isLoggedIn.value = false;
     }
   }
 
-  // 2. Hàm Đăng Nhập
-  Future<void> login(String email, String password) async {
+    // 2. Hàm Đăng Nhập
+  Future<LoginData?> login(String email, String password) async {
     try {
       isLoading.value = true;
 
@@ -88,11 +110,10 @@ class AuthController extends GetxController {
 
         if (data.availableOrganizations.isEmpty) {
           Get.snackbar("Đăng nhập thất bại", "Tài khoản không thuộc bất kỳ tổ chức nào.", snackPosition: SnackPosition.BOTTOM);
-          return;
+          return null;
         }
 
-        // Hiện popup chọn tổ chức
-        _showOrganizationSelectionDialog(data);
+        return data;
       } else {
         Get.snackbar("Đăng nhập thất bại", "Không thể lấy thông tin đăng nhập từ hệ thống.", snackPosition: SnackPosition.BOTTOM);
       }
@@ -105,128 +126,46 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  // Popup hiển thị danh sách tổ chức để chọn
-  void _showOrganizationSelectionDialog(LoginData data) {
-    Get.dialog(
-      PopScope(
-        canPop: false, // Không cho phép đóng popup bằng nút Back của thiết bị để bắt buộc chọn
-        onPopInvokedWithResult: (didPop, result) {
-          if (!didPop) {
-            _storage.remove('accessToken');
-            Get.snackbar("Đăng nhập thất bại", "Bạn chưa chọn tổ chức");
-          }
-        },
-        child: Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  "Chọn tổ chức làm việc",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Vui lòng chọn tổ chức dưới đây để tiếp tục:",
-                  style: TextStyle(fontSize: 14, color: AppColors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: data.availableOrganizations.length,
-                    itemBuilder: (context, index) {
-                      final org = data.availableOrganizations[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            org.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () async {
-                            // Gọi API switch organization
-                            final success = await _switchOrganization(org.id, data);
-                            if (success) {
-                              Get.back(); // Đóng popup chọn tổ chức
-                            }
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    _storage.remove('accessToken');
-                    Get.back(); // Đóng popup
-                    Get.snackbar("Đăng nhập thất bại", "Bạn chưa chọn tổ chức");
-                  },
-                  child: const Text("Hủy bỏ", style: TextStyle(color: AppColors.red)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      barrierDismissible: false, // Bắt buộc tương tác qua popup
-    );
+    return null;
   }
 
   // Gọi API chuyển đổi và xác thực tổ chức
-  Future<bool> _switchOrganization(int orgId, LoginData loginData) async {
+      Future<bool> switchOrganizationAfterLogin(int orgId, LoginData loginData) async {
     try {
-      // Lưu tạm thời token để DioHelper gửi kèm trong API switchOrganization
+      // Lưu tạm thời token cũ để gửi request switch
       await _storage.write('accessToken', loginData.accessToken);
 
       final response = await _authService.switchOrganization(orgId);
       if (response != null && response.statusCode == 200) {
-        // Lưu cấu hình chính thức
-        await _storage.write('accessToken', loginData.accessToken);
+        final newData = response.data;
+        
+        // NẾU API switch trả về access_token rỗng, có nghĩa là API chỉ trả về user info / abilities chứ không cấp token mới
+        // Trong trường hợp đó, ta PHẢI giữ lại token cũ.
+        final String finalToken = (newData != null && newData.accessToken.isNotEmpty) 
+            ? newData.accessToken 
+            : loginData.accessToken;
+
+        await _storage.write('accessToken', finalToken);
         await _storage.write('organizationId', orgId);
         currentOrganizationId.value = orgId;
 
-        // Lưu danh sách tổ chức để chuyển đổi linh hoạt
-        final orgsJson = loginData.availableOrganizations.map((x) => x.toJson()).toList();
+        // Nếu API switch không trả về availableOrganizations (rỗng), thì giữ lại cái cũ
+        final orgsList = (newData != null && newData.availableOrganizations.isNotEmpty) 
+            ? newData.availableOrganizations 
+            : loginData.availableOrganizations;
+        final orgsJson = orgsList.map((x) => x.toJson()).toList();
         await _storage.write('availableOrganizations', orgsJson);
 
-        // Lưu thông tin User
-        currentUser.value = loginData.user;
-        await _storage.write('userInfo', loginData.user.toJson());
-        await _storage.write('userId', loginData.user.id.toString());
+        final user = (newData != null && newData.user.id != 0) ? newData.user : loginData.user;
+        currentUser.value = user;
+        await _storage.write('userInfo', user.toJson());
+        await _storage.write('userId', user.id.toString());
 
-        userAbilities.value = loginData.abilities; 
-        await _storage.write('abilities', loginData.abilities);
+        final abilities = (newData != null && newData.abilities.isNotEmpty) ? newData.abilities : loginData.abilities;
+        userAbilities.value = abilities; 
+        await _storage.write('abilities', abilities);
 
-        // --- ONESIGNAL LOGIN ---
-        OneSignal.login(loginData.user.id.toString());
-
-        // Cập nhật trạng thái chung
         isLoggedIn.value = true;
-
-        Get.snackbar("Thành công", "Đăng nhập thành công!");
-        
-        // Thêm delay 1s để người dùng kịp đọc thông báo trước khi chuyển trang
-        await Future.delayed(const Duration(seconds: 1));
-        
         Get.offAllNamed('/home');
         return true;
       } else {
@@ -235,12 +174,13 @@ class AuthController extends GetxController {
         return false;
       }
     } catch (e) {
-      log("Lỗi switchOrganization: $e");
-      Get.snackbar("Thất bại", "Bạn chọn sai tổ chức");
+      Get.snackbar("Thất bại", "Lỗi chuyển đổi tổ chức: ${e.toString()}");
       await _storage.remove('accessToken');
       return false;
     }
   }
+
+
 
   // 2.1. Hàm Đăng Ký
   Future<bool> register({
@@ -281,8 +221,9 @@ class AuthController extends GetxController {
     }
 
     // ONESIGNAL LOGOUT
-    OneSignal.logout();
-    log("🔔 [OneSignal] Đã Logout");
+    // Tạm ẩn OneSignal
+    // OneSignal.logout();
+    // log("🔔 [OneSignal] Đã Logout");
 
     // Xóa dữ liệu Local
     await _storage.remove('accessToken');
@@ -320,9 +261,12 @@ class AuthController extends GetxController {
         await _storage.write('organizationId', orgId);
         currentOrganizationId.value = orgId;
         
-        // Làm mới TaskController
+        // Làm mới TaskController (Làm mới danh sách, phòng ban và thống kê)
         if (Get.isRegistered<TaskController>()) {
-          Get.find<TaskController>().fetchTasks();
+          final taskCtrl = Get.find<TaskController>();
+          taskCtrl.fetchDepartments();
+          taskCtrl.fetchTasks();
+          taskCtrl.fetchStats();
         }
         
         Get.snackbar("Thành công", "Đã chuyển đổi tổ chức thành công!");

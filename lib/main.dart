@@ -18,7 +18,7 @@ import 'package:app_baucu_version1/untils/app_themes.dart';
 // 3. IMPORT FILE ONESIGNAL CỦA BẠN
 // (Lưu ý: Hãy sửa đường dẫn này cho đúng với nơi bạn đặt file onesignal.dart)
 // Ví dụ nếu bạn để ở thư mục lib/helper/onesignal.dart thì import như sau:
-import 'package:app_baucu_version1/helper/onesignal.dart';
+// import 'package:app_baucu_version1/helper/onesignal.dart';
 
 import 'package:app_baucu_version1/controllers/voter_controller.dart';
 import 'package:app_baucu_version1/controllers/weather_controller.dart';
@@ -38,7 +38,8 @@ void main() async {
   await GetStorage.init();
 
   // C. Khởi tạo OneSignal (Gọi hàm từ file onesignal.dart của bạn)
-  await initOneSignal();
+  // Tạm ẩn OneSignal chưa dùng tới
+  // await initOneSignal();
 
   // D. Inject (Tiêm) các Controller vào bộ nhớ
   Get.put(ThemeController());

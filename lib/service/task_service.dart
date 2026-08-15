@@ -6,10 +6,28 @@ import '../model/task_model.dart';
 class TaskService {
   final DioHelper _http = DioHelper();
 
-  Future<BaseResponse<List<TaskModel>>?> getTasks() async {
+  Future<BaseResponse<List<TaskModel>>?> getTasks({
+    String? type,
+    int? userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
+      final Map<String, dynamic> queryParams = {
+        'page': page,
+        'limit': limit,
+      };
+      if (type == 'received' && userId != null) {
+        queryParams['assignee_id'] = userId;
+      } else if (type == 'sent' && userId != null) {
+        queryParams['assigner_id'] = userId;
+      } else if (type != null && type.isNotEmpty) {
+        queryParams['type'] = type;
+      }
+
       final response = await _http.get(
         url: ApiConstants.taskAssignmentItems,
+        queryParameters: queryParams,
       );
       print("in kết quả tasks: $response");
       if (response != null) {
@@ -30,6 +48,55 @@ class TaskService {
     } catch (e) {
       print("Error in repository getTasks: $e");
       return null;
+    }
+  }
+
+      Future<dynamic> exportTasks({String? type, int? userId, String? keyword, String? status, String? timingStatus}) async {
+    try {
+      final Map<String, dynamic> queryParams = {};
+      if (type == 'received' && userId != null) queryParams['assignee_id'] = userId;
+      else if (type == 'sent' && userId != null) queryParams['assigner_id'] = userId;
+      else if (type != null && type.isNotEmpty) queryParams['type'] = type;
+      
+      if (keyword != null && keyword.isNotEmpty) queryParams['search'] = keyword;
+      if (status != null && status != 'all') queryParams['processing_status'] = status;
+      if (timingStatus != null && timingStatus != 'all') queryParams['timing_status'] = timingStatus;
+
+      final response = await _http.get(
+        url: '${ApiConstants.taskAssignmentItems}/export',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      // Wait, download file using Dio requires responseType: ResponseType.bytes.
+      // Since DioHelper might not support ResponseType, we should add a raw download method.
+      return response;
+    } catch (e) {
+      print("Error in exportTasks: $e");
+      return null;
+    }
+  }
+
+  Future<bool> deleteTask(int id) async {
+    try {
+      final response = await _http.delete(
+        url: '/',
+      );
+      return response != null;
+    } catch (e) {
+      print("Error in repository deleteTask: ");
+      return false;
+    }
+  }
+
+  Future<bool> bulkDeleteTasks(List<int> ids) async {
+    try {
+      final response = await _http.delete(
+        url: '/bulk-delete',
+        data: {'ids': ids},
+      );
+      return response != null;
+    } catch (e) {
+      print("Error in repository bulkDeleteTasks: ");
+      return false;
     }
   }
 
@@ -54,4 +121,135 @@ class TaskService {
       return null;
     }
   }
+
+  Future<dynamic> getStatsByDepartment({String? startDate, String? endDate}) async {
+    try {
+      final Map<String, dynamic> queryParams = {};
+      if (startDate != null && startDate.isNotEmpty) queryParams['from_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) queryParams['to_date'] = endDate;
+
+      final response = await _http.get(
+        url: '${ApiConstants.taskAssignmentItems}/stats-by-department',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      print("in kết quả stats by department: $response");
+      return response;
+    } catch (e) {
+      print("Error in repository getStatsByDepartment: $e");
+      return null;
+    }
+  }
+
+  Future<dynamic> getStatsByItemType({String? startDate, String? endDate}) async {
+    try {
+      final Map<String, dynamic> queryParams = {};
+      if (startDate != null && startDate.isNotEmpty) queryParams['from_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) queryParams['to_date'] = endDate;
+
+      final response = await _http.get(
+        url: '${ApiConstants.taskAssignmentItems}/stats-by-item-type',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      print("in kết quả stats by item type: $response");
+      return response;
+    } catch (e) {
+      print("Error in repository getStatsByItemType: $e");
+      return null;
+    }
+  }
+
+  Future<BaseResponse<TaskModel>?> createTask(Map<String, dynamic> data) async {
+    try {
+      final response = await _http.post(
+        url: ApiConstants.taskAssignmentItems,
+        data: data,
+      );
+      print("in kết quả tạo task: $response");
+      if (response != null) {
+        return BaseResponse.fromJson(
+          response,
+          (json) => TaskModel.fromJson(json is Map<String, dynamic> ? json : {}),
+        );
+      }
+      return null;
+    } catch (e) {
+      print("Error in repository createTask: $e");
+      rethrow;
+    }
+  }
+
+  Future<BaseResponse<TaskModel>?> updateTask(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await _http.put(
+        url: '${ApiConstants.taskAssignmentItems}/$id',
+        data: data,
+      );
+      print("in kết quả cập nhật task: $response");
+      if (response != null) {
+        return BaseResponse.fromJson(
+          response,
+          (json) => TaskModel.fromJson(json is Map<String, dynamic> ? json : {}),
+        );
+      }
+      return null;
+    } catch (e) {
+      print("Error in repository updateTask: $e");
+      rethrow;
+    }
+  }
+
+  Future<BaseResponse<List<TaskItemType>>?> getTaskItemTypes() async {
+    try {
+      final response = await _http.get(
+        url: 'task-assignment-item-types',
+      );
+      print("in kết quả item types: $response");
+      if (response != null) {
+        return BaseResponse.fromJson(
+          response,
+          (json) {
+            List list = [];
+            if (json is List) {
+              list = json;
+            } else if (json is Map<String, dynamic> && json['data'] is List) {
+              list = json['data'] as List;
+            }
+            return list.map((item) => TaskItemType.fromJson(item as Map<String, dynamic>)).toList();
+          },
+        );
+      }
+      return null;
+    } catch (e) {
+      print("Error in repository getTaskItemTypes: $e");
+      return null;
+    }
+  }
+
+  Future<BaseResponse<List<TaskAssignmentDocument>>?> getTaskAssignmentDocuments() async {
+    try {
+      final response = await _http.get(
+        url: 'task-assignment-documents',
+      );
+      print("in kết quả task-assignment-documents: $response");
+      if (response != null) {
+        return BaseResponse.fromJson(
+          response,
+          (json) {
+            List list = [];
+            if (json is List) {
+              list = json;
+            } else if (json is Map<String, dynamic> && json['data'] is List) {
+              list = json['data'] as List;
+            }
+            return list.map((item) => TaskAssignmentDocument.fromJson(item as Map<String, dynamic>)).toList();
+          },
+        );
+      }
+      return null;
+    } catch (e) {
+      print("Error in repository getTaskAssignmentDocuments: $e");
+      return null;
+    }
+  }
 }
+

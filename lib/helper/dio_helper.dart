@@ -68,6 +68,8 @@ class DioHelper {
             options.headers["X-Organization-Id"] = orgId.toString();
           }
 
+          log("🚀 [REQ] >> ${options.method} ${options.path} | OrgID: ${orgId ?? 'None'}");
+
           return handler.next(options);
         },
 
@@ -181,10 +183,11 @@ class DioHelper {
   // 7. DELETE
   Future<dynamic> delete({
     required String url,
+    dynamic data,
   }) async {
     try {
       await _checkConnectivity();
-      final response = await _dio.delete(url);
+      final response = await _dio.delete(url, data: data);
       return response.data;
     } on DioException catch (e) {
       throw _parseError(e);

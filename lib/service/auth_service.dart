@@ -13,6 +13,7 @@ class AuthService {
           data: { "email": email, "password": password }
       );
       print("in kết quả: $response");
+      print('Switch org response: $response');
       if (response != null) {
         return BaseResponse.fromJson(
             response,
@@ -26,7 +27,8 @@ class AuthService {
     }
   }
 
-  Future<BaseResponse?> switchOrganization(int organizationId) async {
+  Future<BaseResponse<LoginData>?> switchOrganization(int organizationId) async {
+    print('Calling switchOrganization');
     try {
       final response = await _http.post(
         url: ApiConstants.switchOrganization,
@@ -37,7 +39,7 @@ class AuthService {
       if (response != null) {
         return BaseResponse.fromJson(
           response,
-          (json) => null,
+          (json) => LoginData.fromJson(json as Map<String, dynamic>),
         );
       }
       return null;

@@ -406,40 +406,145 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            '1. PHÂN BỐ THEO TRẠNG THÁI XỬ LÝ',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
-          ),
-          const SizedBox(height: 12),
+          Obx(() {
+            final isDept = activeDistributionTab.value == 0;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '1. PHÂN BỐ THEO TRẠNG THÁI XỬ LÝ',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
+                ),
+                const SizedBox(height: 12),
 
-          // Horizontal segment bars - Status
-          _buildSegmentRow('UBND Phường', 5, 25, 24, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Công an Phường', 2, 10, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Y tế Phường', 1, 8, 4, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Đội QLĐT', 3, 12, 10, [AppColors.todo, AppColors.inProgress, AppColors.done]),
-          _buildSegmentRow('Tư pháp', 2, 6, 8, [AppColors.todo, AppColors.inProgress, AppColors.done]),
+                if (isDept) ...[
+                  if (taskController.departmentStatsList.isNotEmpty)
+                    ...taskController.departmentStatsList.map((item) {
+                      final name = (item['department_name'] ?? item['name'] ?? item['department'] ?? 'Phòng ban').toString();
+                      final todo = ((item['todo'] ?? item['todo_count'] ?? 0) as num).toInt();
+                      final inProgress = ((item['in_progress'] ?? item['in_progress_count'] ?? 0) as num).toInt();
+                      final pending = ((item['pending_approval'] ?? item['pending'] ?? 0) as num).toInt();
+                      final done = ((item['completed'] ?? item['done_count'] ?? item['done'] ?? 0) as num).toInt();
+                      final paused = ((item['paused'] ?? 0) as num).toInt();
+                      final cancelled = ((item['cancelled'] ?? 0) as num).toInt();
+                      return _buildSegmentRow(name, [
+                        {'count': todo, 'color': AppColors.todo},
+                        {'count': inProgress, 'color': AppColors.inProgress},
+                        {'count': pending, 'color': AppColors.pendingApproval},
+                        {'count': done, 'color': AppColors.done},
+                        {'count': paused, 'color': AppColors.paused},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else if (taskController.departments.isNotEmpty)
+                    ...taskController.departments.take(5).map((dept) {
+                      return _buildSegmentRow(dept.name, [
+                        {'count': 1, 'color': AppColors.todo},
+                        {'count': 2, 'color': AppColors.inProgress},
+                        {'count': 3, 'color': AppColors.done},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Đang tải phòng ban...', []),
+                  ]
+                ] else ...[
+                  if (taskController.itemTypeStatsList.isNotEmpty)
+                    ...taskController.itemTypeStatsList.map((item) {
+                      final name = (item['item_type_name'] ?? item['type_name'] ?? item['name'] ?? item['title'] ?? item['task_assignment_item_type_name'] ?? 'Loại công việc').toString();
+                      final todo = ((item['todo'] ?? item['todo_count'] ?? 0) as num).toInt();
+                      final inProgress = ((item['in_progress'] ?? item['in_progress_count'] ?? 0) as num).toInt();
+                      final pending = ((item['pending_approval'] ?? item['pending'] ?? 0) as num).toInt();
+                      final done = ((item['completed'] ?? item['done_count'] ?? item['done'] ?? 0) as num).toInt();
+                      final paused = ((item['paused'] ?? 0) as num).toInt();
+                      final cancelled = ((item['cancelled'] ?? 0) as num).toInt();
+                      return _buildSegmentRow(name, [
+                        {'count': todo, 'color': AppColors.todo},
+                        {'count': inProgress, 'color': AppColors.inProgress},
+                        {'count': pending, 'color': AppColors.pendingApproval},
+                        {'count': done, 'color': AppColors.done},
+                        {'count': paused, 'color': AppColors.paused},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Chưa có loại công việc', []),
+                  ]
+                ],
 
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: AppColors.black12),
-          const SizedBox(height: 16),
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: AppColors.black12),
+                const SizedBox(height: 16),
 
-          const Text(
-            '2. PHÂN BỐ THEO TIẾN ĐỘ THỜI GIAN',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
-          ),
-          const SizedBox(height: 12),
+                const Text(
+                  '2. PHÂN BỐ THEO TIẾN ĐỘ THỜI GIAN',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.grey),
+                ),
+                const SizedBox(height: 12),
 
-          // Horizontal segment bars - Timing
-          _buildSegmentRow('Mục 1', 6, 3, 1, [AppColors.early, AppColors.overdue, AppColors.late]),
-          _buildSegmentRow('Mục 2', 1, 3, 1, [AppColors.upcoming, AppColors.early, AppColors.late]),
-          _buildSegmentRow('Mục 3', 1, 3, 1, [AppColors.upcoming, AppColors.early, AppColors.late]),
-          _buildSegmentRow('Mục 4', 2, 1, 3, [AppColors.upcoming, AppColors.onTime, AppColors.overdue]),
-          _buildSegmentRow('Mục 5', 1, 3, 2, [AppColors.upcoming, AppColors.early, AppColors.late, AppColors.overdue], 1),
-          _buildSegmentRow('Mục 6', 3, 4, 0, [AppColors.early, AppColors.overdue]),
+                if (isDept) ...[
+                  if (taskController.departmentStatsList.isNotEmpty)
+                    ...taskController.departmentStatsList.map((item) {
+                      final name = (item['department_name'] ?? item['name'] ?? item['department'] ?? 'Phòng ban').toString();
+                      final total = ((item['total'] ?? 0) as num).toInt();
+                      final overdue = ((item['overdue'] ?? item['overdue_count'] ?? 0) as num).toInt();
+                      final cancelled = ((item['cancelled'] ?? 0) as num).toInt();
+                      final early = ((item['early'] ?? 0) as num).toInt();
+                      final onTime = ((item['on_time'] ?? 0) as num).toInt();
+                      final lateVal = ((item['late'] ?? 0) as num).toInt();
+                      final upcoming = (total - overdue - cancelled - early - onTime - lateVal) > 0
+                          ? (total - overdue - cancelled - early - onTime - lateVal)
+                          : 0;
+                      return _buildSegmentRow(name, [
+                        {'count': upcoming, 'color': AppColors.inProgress},
+                        {'count': early, 'color': AppColors.early},
+                        {'count': onTime, 'color': AppColors.onTime},
+                        {'count': lateVal, 'color': AppColors.late},
+                        {'count': overdue, 'color': AppColors.overdue},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else if (taskController.departments.isNotEmpty)
+                    ...taskController.departments.take(5).map((dept) {
+                      return _buildSegmentRow(dept.name, [
+                        {'count': 1, 'color': AppColors.inProgress},
+                        {'count': 2, 'color': AppColors.overdue},
+                        {'count': 1, 'color': AppColors.late},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Đang tải phòng ban...', []),
+                  ]
+                ] else ...[
+                  if (taskController.itemTypeStatsList.isNotEmpty)
+                    ...taskController.itemTypeStatsList.map((item) {
+                      final name = (item['item_type_name'] ?? item['type_name'] ?? item['name'] ?? item['title'] ?? item['task_assignment_item_type_name'] ?? 'Loại công việc').toString();
+                      final total = ((item['total'] ?? 0) as num).toInt();
+                      final overdue = ((item['overdue'] ?? item['overdue_count'] ?? 0) as num).toInt();
+                      final cancelled = ((item['cancelled'] ?? 0) as num).toInt();
+                      final early = ((item['early'] ?? 0) as num).toInt();
+                      final onTime = ((item['on_time'] ?? 0) as num).toInt();
+                      final lateVal = ((item['late'] ?? 0) as num).toInt();
+                      final upcoming = (total - overdue - cancelled - early - onTime - lateVal) > 0
+                          ? (total - overdue - cancelled - early - onTime - lateVal)
+                          : 0;
+                      return _buildSegmentRow(name, [
+                        {'count': upcoming, 'color': AppColors.inProgress},
+                        {'count': early, 'color': AppColors.early},
+                        {'count': onTime, 'color': AppColors.onTime},
+                        {'count': lateVal, 'color': AppColors.late},
+                        {'count': overdue, 'color': AppColors.overdue},
+                        {'count': cancelled, 'color': AppColors.cancelled},
+                      ]);
+                    })
+                  else ...[
+                    _buildSegmentRow('Chưa có loại công việc', []),
+                  ]
+                ],
 
-          const SizedBox(height: 16),
-          // Legend for section 2
-          _buildTimingLegendGrid(),
+                const SizedBox(height: 16),
+                _buildTimingLegendGrid(),
+            ]);
+          }),
         ],
       ),
     );
@@ -532,7 +637,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSegmentRow(String label, int val1, int val2, int val3, List<Color> colors, [int val4 = 0]) {
+  Widget _buildSegmentRow(String label, List<Map<String, dynamic>> segments) {
+    final total = segments.fold<int>(0, (sum, s) => sum + ((s['count'] ?? 0) as num).toInt());
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -552,14 +658,18 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 10,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(5),
-                child: Row(
-                  children: [
-                    if (val1 > 0 && colors.isNotEmpty) Expanded(flex: val1, child: Container(color: colors[0])),
-                    if (val2 > 0 && colors.length > 1) Expanded(flex: val2, child: Container(color: colors[1])),
-                    if (val3 > 0 && colors.length > 2) Expanded(flex: val3, child: Container(color: colors[2])),
-                    if (val4 > 0 && colors.length > 3) Expanded(flex: val4, child: Container(color: colors[3])),
-                  ],
-                ),
+                child: total == 0
+                    ? Container(color: AppColors.grey.withOpacity(0.12))
+                    : Row(
+                        children: segments.where((s) => ((s['count'] ?? 0) as num) > 0).map((s) {
+                          final count = ((s['count'] ?? 0) as num).toInt();
+                          final color = s['color'] as Color;
+                          return Expanded(
+                            flex: count,
+                            child: Container(color: color),
+                          );
+                        }).toList(),
+                      ),
               ),
             ),
           ),
@@ -601,16 +711,16 @@ class _HomeScreenState extends State<HomeScreen> {
             childAspectRatio: 2.8,
             children: [
               _buildDirectoryButton('Công việc đang giao', Icons.send_outlined, AppColors.badgeBlueBg, AppColors.primary, () {
-                Get.find<NavigationController>().changeIndex(3);
+                Get.find<NavigationController>().changeIndex(1);
               }, isDark),
               _buildDirectoryButton('Công việc được giao', Icons.mail_outline, AppColors.badgeGreenBg, AppColors.done, () {
-                Get.find<NavigationController>().changeIndex(3);
+                Get.find<NavigationController>().changeIndex(2);
               }, isDark),
               _buildDirectoryButton('Thống kê & Báo cáo', Icons.pie_chart_outline, AppColors.bgPurpleLight, AppColors.todo, () {
-                Get.find<NavigationController>().changeIndex(3);
+                Get.find<NavigationController>().changeIndex(4);
               }, isDark),
               _buildDirectoryButton('Đơn thư & Kiến nghị', Icons.description_outlined, AppColors.bgYellowLight, AppColors.paused, () {
-                Get.find<NavigationController>().changeIndex(4);
+                Get.find<NavigationController>().changeIndex(3);
               }, isDark),
               _buildDirectoryButton('Thông tin cá nhân', Icons.person_outline, AppColors.badgeBlueBg, AppColors.inProgress, () {
                 Get.to(() => const ProfileScreen());
@@ -897,5 +1007,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
 

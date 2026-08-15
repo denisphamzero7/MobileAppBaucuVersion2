@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/task_controller.dart';
@@ -186,7 +186,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
-                        value: taskController.selectedDepartmentId.value,
+                        value: (taskController.selectedDepartmentId.value != null && taskController.departments.any((d) => d.id == taskController.selectedDepartmentId.value)) ? taskController.selectedDepartmentId.value : null,
                         hint: const Text('Tất cả phòng ban', style: TextStyle(fontSize: 12)),
                         isExpanded: true,
                         icon: Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.grey[600]),
@@ -195,7 +195,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
                             value: null,
                             child: Text('Tất cả phòng ban', style: TextStyle(fontSize: 12)),
                           ),
-                          ...taskController.departments.map((dept) {
+                          ...{for (var d in taskController.departments) d.id: d}.values.map((dept) {
                             return DropdownMenuItem<int>(
                               value: dept.id,
                               child: Text(dept.name, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
