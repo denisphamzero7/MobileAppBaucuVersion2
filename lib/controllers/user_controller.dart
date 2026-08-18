@@ -27,9 +27,11 @@ class UserController extends GetxController {
 
   }
 
-  // Hàm tải dữ liệu hồ sơ từ API
+  // Hàm tải dữ liệu hồ sơ từ API (Áp dụng SWR)
   Future<void> fetchProfile() async {
-    isLoading.value = true;
+    if (userProfile.value == null) {
+      isLoading.value = true;
+    }
     errorMessage.value = '';
 
     try {

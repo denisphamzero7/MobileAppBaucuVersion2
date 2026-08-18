@@ -124,8 +124,14 @@ class TaskService {
   }) async {
     try {
       final Map<String, dynamic> queryParams = {};
-      if (startDate != null && startDate.isNotEmpty) queryParams['start_date'] = startDate;
-      if (endDate != null && endDate.isNotEmpty) queryParams['end_date'] = endDate;
+      if (startDate != null && startDate.isNotEmpty) {
+        queryParams['start_date'] = startDate;
+        queryParams['from_date'] = startDate;
+      }
+      if (endDate != null && endDate.isNotEmpty) {
+        queryParams['end_date'] = endDate;
+        queryParams['to_date'] = endDate;
+      }
       if (departmentId != null) queryParams['department_id'] = departmentId;
       if (type == 'received' && userId != null) queryParams['assignee_id'] = userId;
       else if (type == 'sent' && userId != null) queryParams['assigner_id'] = userId;
@@ -151,8 +157,14 @@ class TaskService {
   Future<dynamic> getStatsByDepartment({String? startDate, String? endDate}) async {
     try {
       final Map<String, dynamic> queryParams = {};
-      if (startDate != null && startDate.isNotEmpty) queryParams['from_date'] = startDate;
-      if (endDate != null && endDate.isNotEmpty) queryParams['to_date'] = endDate;
+      if (startDate != null && startDate.isNotEmpty) {
+        queryParams['from_date'] = startDate;
+        queryParams['start_date'] = startDate;
+      }
+      if (endDate != null && endDate.isNotEmpty) {
+        queryParams['to_date'] = endDate;
+        queryParams['end_date'] = endDate;
+      }
 
       final response = await _http.get(
         url: '${ApiConstants.taskAssignmentItems}/stats-by-department',
@@ -171,8 +183,14 @@ class TaskService {
   Future<dynamic> getStatsByItemType({String? startDate, String? endDate}) async {
     try {
       final Map<String, dynamic> queryParams = {};
-      if (startDate != null && startDate.isNotEmpty) queryParams['from_date'] = startDate;
-      if (endDate != null && endDate.isNotEmpty) queryParams['to_date'] = endDate;
+      if (startDate != null && startDate.isNotEmpty) {
+        queryParams['from_date'] = startDate;
+        queryParams['start_date'] = startDate;
+      }
+      if (endDate != null && endDate.isNotEmpty) {
+        queryParams['to_date'] = endDate;
+        queryParams['end_date'] = endDate;
+      }
 
       final response = await _http.get(
         url: '${ApiConstants.taskAssignmentItems}/stats-by-item-type',

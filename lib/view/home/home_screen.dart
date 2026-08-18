@@ -4,9 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/task_controller.dart';
 import '../../controllers/navigation.dart';
+import '../../model/task_model.dart';
 import '../../untils/app_textstyles.dart';
 import '../../untils/app_colors.dart';
 import '../widgets/Status_info_card.dart';
+import '../widgets/skeleton_loader.dart';
 import '../user/user_screen.dart';
 import '../../core/api_constants.dart';
 import '../../core/widgets/app_refresher.dart';
@@ -871,7 +873,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Obx(() {
-            final tasks = taskController.tasksList;
+            final allTasks = taskController.tasksList;
+            final sentTasks = taskController.sentTasksList;
+            final receivedTasks = taskController.receivedTasksList;
+            // Ưu tiên tasksList, nếu rỗng thì gom từ sent + received
+            final List<TaskModel> tasks = allTasks.isNotEmpty
+                ? allTasks
+                : [...sentTasks, ...receivedTasks];
+
+            final isTasksLoading = taskController.isTypeLoading(null) && tasks.isEmpty;
+
+            if (isTasksLoading) {
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 3,
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
+                itemBuilder: (context, index) => const SkeletonLoader(
+                  child: SkeletonBox(
+                    width: double.infinity,
+                    height: 75,
+                    radius: 16,
+                  ),
+                ),
+              );
+            }
+
             if (tasks.isEmpty) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24.0),

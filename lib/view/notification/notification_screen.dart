@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../widgets/skeleton_loader.dart';
+import '../widgets/smart_skeleton_wrapper.dart';
 
 class NotificationScreen extends GetView<NotificationController> {
   const NotificationScreen({super.key});
@@ -15,11 +16,6 @@ class NotificationScreen extends GetView<NotificationController> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-
-    // Tự động load lại danh sách khi vào màn hình
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchNotifications();
-    });
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
@@ -55,36 +51,26 @@ class NotificationScreen extends GetView<NotificationController> {
         ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value && controller.notifications.isEmpty) {
-          return ListView.separated(
+        return SmartSkeletonWrapper(
+          showSkeleton: controller.shouldShowSkeleton,
+          skeleton: Padding(
             padding: const EdgeInsets.all(16),
-            itemCount: 5,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, __) => const SkeletonLoader(
-              child: SkeletonBox(
-                width: double.infinity,
-                height: 80,
-                radius: 12,
-              ),
+            child: SkeletonLoader(
+              child: AppSkeleton.listCards(count: 5, height: 80, radius: 12, verticalPadding: 6.0),
             ),
-          );
-        }
-
-        if (controller.notifications.isEmpty) {
-          return _buildEmptyState(isDark);
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchNotifications(),
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.notifications.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final item = controller.notifications[index];
-              return _buildNotificationItem(context, item, isDark);
-            },
           ),
+          onRefresh: () => controller.fetchNotifications(isManualPull: true),
+          child: controller.notifications.isEmpty
+              ? _buildEmptyState(isDark)
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.notifications.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final item = controller.notifications[index];
+                    return _buildNotificationItem(context, item, isDark);
+                  },
+                ),
         );
       }),
     );

@@ -6,7 +6,10 @@ class NotificationController extends GetxController {
   final NotificationService _notificationService = NotificationService();
 
   final RxList<NotificationModel> notifications = <NotificationModel>[].obs;
-  final RxBool isLoading = false.obs;
+  final RxBool isLoading = true.obs;
+  final RxBool isManualRefreshing = false.obs;
+
+  bool get shouldShowSkeleton => (isLoading.value && notifications.isEmpty) || isManualRefreshing.value;
 
   @override
   void onInit() {
@@ -14,8 +17,11 @@ class NotificationController extends GetxController {
     fetchNotifications();
   }
 
-  Future<void> fetchNotifications() async {
+  Future<void> fetchNotifications({bool isManualPull = false}) async {
     try {
+      if (isManualPull) {
+        isManualRefreshing.value = true;
+      }
       isLoading.value = true;
       final response = await _notificationService.getNotifications();
       if (response != null) {
@@ -25,6 +31,7 @@ class NotificationController extends GetxController {
       print("Lỗi fetchNotifications: $e");
     } finally {
       isLoading.value = false;
+      isManualRefreshing.value = false;
     }
   }
 }

@@ -188,6 +188,9 @@ class TaskDetailsBottomSheet extends StatelessWidget {
     final canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -232,158 +235,166 @@ class TaskDetailsBottomSheet extends StatelessWidget {
                   child: Icon(Icons.close, size: 20, color: isDark ? AppColors.white.withValues(alpha: 0.6) : AppColors.grey[600]),
                 ),
               ),
-
             ],
           ),
           const SizedBox(height: 12),
 
-          // Badges Row
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _buildStatusBadge(task.processingStatus),
-              _buildPriorityBadge(task.priority),
-              _buildTimingBadge(),
-            ],
-          ),
-          const SizedBox(height: 16),
+          // Scrollable Middle Body (Ngăn chặn tràn màn hình khi mô tả dài)
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Badges Row
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _buildStatusBadge(task.processingStatus),
+                      _buildPriorityBadge(task.priority),
+                      _buildTimingBadge(),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-          // Progress Bar Card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.white10 : AppColors.lightBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  // Progress Bar Card
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.white10 : AppColors.lightBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Tiến độ thực hiện',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.white70 : AppColors.grey[700],
+                              ),
+                            ),
+                            Text(
+                              '${task.completionPercent}%',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (task.completionPercent.clamp(0, 100)) / 100.0,
+                            backgroundColor: isDark ? AppColors.white24 : AppColors.grey[300],
+                            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                            minHeight: 6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Dates Row
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.white10 : AppColors.lightBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.play_circle_outline, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text('Bắt đầu:', style: TextStyle(fontSize: 12, color: AppColors.grey[600])),
+                            const Spacer(),
+                            Text(
+                              _formatDateTime(task.startAt),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.white : AppColors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6),
+                          child: Divider(height: 1, thickness: 0.5),
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.flag_outlined,
+                              size: 16,
+                              color: task.isOverdue ? AppColors.red : AppColors.done,
+                            ),
+                            const SizedBox(width: 8),
+                            Text('Hạn chót:', style: TextStyle(fontSize: 12, color: AppColors.grey[600])),
+                            const Spacer(),
+                            Text(
+                              _formatDateTime(task.endAt),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: task.isOverdue
+                                    ? AppColors.red
+                                    : (isDark ? AppColors.white : AppColors.black87),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Description Section
+                  if (task.description.isNotEmpty) ...[
                     Text(
-                      'Tiến độ thực hiện',
+                      'Mô tả chi tiết',
                       style: TextStyle(
+                        fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
                         color: isDark ? AppColors.white70 : AppColors.grey[700],
                       ),
                     ),
-                    Text(
-                      '${task.completionPercent}%',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
+                    const SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.white10 : AppColors.lightBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        task.description,
+                        style: TextStyle(
+                          color: isDark ? AppColors.grey[300] : AppColors.black87,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 10),
                   ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: (task.completionPercent.clamp(0, 100)) / 100.0,
-                    backgroundColor: isDark ? AppColors.white24 : AppColors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                    minHeight: 6,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
 
-          // Dates Row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.white10 : AppColors.lightBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.play_circle_outline, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text('Bắt đầu:', style: TextStyle(fontSize: 12, color: AppColors.grey[600])),
-                    const Spacer(),
-                    Text(
-                      _formatDateTime(task.startAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.white : AppColors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6),
-                  child: Divider(height: 1, thickness: 0.5),
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.flag_outlined,
-                      size: 16,
-                      color: task.isOverdue ? AppColors.red : AppColors.done,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Hạn chót:', style: TextStyle(fontSize: 12, color: AppColors.grey[600])),
-                    const Spacer(),
-                    Text(
-                      _formatDateTime(task.endAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: task.isOverdue
-                            ? AppColors.red
-                            : (isDark ? AppColors.white : AppColors.black87),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Description Section
-          if (task.description.isNotEmpty) ...[
-            Text(
-              'Mô tả chi tiết',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: isDark ? AppColors.white70 : AppColors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.white10 : AppColors.lightBg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                task.description,
-                style: TextStyle(
-                  color: isDark ? AppColors.grey[300] : AppColors.black87,
-                  fontSize: 13,
-                  height: 1.4,
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-          ] else ...[
-            const SizedBox(height: 12),
-          ],
-
-          // Actions Row
+          // Actions Row (Cố định ở đáy, luôn hiển thị rõ ràng)
           Row(
             children: [
               if (canDelete) ...[

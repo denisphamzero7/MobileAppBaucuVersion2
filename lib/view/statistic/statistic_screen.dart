@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../controllers/task_controller.dart';
-import '../../controllers/navigation.dart';
 import '../../untils/app_colors.dart';
-import '../../core/widgets/app_refresher.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/smart_skeleton_wrapper.dart';
 
 class StatisticScreen extends StatefulWidget {
 
@@ -25,19 +24,11 @@ class _StatisticScreenState extends State<StatisticScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshStats();
-    });
+    taskController.fetchStats();
   }
 
   Future<void> _refreshStats() async {
-    await Future.wait([
-      taskController.fetchStats(),
-      taskController.fetchDepartmentStats(),
-      taskController.fetchItemTypeStats(),
-      taskController.fetchTasks(),
-      taskController.fetchDepartments(),
-    ]);
+    await taskController.fetchStats();
   }
 
 
@@ -48,62 +39,63 @@ class _StatisticScreenState extends State<StatisticScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       appBar: AppBar(
-        leadingWidth: 40,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-          onPressed: () {
-            Get.find<NavigationController>().changeIndex(0);
-          },
+        title: Text(
+          'Thống kê công việc',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.white : AppColors.black87,
+          ),
         ),
-        title: const Text(
-          'Thống kê & Báo cáo lãnh đạo',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        centerTitle: false,
-        backgroundColor: isDark ? AppColors.black : AppColors.white,
         elevation: 0,
+        backgroundColor: isDark ? AppColors.darkBg : AppColors.white,
         foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
       body: SafeArea(
-        child: AppRefresher(
-          onRefresh: _refreshStats,
-          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-          child: Obx(() {
-            if (taskController.isStatsLoading.value && taskController.stats.value.total == 0) {
+        child: Obx(() {
+          final isSkeleton = taskController.isStatsLoading.value && taskController.stats.value.total == 0;
 
-
-              return Column(
+          return SmartSkeletonWrapper(
+            showSkeleton: isSkeleton,
+            skeleton: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+              child: SkeletonLoader(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSkeleton.searchBar(height: 48, radius: 14),
+                    const SizedBox(height: 12),
+                    AppSkeleton.grid(crossAxisCount: 3, itemCount: 6, childAspectRatio: 2.1, height: 44),
+                    const SizedBox(height: 16),
+                    AppSkeleton.grid(crossAxisCount: 3, itemCount: 6, childAspectRatio: 2.1, height: 44),
+                    const SizedBox(height: 16),
+                    const SkeletonBox(width: double.infinity, height: 160, radius: 14),
+                  ],
+                ),
+              ),
+            ),
+            onRefresh: _refreshStats,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 48, radius: 14)),
-                  SizedBox(height: 12),
-                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 110, radius: 14)),
-                  SizedBox(height: 16),
-                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 110, radius: 14)),
-                  SizedBox(height: 16),
-                  SkeletonLoader(child: SkeletonBox(width: double.infinity, height: 160, radius: 14)),
+                children: [
+                  _buildTopFilters(isDark),
+                  const SizedBox(height: 12),
+                  _buildStatusGrid(isDark),
+                  const SizedBox(height: 16),
+                  _buildTimingGrid(isDark),
+                  const SizedBox(height: 16),
+                  _buildDoughnutChartsSection(isDark),
+                  const SizedBox(height: 16),
+                  _buildDetailedDistributionSection(isDark),
                 ],
-              );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopFilters(isDark),
-                const SizedBox(height: 12),
-                _buildStatusGrid(isDark),
-                const SizedBox(height: 16),
-                _buildTimingGrid(isDark),
-                const SizedBox(height: 16),
-                _buildDoughnutChartsSection(isDark),
-                const SizedBox(height: 16),
-                _buildDetailedDistributionSection(isDark),
-              ],
-            );
-          }),
-        ),
+              ),
+            ),
+          );
+        }),
       ),
-
     );
   }
 
@@ -161,8 +153,31 @@ class _StatisticScreenState extends State<StatisticScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(startDate ?? 'Từ ngày', style: TextStyle(fontSize: 10, color: startDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
-                                Icon(Icons.keyboard_arrow_down, size: 12, color: AppColors.grey[600]),
+                                Expanded(
+                                  child: Text(
+                                    startDate ?? 'Từ ngày',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: startDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey,
+                                      fontWeight: startDate != null ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (startDate != null)
+                                  GestureDetector(
+                                    onTap: () {
+                                      DateTime? currentEnd = endDate != null ? DateTime.tryParse(endDate) : null;
+                                      taskController.setDateRange(null, currentEnd);
+                                      _refreshStats();
+                                    },
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 2),
+                                      child: Icon(Icons.close, size: 12, color: AppColors.grey),
+                                    ),
+                                  )
+                                else
+                                  Icon(Icons.keyboard_arrow_down, size: 12, color: AppColors.grey[600]),
                               ],
                             ),
                           ),
@@ -196,8 +211,31 @@ class _StatisticScreenState extends State<StatisticScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(endDate ?? 'Đến ngày', style: TextStyle(fontSize: 10, color: endDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey), overflow: TextOverflow.ellipsis)),
-                                Icon(Icons.keyboard_arrow_down, size: 12, color: AppColors.grey[600]),
+                                Expanded(
+                                  child: Text(
+                                    endDate ?? 'Đến ngày',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: endDate != null ? (isDark ? AppColors.white : AppColors.black) : AppColors.grey,
+                                      fontWeight: endDate != null ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (endDate != null)
+                                  GestureDetector(
+                                    onTap: () {
+                                      DateTime? currentStart = startDate != null ? DateTime.tryParse(startDate) : null;
+                                      taskController.setDateRange(currentStart, null);
+                                      _refreshStats();
+                                    },
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 2),
+                                      child: Icon(Icons.close, size: 12, color: AppColors.grey),
+                                    ),
+                                  )
+                                else
+                                  Icon(Icons.keyboard_arrow_down, size: 12, color: AppColors.grey[600]),
                               ],
                             ),
                           ),

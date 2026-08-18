@@ -18,7 +18,26 @@ class TaskController extends GetxController {
   final UserService _userService = UserService();
 
   final RxList<TaskModel> tasksList = <TaskModel>[].obs;
+  final RxList<TaskModel> sentTasksList = <TaskModel>[].obs;
+  final RxList<TaskModel> receivedTasksList = <TaskModel>[].obs;
+
+  RxList<TaskModel> getTasksList(String? type) {
+    if (type == 'sent') return sentTasksList;
+    if (type == 'received') return receivedTasksList;
+    return tasksList;
+  }
+
   final RxBool isLoading = false.obs;
+  final RxMap<String, bool> isLoadingMap = <String, bool>{}.obs;
+  final RxSet<String> initialLoadedTypes = <String>{}.obs;
+
+  bool isTypeLoading(String? type) {
+    final key = type ?? 'all';
+    if (isLoadingMap[key] == true) return true;
+    if (!initialLoadedTypes.contains(key)) return true;
+    return false;
+  }
+
   final RxString errorMessage = ''.obs;
   final RxBool isMultiSelectMode = false.obs;
   final RxList<int> selectedTaskIds = <int>[].obs;
@@ -51,10 +70,6 @@ class TaskController extends GetxController {
   final Rx<TaskStatsModel> stats = TaskStatsModel.empty().obs;
   final RxBool isStatsLoading = false.obs;
 
-  // Stats for the active tab (sent / received)
-  final Rx<TaskStatsModel> tabStats = TaskStatsModel.empty().obs;
-  final RxBool isTabStatsLoading = false.obs;
-
   // Filters for stats
   final RxnString startDate = RxnString(null);
   final RxnString endDate = RxnString(null);
@@ -67,27 +82,16 @@ class TaskController extends GetxController {
   void onInit() {
     super.onInit();
     fetchDepartments();
-    fetchTasks();
     fetchStats();
   }
 
-  Future<void> fetchTabStats({String? type}) async {
-    isTabStatsLoading.value = true;
-    try {
-      final userId = Get.find<AuthController>().currentUser.value?.id;
-      final response = await _taskService.getTaskStats(
-        type: type,
-        userId: userId,
-      );
-      if (response != null && response['data'] is Map<String, dynamic>) {
-        tabStats.value = TaskStatsModel.fromJson(response['data'] as Map<String, dynamic>);
-        log("✅ Tải thống kê tab ($type) thành công: Tổng ${tabStats.value.total}");
-      }
-    } catch (e) {
-      log("❌ Lỗi khi tải thống kê tab ($type): $e");
-    } finally {
-      isTabStatsLoading.value = false;
-    }
+  Future<void> refreshTasks() async {
+    await Future.wait([
+      fetchTasks(type: null, isRefresh: true),
+      fetchTasks(type: 'sent', isRefresh: true),
+      fetchTasks(type: 'received', isRefresh: true),
+      fetchStats(),
+    ]);
   }
 
   Future<void> fetchDepartments() async {
@@ -125,13 +129,27 @@ class TaskController extends GetxController {
   final RxInt currentPage = 1.obs;
   final RxBool hasMoreTasks = true.obs;
   final RxBool isLoadingMore = false.obs;
+  final RxBool isManualRefreshing = false.obs;
 
-  Future<void> fetchTasks({String? type, bool isRefresh = true}) async {
+  Future<void> fetchTasks({
+    String? type, 
+    bool isRefresh = true, 
+    bool isManualPull = false,
+    int limit = 50,
+  }) async {
+    final targetList = getTasksList(type);
+    final key = type ?? 'all';
+    
+    if (isManualPull) {
+      isManualRefreshing.value = true;
+    }
+
+    isLoadingMap[key] = true;
+    isLoading.value = true;
+
     if (isRefresh) {
-      isLoading.value = true;
       currentPage.value = 1;
       hasMoreTasks.value = true;
-      fetchTabStats(type: type);
     }
     errorMessage.value = '';
 
@@ -141,27 +159,27 @@ class TaskController extends GetxController {
         type: type, 
         userId: userId,
         page: currentPage.value,
-        limit: 10,
+        limit: limit,
       );
       if (response != null && response.statusCode == 200) {
         if (isRefresh) {
-          tasksList.value = response.data;
+          targetList.assignAll(response.data);
         } else {
-          final existingIds = tasksList.map((t) => t.id).toSet();
+          final existingIds = targetList.map((t) => t.id).toSet();
           final newTasks = response.data.where((t) => !existingIds.contains(t.id)).toList();
-          tasksList.addAll(newTasks);
+          targetList.addAll(newTasks);
         }
 
-        if (response.data.length < 10) {
+        if (response.data.length < limit) {
           hasMoreTasks.value = false;
         } else {
           hasMoreTasks.value = true;
         }
 
-        log("✅ Tải danh sách công việc (${type ?? 'tất cả'}) trang ${currentPage.value} thành công (nhận ${response.data.length} mục). Tổng hiện tại: ${tasksList.length}");
+        log("✅ Tải danh sách công việc (${type ?? 'tất cả'}) trang ${currentPage.value} thành công (nhận ${response.data.length} mục). Tổng hiện tại: ${targetList.length}");
       } else {
         if (isRefresh) {
-          tasksList.clear();
+          targetList.clear();
         }
         hasMoreTasks.value = false;
         final msg = response?.message ?? "Không thể tải danh sách công việc.";
@@ -174,7 +192,7 @@ class TaskController extends GetxController {
       }
     } catch (e) {
       if (isRefresh) {
-        tasksList.clear();
+        targetList.clear();
       }
       hasMoreTasks.value = false;
       final errorMsg = e.toString().replaceAll("Exception: ", "");
@@ -185,19 +203,19 @@ class TaskController extends GetxController {
       }
       log("ℹ️ Ngoại lệ khi tải công việc: $e");
     } finally {
-      isLoading.value = false;
+      isLoadingMap[key] = false;
+      isLoading.value = isLoadingMap.values.any((val) => val == true);
       isLoadingMore.value = false;
+      isManualRefreshing.value = false;
+      initialLoadedTypes.add(key);
     }
   }
 
 
   Future<void> deleteTask(int id) async {
-    final backupIndex = tasksList.indexWhere((t) => t.id == id);
-    TaskModel? backupTask;
-    if (backupIndex != -1) {
-      backupTask = tasksList[backupIndex];
-      tasksList.removeAt(backupIndex);
-    }
+    sentTasksList.removeWhere((t) => t.id == id);
+    receivedTasksList.removeWhere((t) => t.id == id);
+    tasksList.removeWhere((t) => t.id == id);
 
     try {
       final success = await _taskService.deleteTask(id);
@@ -212,15 +230,9 @@ class TaskController extends GetxController {
         );
         fetchStats();
       } else {
-        if (backupTask != null && backupIndex != -1) {
-          tasksList.insert(backupIndex, backupTask);
-        }
         Get.snackbar('Lỗi', 'Không thể xóa công việc', backgroundColor: Colors.red.shade100);
       }
     } catch (e) {
-      if (backupTask != null && backupIndex != -1) {
-        tasksList.insert(backupIndex, backupTask);
-      }
       Get.snackbar('Lỗi', 'Lỗi khi xóa công việc: $e', backgroundColor: Colors.red.shade100);
     }
   }
@@ -249,8 +261,11 @@ class TaskController extends GetxController {
     isLoading.value = true;
     final success = await _taskService.bulkDeleteTasks(ids);
     if (success) {
+      sentTasksList.removeWhere((t) => ids.contains(t.id));
+      receivedTasksList.removeWhere((t) => ids.contains(t.id));
       tasksList.removeWhere((t) => ids.contains(t.id));
       Get.snackbar('Thành công', 'Đã xóa các công việc đã chọn');
+      fetchStats();
     } else {
       Get.snackbar('Lỗi', 'Không thể xóa các công việc');
     }
@@ -398,7 +413,8 @@ class TaskController extends GetxController {
     try {
       final response = await _taskService.updateTask(id, payload);
       if (response != null && response.statusCode == 200) {
-        fetchTasks();
+        fetchTasks(type: 'sent');
+        fetchTasks(type: 'received');
         fetchStats();
         return true;
       } else {
@@ -411,12 +427,5 @@ class TaskController extends GetxController {
       Get.snackbar('Lỗi', errorMsg, backgroundColor: Colors.red.shade100);
       return false;
     }
-  }
-
-  Future<void> refreshTasks() async {
-    await Future.wait([
-      fetchTasks(),
-      fetchStats(),
-    ]);
   }
 }

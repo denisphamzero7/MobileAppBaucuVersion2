@@ -149,6 +149,14 @@ class AuthController extends GetxController {
         }
 
         Get.offAllNamed('/home');
+        Get.snackbar(
+          "Thành công",
+          "Đăng nhập thành công!",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFF10B981),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
         return true;
       } else {
         Get.snackbar("Thất bại", "Bạn chọn sai tổ chức");
@@ -216,6 +224,14 @@ class AuthController extends GetxController {
     }
 
     Get.offAllNamed('/login');
+    Get.snackbar(
+      "Thông báo",
+      "Bạn đã đăng xuất khỏi hệ thống!",
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: const Color(0xFF10B981),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
   }
 
 

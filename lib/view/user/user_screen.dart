@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:fl_chart/fl_chart.dart';
 
-import '../../controllers/auth_controller.dart';
 import '../../controllers/user_controller.dart';
 import '../../controllers/log_activity_controller.dart';
-import '../../controllers/theme_controller.dart';
+import '../../controllers/notification_controller.dart';
+import '../../controllers/navigation.dart';
 import '../../model/profile.dart';
-import '../../untils/app_textstyles.dart';
-import '../../../untils/app_colors.dart';
-import '../../core/api_constants.dart';
-import '../widgets/organization_selection_dialog.dart';
+import '../../untils/app_colors.dart';
+import '../../untils/app_strings.dart';
 import '../widgets/skeleton_loader.dart';
 
-class ProfileScreen extends StatefulWidget {
+import 'widgets/profile_top_card.dart';
+import 'widgets/profile_footer_widget.dart';
+import 'widgets/user_overview_tab.dart';
+import 'widgets/user_personal_info_tab.dart';
+import 'widgets/user_security_tab.dart';
 
+import 'widgets/user_activity_log_tab.dart';
+
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
@@ -23,29 +27,22 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final UserController userController = Get.find<UserController>();
-  final AuthController authController = Get.find<AuthController>();
   late final LogActivityController logController;
-
-  final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  final RxBool _obscureNewPassword = true.obs;
-  final RxBool _obscureConfirmPassword = true.obs;
-
-  @override
-  void dispose() {
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
+  late final NotificationController notificationController;
 
   @override
   void initState() {
-
     super.initState();
     if (!Get.isRegistered<LogActivityController>()) {
       logController = Get.put(LogActivityController());
     } else {
       logController = Get.find<LogActivityController>();
+    }
+
+    if (!Get.isRegistered<NotificationController>()) {
+      notificationController = Get.put(NotificationController());
+    } else {
+      notificationController = Get.find<NotificationController>();
     }
 
     if (userController.userProfile.value == null) {
@@ -56,216 +53,206 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF5F6FA),
+      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF7F8FA),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await userController.refreshProfile();
-            await logController.fetchLogs();
-            await logController.fetchTimelineStats();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Obx(() {
-              if (userController.isLoading.value || userController.userProfile.value == null) {
-                return _buildSkeletonLoader(context);
-              }
-              final profile = userController.userProfile.value!;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTopCard(context, profile, isDark),
-                  const SizedBox(height: 16),
-                  _buildTabBar(isDark),
-                  const SizedBox(height: 16),
-                  _buildTabContent(context, profile, isDark),
-                ],
-              );
-            }),
-          ),
+        child: Column(
+          children: [
+            // 1. TOP APP BAR
+            _buildCustomAppBar(context, isDark),
+
+            // 2. MAIN SCROLLABLE BODY
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () async {
+                  await userController.refreshProfile();
+                  await logController.fetchLogs();
+                  await logController.fetchTimelineStats();
+                  await notificationController.fetchNotifications();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 30.0),
+                  child: Obx(() {
+                    if (userController.isLoading.value || userController.userProfile.value == null) {
+                      return _buildSkeletonLoader(context);
+                    }
+                    final profile = userController.userProfile.value!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Card Profile Header
+                        ProfileTopCard(profile: profile, isDark: isDark),
+                        const SizedBox(height: 14),
+
+                        // Tab Bar Selector
+                        _buildTabBar(isDark),
+                        const SizedBox(height: 14),
+
+                        // Tab Content Router
+                        _buildTabContent(context, profile, isDark),
+                        const SizedBox(height: 14),
+
+                        // Footer bản quyền & đơn vị phát triển dùng chung
+                        ProfileFooterWidget(isDark: isDark),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTopCard(BuildContext context, ProfileData profile, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2B58FF), Color(0xFF5A44E3)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2B58FF).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // --- 1. TOP APP BAR ---
+  Widget _buildCustomAppBar(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  color: Colors.white24,
-                ),
-                child: ClipOval(
-                  child: (profile.avatar != null && profile.avatar!.isNotEmpty)
-                      ? Image.network(
-                          ApiConstants.baseUrl.replaceAll(RegExp(r'/api/?$'), '') + profile.avatar!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 40, color: Colors.white),
-                        )
-                      : const Icon(Icons.person, size: 40, color: Colors.white),
-                ),
+          InkWell(
+            onTap: () {
+              if (Get.isRegistered<NavigationController>()) {
+                Get.find<NavigationController>().changeIndex(0);
+              } else {
+                Navigator.maybePop(context);
+              }
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Icon(
+                Icons.chevron_left_rounded,
+                size: 26,
+                color: isDark ? Colors.white : AppColors.black87,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.name,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '@${profile.email != 'N/A' && profile.email.contains('@') ? profile.email.split('@').first : profile.id}',
-                      style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        profile.role?.name ?? 'Cán bộ / Nhân viên',
-                        style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              AppStrings.userOverviewTitle,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppColors.black87,
               ),
-            ],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const SizedBox(height: 16),
-          Divider(color: Colors.white.withOpacity(0.2), height: 1),
-          const SizedBox(height: 16),
-          Text(
-            'Tổ chức hiện tại:',
-            style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7)),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(width: 8),
+          // Nút Capsule Right Actions (... | X)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              color: isDark ? AppColors.cardDark : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.08),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.business, color: Color(0xFFFFD700), size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Obx(() => Text(
-                    authController.currentOrganizationName,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
-                  )),
+                InkWell(
+                  onTap: () => _showMoreOptions(context, isDark),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Icon(
+                      Icons.more_horiz_rounded,
+                      size: 20,
+                      color: isDark ? AppColors.white70 : AppColors.black87,
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 14,
+                  width: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  color: isDark ? AppColors.white24 : AppColors.black12,
+                ),
+                InkWell(
+                  onTap: () {
+                    if (Get.isRegistered<NavigationController>()) {
+                      Get.find<NavigationController>().changeIndex(0);
+                    } else {
+                      Navigator.maybePop(context);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: isDark ? AppColors.white70 : AppColors.black87,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          GestureDetector(
-
-            onTap: () => _showOrganizationSelection(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.swap_horiz, color: Colors.white, size: 20),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Chuyển tổ chức làm việc',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'Đổi tổ chức >',
-                      style: TextStyle(color: Colors.black87, fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          )
         ],
       ),
     );
   }
 
-  void _showOrganizationSelection(BuildContext context) {
-    final orgs = authController.getAvailableOrganizations();
-    
-    Get.dialog(
-      OrganizationSelectionDialog(
-        organizations: orgs,
-        isCancellable: true,
-        onSelect: (orgId) {
-          Get.back();
-          if (orgId != authController.currentOrganizationId.value) {
-            authController.changeOrganization(orgId);
-          }
-        },
-        onCancel: () {
-          Get.back();
-        },
+  void _showMoreOptions(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+              title: const Text('Làm mới thông tin'),
+              onTap: () {
+                Navigator.pop(ctx);
+                userController.refreshProfile();
+                logController.fetchLogs();
+              },
+            ),
+          ],
+        ),
       ),
-      barrierDismissible: true,
     );
   }
 
+  // --- 2. TAB BAR SELECTOR ---
   Widget _buildTabBar(bool isDark) {
-
     return Obx(() {
       final activeTab = logController.activeTabIndex.value;
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         child: Row(
           children: [
-            _buildTabItem(0, 'Tổng Quan', Icons.show_chart, activeTab, isDark),
+            _buildTabItem(0, 'Tổng Quan', Icons.show_chart_rounded, activeTab, isDark),
             const SizedBox(width: 8),
-            _buildTabItem(1, 'Thông Tin Cá Nhân', Icons.person_outline, activeTab, isDark),
+            _buildTabItem(1, 'Thông Tin Cá Nhân', Icons.person_outline_rounded, activeTab, isDark),
             const SizedBox(width: 8),
-            _buildTabItem(2, 'Cài Đặt Bảo Mật', Icons.security, activeTab, isDark),
+            _buildTabItem(2, 'Cài Đặt Bảo Mật', Icons.security_rounded, activeTab, isDark),
+            const SizedBox(width: 8),
+            _buildTabItem(3, 'Nhật Ký Cá Nhân', Icons.verified_user_outlined, activeTab, isDark),
           ],
         ),
       );
@@ -274,550 +261,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildTabItem(int index, String label, IconData icon, int activeTab, bool isDark) {
     final isActive = index == activeTab;
-    return GestureDetector(
-      onTap: () => logController.changeTab(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF2B58FF) : (isDark ? AppColors.cardDark : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isActive
-              ? [BoxShadow(color: const Color(0xFF2B58FF).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]
-              : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))],
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isActive ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => logController.changeTab(index),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive
+                ? const Color(0xFF2155FA)
+                : (isDark ? AppColors.cardDark : Colors.white),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive
+                  ? const Color(0xFF2155FA)
+                  : (isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05)),
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF2155FA).withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1.5),
+                    )
+                  ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isActive ? Colors.white : (isDark ? Colors.white70 : AppColors.grey[700]),
               ),
-            )
-          ],
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                  color: isActive ? Colors.white : (isDark ? Colors.white70 : AppColors.black87),
+                ),
+                maxLines: 1,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // --- 3. TAB CONTENT ROUTER ---
   Widget _buildTabContent(BuildContext context, ProfileData profile, bool isDark) {
     return Obx(() {
       switch (logController.activeTabIndex.value) {
         case 0:
-          return _buildOverviewTab(isDark);
+          return UserOverviewTab(isDark: isDark);
         case 1:
-          return _buildPersonalInfoTab(context, profile, isDark);
+          return UserPersonalInfoTab(profile: profile, isDark: isDark);
         case 2:
-          return _buildSecurityTab(context, isDark);
+          return UserSecurityTab(isDark: isDark);
+        case 3:
+          return UserActivityLogTab(isDark: isDark);
         default:
           return const SizedBox();
       }
     });
   }
 
-  Widget _buildOverviewTab(bool isDark) {
-    return Column(
-      children: [
-        _buildTrendChart(isDark),
-        const SizedBox(height: 16),
-        _buildRecentActivities(isDark),
-      ],
-    );
-  }
-
-  Widget _buildTrendChart(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.show_chart, color: Color(0xFF8A2BE2), size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'XU HƯỚNG HOẠT ĐỘNG',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          AspectRatio(
-            aspectRatio: 1.5,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: true,
-                  horizontalInterval: 1000,
-                  verticalInterval: 1,
-                  getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1),
-                  getDrawingVerticalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1),
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 22,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            'T${value.toInt()}/26',
-                            style: const TextStyle(color: Colors.grey, fontSize: 9),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 1000,
-                      reservedSize: 32,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          value == 0 ? '0' : '${(value / 1000).toStringAsFixed(0)}.000',
-                          style: const TextStyle(color: Colors.grey, fontSize: 9),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                    left: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                    right: const BorderSide(color: Colors.transparent),
-                    top: const BorderSide(color: Colors.transparent),
-                  ),
-                ),
-                minX: 1,
-                maxX: 12,
-                minY: 0,
-                maxY: 6000,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(1, 0), FlSpot(2, 0), FlSpot(3, 0), FlSpot(4, 0),
-                      FlSpot(5, 0), FlSpot(6, 0), FlSpot(7, 5200), FlSpot(8, 3600),
-                      FlSpot(9, 0), FlSpot(10, 0), FlSpot(11, 0), FlSpot(12, 0),
-                    ],
-                    isCurved: true,
-                    color: const Color(0xFF8A2BE2),
-                    barWidth: 2,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 2,
-                          color: const Color(0xFF8A2BE2),
-                          strokeWidth: 1,
-                          strokeColor: Colors.white,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF8A2BE2).withOpacity(0.3),
-                          const Color(0xFF8A2BE2).withOpacity(0.01),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentActivities(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.access_time, color: Color(0xFF00ACC1), size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'HOẠT ĐỘNG GẦN ĐÂY',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Obx(() {
-            if (logController.isLoading.value) {
-              return ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 4,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, __) => const SkeletonLoader(
-                  child: SkeletonBox(
-                    width: double.infinity,
-                    height: 50,
-                    radius: 10,
-                  ),
-                ),
-              );
-            }
-            if (logController.logs.isEmpty) {
-              return const Center(child: Text("Không có hoạt động nào", style: TextStyle(color: Colors.grey)));
-            }
-
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: logController.logs.length > 5 ? 5 : logController.logs.length,
-              separatorBuilder: (context, index) => const Divider(height: 24, color: Colors.black12),
-              itemBuilder: (context, index) {
-                final log = logController.logs[index];
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
-                      child: Icon(Icons.circle, color: Color(0xFF00ACC1), size: 8),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00ACC1).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        log.method,
-                        style: const TextStyle(color: Color(0xFF00ACC1), fontSize: 9, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            log.description,
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            log.ipAddress,
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      log.createdAt,
-                      style: const TextStyle(fontSize: 9, color: Colors.grey),
-                    ),
-                  ],
-                );
-              },
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalInfoTab(BuildContext context, ProfileData profile, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'THÔNG TIN CÁ NHÂN',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          _InfoItem(icon: Icons.alternate_email, label: 'Email', value: profile.email),
-          _InfoItem(icon: Icons.fingerprint, label: 'ID Người dùng', value: profile.id),
-          // _InfoItem(icon: Icons.security, label: 'Admin', value: profile.role?.name.toLowerCase() == 'admin' ? 'Có' : 'Không'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSecurityTab(BuildContext context, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'CÀI ĐẶT BẢO MẬT',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          
-          // Khối Đổi mật khẩu
-          Text(
-            'Đổi mật khẩu',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Mật khẩu mới
-          Obx(() => TextField(
-            controller: _newPasswordController,
-            obscureText: _obscureNewPassword.value,
-            style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87),
-            decoration: InputDecoration(
-              hintText: 'Mật khẩu mới',
-              hintStyle: const TextStyle(fontSize: 12, color: AppColors.grey),
-              prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureNewPassword.value ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  size: 18,
-                  color: AppColors.grey,
-                ),
-                onPressed: () => _obscureNewPassword.toggle(),
-              ),
-              filled: true,
-              fillColor: isDark ? AppColors.cardItemDark : AppColors.lightBg,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          )),
-          const SizedBox(height: 10),
-
-          // Xác nhận mật khẩu
-          Obx(() => TextField(
-            controller: _confirmPasswordController,
-            obscureText: _obscureConfirmPassword.value,
-            style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87),
-            decoration: InputDecoration(
-              hintText: 'Xác nhận mật khẩu',
-              hintStyle: const TextStyle(fontSize: 12, color: AppColors.grey),
-              prefixIcon: const Icon(Icons.lock_reset_outlined, size: 18, color: AppColors.primary),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureConfirmPassword.value ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  size: 18,
-                  color: AppColors.grey,
-                ),
-                onPressed: () => _obscureConfirmPassword.toggle(),
-              ),
-              filled: true,
-              fillColor: isDark ? AppColors.cardItemDark : AppColors.lightBg,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          )),
-          const SizedBox(height: 12),
-
-          // Nút Đổi mật khẩu
-          Obx(() => SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: userController.isChangingPassword.value
-                  ? null
-                  : () async {
-                      final success = await userController.changePassword(
-                        _newPasswordController.text.trim(),
-                        _confirmPasswordController.text.trim(),
-                      );
-                      if (success) {
-                        _newPasswordController.clear();
-                        _confirmPasswordController.clear();
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: userController.isChangingPassword.value
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Đổi mật khẩu',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-            ),
-          )),
-
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
-
-          GetBuilder<ThemeController>(
-            builder: (themeController) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                themeController.isDarkMode ? Icons.light_mode : Icons.dark_mode_outlined,
-                color: Theme.of(context).primaryColor,
-                size: 24,
-              ),
-              title: Text(
-                'Chế độ giao diện',
-                style: AppTextStyle.bodySmall.copyWith(fontSize: 11, color: AppColors.grey),
-              ),
-              subtitle: Text(
-                themeController.isDarkMode ? 'Giao diện tối' : 'Giao diện sáng',
-                style: AppTextStyle.bodyLarge.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-              trailing: Switch(
-                value: themeController.isDarkMode,
-                onChanged: (val) => themeController.toggleTheme(),
-                activeThumbColor: Theme.of(context).primaryColor,
-              ),
-            ),
-          ),
-          const Divider(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Get.snackbar('Thông báo', 'Đang thực hiện đăng xuất...', snackPosition: SnackPosition.TOP);
-                userController.logout();
-              },
-              icon: const Icon(Icons.logout, size: 18, color: Colors.white),
-              label: const Text('Đăng xuất', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.red,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-
+  // --- SKELETON LOADER CHUẨN ---
   Widget _buildSkeletonLoader(BuildContext context) {
-    return Column(
-      children: [
-        const SkeletonLoader(
-          child: SkeletonBox(
-            width: double.infinity,
-            height: 180,
-            radius: 16,
-          ),
-        ),
-        const SizedBox(height: 16),
-        const SkeletonLoader(
-          child: SkeletonBox(
-            width: double.infinity,
-            height: 48,
-            radius: 12,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: 4,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, __) => const SkeletonLoader(
-            child: SkeletonBox(
-              width: double.infinity,
-              height: 60,
-              radius: 12,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-
-class _InfoItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey),
-          const SizedBox(width: 12),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
+    return AppSkeleton.profilePageLayout();
   }
 }

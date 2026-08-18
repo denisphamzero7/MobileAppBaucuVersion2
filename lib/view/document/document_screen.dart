@@ -6,8 +6,10 @@ import '../../untils/app_colors.dart';
 import '../../service/petition_service.dart';
 import '../../core/widgets/import_excel_button.dart';
 import '../../core/widgets/export_excel_button.dart';
+import '../../core/widgets/app_pagination_widget.dart';
 import '../../view/widgets/quick_action_bottom_sheet.dart';
 import '../../view/widgets/skeleton_loader.dart';
+import '../../view/widgets/smart_skeleton_wrapper.dart';
 import '../../view/task/widgets/stat_card_widget.dart';
 
 class DocumentScreen extends StatefulWidget {
@@ -21,6 +23,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
   final RxString selectedStatusFilter = 'all'.obs;
   final RxString searchText = ''.obs;
   final TextEditingController searchController = TextEditingController();
+  final RxInt currentPage = 1.obs;
+  static const int itemsPerPage = 10;
   
   final PetitionService _petitionService = PetitionService();
   final RxList<DepartmentModel> departments = <DepartmentModel>[].obs;
@@ -28,16 +32,25 @@ class _DocumentScreenState extends State<DocumentScreen> {
 
   final RxList<PetitionItemModel> petitionsList = <PetitionItemModel>[].obs;
   final Rx<PetitionStatsModel> stats = PetitionStatsModel().obs;
-  final RxBool isLoading = false.obs;
+  final RxBool isLoading = true.obs;
+  final RxBool isInitialLoaded = false.obs;
 
   // Multi-select & Bulk Delete
   final RxBool isMultiSelectMode = false.obs;
   final RxSet<int> selectedPetitionIds = <int>{}.obs;
+  final RxBool isManualRefreshing = false.obs;
 
   @override
   void initState() {
     super.initState();
-    _fetchInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (petitionsList.isEmpty) {
+        _fetchInitialData();
+      } else {
+        isLoading.value = false;
+        isInitialLoaded.value = true;
+      }
+    });
   }
 
   @override
@@ -46,14 +59,25 @@ class _DocumentScreenState extends State<DocumentScreen> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    isManualRefreshing.value = true;
+    currentPage.value = 1;
+    await _fetchInitialData();
+    isManualRefreshing.value = false;
+  }
+
   Future<void> _fetchInitialData() async {
     isLoading.value = true;
-    await Future.wait([
-      _fetchPetitions(),
-      _fetchStats(),
-      _fetchDepartments(),
-    ]);
-    isLoading.value = false;
+    try {
+      await Future.wait([
+        _fetchPetitions(),
+        _fetchStats(),
+        _fetchDepartments(),
+      ]);
+    } finally {
+      isLoading.value = false;
+      isInitialLoaded.value = true;
+    }
   }
 
   Future<void> _fetchPetitions() async {
@@ -83,14 +107,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
     }
   }
 
-  Future<void> _onRefresh() async {
-    await Future.wait([
-      _fetchPetitions(),
-      _fetchStats(),
-      _fetchDepartments(),
-    ]);
-  }
-
   void toggleMultiSelectMode() {
     isMultiSelectMode.value = !isMultiSelectMode.value;
     if (!isMultiSelectMode.value) {
@@ -116,6 +132,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
     final canCreate = authCtrl.can('create', 'TaskAssignmentPetitions');
     final canDelete = authCtrl.can('destroy', 'TaskAssignmentPetitions');
     final canExport = authCtrl.can('read', 'TaskAssignmentPetitions');
+    final canUpdate = authCtrl.can('update', 'TaskAssignmentPetitions');
 
     final List<QuickActionItem> items = [];
 
@@ -315,6 +332,20 @@ class _DocumentScreenState extends State<DocumentScreen> {
   void _showCreateEditPetitionModal(BuildContext context, {PetitionItemModel? petitionToEdit}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEdit = petitionToEdit != null;
+    final authCtrl = Get.find<AuthController>();
+    final canCreate = authCtrl.can('create', 'TaskAssignmentPetitions');
+    final canUpdate = authCtrl.can('update', 'TaskAssignmentPetitions');
+
+    if (isEdit && !canUpdate) {
+      Get.snackbar('Từ chối truy cập', 'Bạn không có quyền cập nhật đơn thư này.',
+          backgroundColor: Colors.red.shade100);
+      return;
+    }
+    if (!isEdit && !canCreate) {
+      Get.snackbar('Từ chối truy cập', 'Bạn không có quyền tạo đơn thư mới.',
+          backgroundColor: Colors.red.shade100);
+      return;
+    }
 
     final titleCtrl = TextEditingController(text: petitionToEdit?.title ?? '');
     final senderNameCtrl = TextEditingController(text: petitionToEdit?.senderName ?? '');
@@ -1067,22 +1098,40 @@ class _DocumentScreenState extends State<DocumentScreen> {
         return const SizedBox.shrink();
       }),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _onRefresh,
-          color: AppColors.primary,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 120.0),
-            child: Obx(() {
-              final st = stats.value;
-              final dynamicTotal = st.total > 0 ? st.total : petitionsList.length;
-              final dynamicNew = st.todo > 0 ? st.todo : petitionsList.where((p) => p.processingStatus == 'new').length;
-              final dynamicProcessing = st.inProgress > 0 ? st.inProgress : petitionsList.where((p) => p.processingStatus == 'processing').length;
-              final dynamicCompleted = st.done > 0 ? st.done : petitionsList.where((p) => p.processingStatus == 'completed').length;
-              final dynamicPaused = st.paused > 0 ? st.paused : petitionsList.where((p) => p.processingStatus == 'paused').length;
-              final dynamicCancelled = st.cancelled > 0 ? st.cancelled : petitionsList.where((p) => p.processingStatus == 'cancelled').length;
+        child: Obx(() {
+          final showSkeleton = isLoading.value && (petitionsList.isEmpty || isManualRefreshing.value);
 
-              return Column(
+          final st = stats.value;
+          final dynamicTotal = st.total > 0 ? st.total : petitionsList.length;
+          final dynamicNew = st.todo > 0 ? st.todo : petitionsList.where((p) => p.processingStatus == 'new').length;
+          final dynamicProcessing = st.inProgress > 0 ? st.inProgress : petitionsList.where((p) => p.processingStatus == 'processing').length;
+          final dynamicCompleted = st.done > 0 ? st.done : petitionsList.where((p) => p.processingStatus == 'completed').length;
+          final dynamicPaused = st.paused > 0 ? st.paused : petitionsList.where((p) => p.processingStatus == 'paused').length;
+          final dynamicCancelled = st.cancelled > 0 ? st.cancelled : petitionsList.where((p) => p.processingStatus == 'cancelled').length;
+
+          final int totalFilteredItems = petitionsList.length;
+          final int totalPages = (totalFilteredItems / itemsPerPage).ceil().clamp(1, 9999);
+          if (currentPage.value > totalPages) {
+            currentPage.value = totalPages;
+          }
+          final int startIndex = (currentPage.value - 1) * itemsPerPage;
+          final pagedPetitions = petitionsList.skip(startIndex).take(itemsPerPage).toList();
+
+          return SmartSkeletonWrapper(
+            showSkeleton: showSkeleton,
+            skeleton: AppSkeleton.fullPageLayout(
+              statusGridCount: 6,
+              statusGridCols: 3,
+              statusGridRatio: 2.1,
+              timingGridCount: 0,
+              cardCount: 4,
+              cardHeight: 120,
+            ),
+            onRefresh: _onRefresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 20.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // A. SEARCH BAR & FILTER BUTTON
@@ -1099,6 +1148,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                             controller: searchController,
                             onChanged: (val) {
                               searchText.value = val.trim();
+                              currentPage.value = 1;
                               _fetchPetitions();
                             },
                             style: const TextStyle(fontSize: 13),
@@ -1112,6 +1162,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                       onPressed: () {
                                         searchController.clear();
                                         searchText.value = '';
+                                        currentPage.value = 1;
                                         _fetchPetitions();
                                       },
                                     )
@@ -1166,6 +1217,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           InkWell(
                             onTap: () {
                               selectedDepartment.value = null;
+                              currentPage.value = 1;
                               _fetchPetitions();
                             },
                             child: const Icon(Icons.close, size: 14, color: AppColors.primary),
@@ -1189,16 +1241,17 @@ class _DocumentScreenState extends State<DocumentScreen> {
                     crossAxisCount: 3,
                     crossAxisSpacing: 6,
                     mainAxisSpacing: 6,
-                    childAspectRatio: 1.4,
+                    childAspectRatio: 2.1,
                     children: [
                       StatCardWidget(
-                        label: 'Tổng đơn thư',
+                        label: 'Tổng',
                         count: dynamicTotal,
                         icon: Icons.filter_list,
                         color: AppColors.primary,
                         isSelected: selectedStatusFilter.value == 'all',
                         onTap: () {
                           selectedStatusFilter.value = 'all';
+                          currentPage.value = 1;
                           _fetchPetitions();
                         },
                         isDark: isDark,
@@ -1211,6 +1264,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         isSelected: selectedStatusFilter.value == 'new',
                         onTap: () {
                           selectedStatusFilter.value = 'new';
+                          currentPage.value = 1;
                           _fetchPetitions();
                         },
                         isDark: isDark,
@@ -1223,6 +1277,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         isSelected: selectedStatusFilter.value == 'processing',
                         onTap: () {
                           selectedStatusFilter.value = 'processing';
+                          currentPage.value = 1;
                           _fetchPetitions();
                         },
                         isDark: isDark,
@@ -1230,11 +1285,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       StatCardWidget(
                         label: 'Đã hoàn thành',
                         count: dynamicCompleted,
-                        icon: Icons.check_circle_outline,
+                        icon: Icons.done_all,
                         color: AppColors.done,
                         isSelected: selectedStatusFilter.value == 'completed',
                         onTap: () {
                           selectedStatusFilter.value = 'completed';
+                          currentPage.value = 1;
                           _fetchPetitions();
                         },
                         isDark: isDark,
@@ -1247,6 +1303,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         isSelected: selectedStatusFilter.value == 'paused',
                         onTap: () {
                           selectedStatusFilter.value = 'paused';
+                          currentPage.value = 1;
                           _fetchPetitions();
                         },
                         isDark: isDark,
@@ -1259,6 +1316,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         isSelected: selectedStatusFilter.value == 'cancelled',
                         onTap: () {
                           selectedStatusFilter.value = 'cancelled';
+                          currentPage.value = 1;
                           _fetchPetitions();
                         },
                         isDark: isDark,
@@ -1268,7 +1326,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                   const SizedBox(height: 20),
 
                   // C. LIST OF PETITIONS
-                  if (isLoading.value && petitionsList.isEmpty)
+                  if (isLoading.value)
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -1301,21 +1359,38 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       ),
                     )
                   else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: petitionsList.length,
-                      itemBuilder: (context, index) {
-                        final petition = petitionsList[index];
-                        return _buildPetitionCard(context, petition, isDark, canDelete, canUpdate);
-                      },
+                    Column(
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: pagedPetitions.length,
+                          itemBuilder: (context, index) {
+                            final petition = pagedPetitions[index];
+                            return _buildPetitionCard(context, petition, isDark, canDelete, canUpdate);
+                          },
+                        ),
+                        if (totalFilteredItems > 0) ...[
+                          const SizedBox(height: 16),
+                          AppPaginationWidget(
+                            currentPage: currentPage.value,
+                            totalPages: totalPages,
+                            totalItems: totalFilteredItems,
+                            itemsPerPage: itemsPerPage,
+                            isLoading: isLoading.value,
+                            onPageChanged: (newPage) {
+                              currentPage.value = newPage;
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                   const SizedBox(height: 20),
                 ],
-              );
-            }),
-          ),
-        ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

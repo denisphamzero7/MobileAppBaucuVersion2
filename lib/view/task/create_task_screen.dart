@@ -203,6 +203,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   void _submit() async {
+    final authController = Get.find<AuthController>();
+    final isEdit = widget.taskToUpdate != null;
+
+    if (isEdit && !authController.can('update', 'TaskAssignmentItems')) {
+      Get.snackbar('Từ chối truy cập', 'Bạn không có quyền cập nhật công việc này.', backgroundColor: Colors.red.shade100);
+      return;
+    }
+    if (!isEdit && !authController.can('create', 'TaskAssignmentItems')) {
+      Get.snackbar('Từ chối truy cập', 'Bạn không có quyền tạo công việc mới.', backgroundColor: Colors.red.shade100);
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     // 1. Kiểm tra thời hạn
@@ -218,7 +230,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
 
     // 3. Lấy ID người giao việc (User hiện tại)
-    final authController = Get.find<AuthController>();
     final currentUserId = authController.currentUser.value?.id ??
         int.tryParse(GetStorage().read('userId')?.toString() ?? '') ??
         (GetStorage().read('userInfo') != null ? int.tryParse(GetStorage().read('userInfo')['id']?.toString() ?? '') : null) ?? 1;

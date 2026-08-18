@@ -11,7 +11,7 @@ class StatCardWidget extends StatelessWidget {
   final bool isDark;
 
   const StatCardWidget({
-    Key? key,
+    super.key,
     required this.label,
     required this.count,
     required this.icon,
@@ -19,24 +19,24 @@ class StatCardWidget extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.isDark,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.primary : (isDark ? AppColors.white10 : AppColors.black.withOpacity(0.05)),
+            color: isSelected ? AppColors.primary : (isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05)),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(0.01),
+              color: AppColors.black.withValues(alpha: 0.01),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -44,28 +44,28 @@ class StatCardWidget extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Icon(icon, size: 14, color: color),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
                 Text(
                   count.toString(),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: isDark ? AppColors.white : AppColors.black87,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.grey[400] : AppColors.grey[600],
               ),

@@ -1,0 +1,31 @@
+# 🤖 PROJECT CODING RULES FOR AI ASSISTANTS
+
+Every AI assistant working on this repository MUST follow these rules:
+
+1. **Architecture Pattern**:
+   - Strictly follow the 4-layer architecture described in `docs/ARCHITECTURE_GUIDE.md`:
+     `Model` (`lib/model/`) -> `Service` (`lib/service/`) -> `Controller` (`lib/controllers/`) -> `View` (`lib/view/`).
+   - Use GetX for state management (`RxList`, `RxString`, `RxBool`, `Obx(() => ...)`).
+
+2. **Loading State (CRITICAL RULE)**:
+   - ALWAYS use **Skeleton Loader** (`SkeletonLoader` & `SkeletonBox` from `lib/view/widgets/skeleton_loader.dart`) for list/card/dashboard loading states.
+   - NEVER use plain `CircularProgressIndicator` centered in list views.
+
+3. **Pagination Standard**:
+   - ALWAYS use `AppPaginationWidget` from `lib/core/widgets/app_pagination_widget.dart` for paginated lists.
+   - Default items per page: `10`.
+   - Never auto-flip pages upon reaching scroll bottom. Let users tap page buttons or page picker.
+
+4. **Permissions (CASL Abilities)**:
+   - Check user abilities using `final authCtrl = Get.find<AuthController>();` and `authCtrl.can(action, subject)` where action is `'create'`, `'read'`, `'update'`, `'destroy'`.
+
+5. **UI & Overflow Safety**:
+   - For bottom sheets / modals, always set `constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85)` and wrap middle body in `Flexible(child: SingleChildScrollView(child: ...))` with action buttons pinned at bottom.
+   - Avoid `withOpacity` on Colors; use `withValues(alpha: ...)` or predefined colors in `AppColors`.
+
+6. **Stale-While-Revalidate (SWR) & Non-Flickering Loading Lifecycle**:
+   - Only activate full Skeleton Shimmer loaders on cold start / first visit when data is empty (`itemsList.isEmpty`).
+   - If data already exists in memory, display it immediately (0ms delay) and revalidate/sync in background without clearing lists or causing screen flicker.
+
+7. **Centralized Text Strings (AppStrings)**:
+   - Use `AppStrings` (`lib/untils/app_strings.dart`) for all labels, buttons, titles, and notifications instead of hardcoding raw strings in Views.
