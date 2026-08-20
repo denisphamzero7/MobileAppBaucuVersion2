@@ -7,25 +7,46 @@ Every AI assistant working on this repository MUST follow these rules:
      `Model` (`lib/model/`) -> `Service` (`lib/service/`) -> `Controller` (`lib/controllers/`) -> `View` (`lib/view/`).
    - Use GetX for state management (`RxList`, `RxString`, `RxBool`, `Obx(() => ...)`).
 
-2. **Loading State (CRITICAL RULE)**:
+2. **DRY (Don't Repeat Yourself) & Resource Reuse Rule (CRITICAL)**:
+   - **Always reuse existing resources and utilities first**. DO NOT write duplicate helper functions, duplicate widgets, or duplicate API callers if one already exists in the project.
+   - **Only create new functions / widgets** if no existing module fulfills the requirement.
+   - **Existing Resource Map**:
+     - *API & Networking*: `DioHelper.dio` (`lib/helper/dio_helper.dart`), `BaseResponse<T>` (`lib/model/base_response.dart`), `ApiConstants` (`lib/core/api_constants.dart`).
+     - *UI Notifications*: `CustomSnackbar` (`lib/helper/custom_snackbar.dart`) for success, error, warning, info alerts.
+     - *Loading State*: `SkeletonLoader`, `SkeletonBox`, `SkeletonCard` (`lib/view/widgets/skeleton_loader.dart`) & `SmartSkeletonWrapper` (`lib/view/widgets/smart_skeleton_wrapper.dart`).
+     - *Pagination*: `AppPaginationWidget` (`lib/core/widgets/app_pagination_widget.dart`).
+     - *Refresh & Scroll*: `AppRefresher` (`lib/core/widgets/app_refresher.dart`).
+     - *Common UI Elements*: `AppDivider` (`lib/core/widgets/app_divider.dart`), `CustomTextField` (`lib/view/widgets/custom_textfield.dart`), `CustomCard` (`lib/view/widgets/custom_card.dart`), `CustomSearch` (`lib/view/widgets/custom_search.dart`).
+     - *Permissions (CASL Abilities)*: `CanAccess` (`lib/core/widgets/can_access.dart`) or `Get.find<AuthController>().can(action, subject)`.
+     - *Theme, Styles, Strings*: `AppColors` (`lib/untils/app_colors.dart`), `AppStrings` (`lib/untils/app_strings.dart`), `AppTextStyles` (`lib/untils/app_textstyles.dart`), `AppThemes` (`lib/untils/app_themes.dart`), `AppConstants` (`lib/untils/app_constants.dart`).
+
+3. **Loading State (CRITICAL RULE)**:
    - ALWAYS use **Skeleton Loader** (`SkeletonLoader` & `SkeletonBox` from `lib/view/widgets/skeleton_loader.dart`) for list/card/dashboard loading states.
    - NEVER use plain `CircularProgressIndicator` centered in list views.
 
-3. **Pagination Standard**:
+4. **Pagination Standard**:
    - ALWAYS use `AppPaginationWidget` from `lib/core/widgets/app_pagination_widget.dart` for paginated lists.
    - Default items per page: `10`.
    - Never auto-flip pages upon reaching scroll bottom. Let users tap page buttons or page picker.
 
-4. **Permissions (CASL Abilities)**:
+5. **Permissions (CASL Abilities)**:
    - Check user abilities using `final authCtrl = Get.find<AuthController>();` and `authCtrl.can(action, subject)` where action is `'create'`, `'read'`, `'update'`, `'destroy'`.
+   - In UI, wrap sensitive action widgets with `CanAccess(action: ..., subject: ..., child: ...)`.
 
-5. **UI & Overflow Safety**:
+6. **UI & Overflow Safety**:
    - For bottom sheets / modals, always set `constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85)` and wrap middle body in `Flexible(child: SingleChildScrollView(child: ...))` with action buttons pinned at bottom.
    - Avoid `withOpacity` on Colors; use `withValues(alpha: ...)` or predefined colors in `AppColors`.
 
-6. **Stale-While-Revalidate (SWR) & Non-Flickering Loading Lifecycle**:
+7. **Stale-While-Revalidate (SWR) & Non-Flickering Loading Lifecycle**:
    - Only activate full Skeleton Shimmer loaders on cold start / first visit when data is empty (`itemsList.isEmpty`).
    - If data already exists in memory, display it immediately (0ms delay) and revalidate/sync in background without clearing lists or causing screen flicker.
 
-7. **Centralized Text Strings (AppStrings)**:
+8. **Centralized Text Strings & Colors**:
    - Use `AppStrings` (`lib/untils/app_strings.dart`) for all labels, buttons, titles, and notifications instead of hardcoding raw strings in Views.
+   - Use `AppColors` (`lib/untils/app_colors.dart`) exclusively for all colors.
+
+9. **Standard 4-Step Feature Development Flow**:
+   - *Step 1*: Check existing resources (`model/`, `service/`, `controllers/`, `widgets/`, `untils/`, `helper/`).
+   - *Step 2*: If existing function/widget fits, use it directly. If partially missing, extend existing class/file rather than creating duplicate files.
+   - *Step 3*: Integrate with Controller using reactive states (`Rx`) and `BaseResponse`.
+   - *Step 4*: Render UI strictly reusing components (`Obx`, `AppStrings`, `AppColors`, `SkeletonLoader`, `AppPaginationWidget`, `CustomSnackbar`).

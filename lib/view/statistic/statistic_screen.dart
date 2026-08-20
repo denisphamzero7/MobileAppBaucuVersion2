@@ -53,27 +53,11 @@ class _StatisticScreenState extends State<StatisticScreen> {
       ),
       body: SafeArea(
         child: Obx(() {
-          final isSkeleton = taskController.isStatsLoading.value && taskController.stats.value.total == 0;
+          final isSkeleton = taskController.isStatsLoading.value;
 
           return SmartSkeletonWrapper(
             showSkeleton: isSkeleton,
-            skeleton: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-              child: SkeletonLoader(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppSkeleton.searchBar(height: 48, radius: 14),
-                    const SizedBox(height: 12),
-                    AppSkeleton.grid(crossAxisCount: 3, itemCount: 6, childAspectRatio: 2.1, height: 44),
-                    const SizedBox(height: 16),
-                    AppSkeleton.grid(crossAxisCount: 3, itemCount: 6, childAspectRatio: 2.1, height: 44),
-                    const SizedBox(height: 16),
-                    const SkeletonBox(width: double.infinity, height: 160, radius: 14),
-                  ],
-                ),
-              ),
-            ),
+            skeleton: AppSkeleton.statisticPageLayout(),
             onRefresh: _refreshStats,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),

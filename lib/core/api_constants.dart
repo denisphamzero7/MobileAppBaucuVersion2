@@ -35,10 +35,18 @@ class ApiConstants {
 
   // === Công việc ===
   static const String taskAssignmentItems = "task-assignment-items";
+  static const String taskImport = "task-assignment-items/import";
+  static const String taskExport = "task-assignment-items/export";
+  static const String taskBulkDelete = "task-assignment-items/bulk-delete";
+  static const String taskStats = "task-assignment-items/stats";
+  static const String taskStatsByDepartment = "task-assignment-items/stats-by-department";
+  static const String taskStatsByItemType = "task-assignment-items/stats-by-item-type";
+  static const String taskAssignmentItemTypes = "task-assignment-item-types";
+  static const String taskAssignmentDepartments = "task-assignment-departments";
   static const String taskAssignmentPetitions = "task-assignment-petitions";
   static const String taskAssignmentPetitionsDepartments = "task-assignment-petitions/available-departments";
   static const String taskAssignmentPetitionsStats = "task-assignment-petitions/stats";
 
   // === Van ban công việc ===
-  static const String taskAssignmentDocuments= "task-assignment-documents";
+  static const String taskAssignmentDocuments = "task-assignment-documents";
 }

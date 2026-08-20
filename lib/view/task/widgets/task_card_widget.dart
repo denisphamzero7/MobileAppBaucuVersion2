@@ -4,6 +4,7 @@ import '../../../controllers/task_controller.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../model/task_model.dart';
 import '../../../untils/app_colors.dart';
+import '../../../untils/app_strings.dart';
 import '../create_task_screen.dart';
 import 'task_details_dialog.dart';
 
@@ -26,42 +27,42 @@ class TaskCardWidget extends GetView<TaskController> {
     final bool canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
 
     // Determine status text and colors
-    String statusText = 'Đang thực hiện';
+    String statusText = AppStrings.statusInProgress;
     Color statusColor = AppColors.primary;
     Color statusBgColor = AppColors.badgeBlueBg;
 
     if (task.processingStatus == 'todo') {
-      statusText = 'Chưa thực hiện';
+      statusText = AppStrings.statusTodo;
       statusColor = AppColors.textGrayDark;
       statusBgColor = isDark ? AppColors.white10 : AppColors.lightBg;
     } else if (task.processingStatus == 'pending_approval' || task.processingStatus == 'pending') {
-      statusText = 'Chờ duyệt';
+      statusText = AppStrings.statusPendingApproval;
       statusColor = AppColors.pendingApproval;
       statusBgColor = isDark ? AppColors.cardItemDark : AppColors.bgPurpleLight;
     } else if (task.processingStatus == 'done' || task.processingStatus == 'completed') {
-      statusText = 'Hoàn thành';
+      statusText = AppStrings.statusDone;
       statusColor = AppColors.done;
       statusBgColor = AppColors.badgeGreenBg;
     } else if (task.processingStatus == 'paused') {
-      statusText = 'Tạm dừng';
+      statusText = AppStrings.statusPaused;
       statusColor = AppColors.paused;
       statusBgColor = AppColors.bgYellowLight;
     } else if (task.processingStatus == 'cancelled') {
-      statusText = 'Đã hủy';
+      statusText = AppStrings.statusCancelled;
       statusColor = AppColors.overdue;
       statusBgColor = AppColors.badgeRedBg;
     }
 
     // Determine timing text
-    String timingText = 'ĐÚNG HẠN';
+    String timingText = AppStrings.timingOnTimeUpper;
     if (task.isOverdue || task.timingStatus == 'overdue') {
-      timingText = 'QUÁ HẠN';
+      timingText = AppStrings.timingOverdueUpper;
     } else if (task.timingStatus == 'late') {
-      timingText = 'TRỄ HẠN';
+      timingText = AppStrings.timingLateUpper;
     } else if (task.timingStatus == 'early') {
-      timingText = 'SỚM HẠN';
+      timingText = AppStrings.timingEarlyUpper;
     } else if (task.timingStatus == 'upcoming') {
-      timingText = 'CHƯA ĐẾN HẠN';
+      timingText = AppStrings.timingUpcomingUpper;
     }
 
     // Format deadline
@@ -253,10 +254,10 @@ class TaskCardWidget extends GetView<TaskController> {
           ),
           confirmDismiss: (direction) async {
              return await Get.defaultDialog<bool>(
-               title: 'Xóa công việc',
-               middleText: 'Bạn có chắc chắn muốn xóa công việc này?',
-               textConfirm: 'Xóa',
-               textCancel: 'Hủy',
+               title: AppStrings.deleteTask,
+               middleText: AppStrings.confirmDeleteTask,
+               textConfirm: AppStrings.delete,
+               textCancel: AppStrings.cancel,
                confirmTextColor: Colors.white,
                onConfirm: () => Get.back(result: true),
                onCancel: () => Get.back(result: false),

@@ -1,14 +1,13 @@
+import 'dart:developer' as developer;
 import '../core/api_constants.dart';
 import '../helper/dio_helper.dart';
 import '../model/base_response.dart';
+import '../model/department_model.dart';
 import '../model/task_model.dart';
 import '../model/user_model.dart';
-import 'petition_service.dart';
 
 class TaskService {
   final DioHelper _http = DioHelper();
-
-
 
   Future<BaseResponse<List<TaskModel>>?> getTasks({
     String? type,
@@ -35,7 +34,7 @@ class TaskService {
         url: ApiConstants.taskAssignmentItems,
         queryParameters: queryParams,
       );
-      print("in kết quả tasks: $response");
+      developer.log("Get tasks response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -47,7 +46,7 @@ class TaskService {
               listData = json['data'] as List;
             }
             return listData.map((item) => TaskModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
+          },
         );
       }
       return null;
@@ -60,7 +59,7 @@ class TaskService {
           data: [],
         );
       }
-      print("Error in repository getTasks: $e");
+      developer.log("Error in repository getTasks: $e", name: "TaskService");
       return null;
     }
   }
@@ -68,23 +67,33 @@ class TaskService {
   Future<dynamic> exportTasks({String? type, int? userId, String? keyword, String? status, String? timingStatus}) async {
     try {
       final Map<String, dynamic> queryParams = {};
-      if (type == 'received' && userId != null) queryParams['assignee_id'] = userId;
-      else if (type == 'sent' && userId != null) queryParams['assigner_id'] = userId;
-      else if (type != null && type.isNotEmpty) queryParams['type'] = type;
+      if (type == 'received' && userId != null) {
+        queryParams['assignee_id'] = userId;
+      } else if (type == 'sent' && userId != null) {
+        queryParams['assigner_id'] = userId;
+      } else if (type != null && type.isNotEmpty) {
+        queryParams['type'] = type;
+      }
       
-      if (keyword != null && keyword.isNotEmpty) queryParams['search'] = keyword;
-      if (status != null && status != 'all') queryParams['processing_status'] = status;
-      if (timingStatus != null && timingStatus != 'all') queryParams['timing_status'] = timingStatus;
+      if (keyword != null && keyword.isNotEmpty) {
+        queryParams['search'] = keyword;
+      }
+      if (status != null && status != 'all') {
+        queryParams['processing_status'] = status;
+      }
+      if (timingStatus != null && timingStatus != 'all') {
+        queryParams['timing_status'] = timingStatus;
+      }
 
       final response = await _http.get(
-        url: '${ApiConstants.taskAssignmentItems}/export',
+        url: ApiConstants.taskExport,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       return response;
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (!errorStr.contains('unauthorized') && !errorStr.contains('403')) {
-        print("Error in exportTasks: $e");
+        developer.log("Error in exportTasks: $e", name: "TaskService");
       }
       return null;
     }
@@ -97,7 +106,7 @@ class TaskService {
       );
       return response != null;
     } catch (e) {
-      print("Error in repository deleteTask: $e");
+      developer.log("Error in repository deleteTask: $e", name: "TaskService");
       return false;
     }
   }
@@ -105,12 +114,12 @@ class TaskService {
   Future<bool> bulkDeleteTasks(List<int> ids) async {
     try {
       final response = await _http.delete(
-        url: '${ApiConstants.taskAssignmentItems}/bulk-delete',
+        url: ApiConstants.taskBulkDelete,
         data: {'ids': ids},
       );
       return response != null;
     } catch (e) {
-      print("Error in repository bulkDeleteTasks: $e");
+      developer.log("Error in repository bulkDeleteTasks: $e", name: "TaskService");
       return false;
     }
   }
@@ -132,13 +141,20 @@ class TaskService {
         queryParams['end_date'] = endDate;
         queryParams['to_date'] = endDate;
       }
-      if (departmentId != null) queryParams['department_id'] = departmentId;
-      if (type == 'received' && userId != null) queryParams['assignee_id'] = userId;
-      else if (type == 'sent' && userId != null) queryParams['assigner_id'] = userId;
-      if (type != null && type.isNotEmpty) queryParams['type'] = type;
+      if (departmentId != null) {
+        queryParams['department_id'] = departmentId;
+      }
+      if (type == 'received' && userId != null) {
+        queryParams['assignee_id'] = userId;
+      } else if (type == 'sent' && userId != null) {
+        queryParams['assigner_id'] = userId;
+      }
+      if (type != null && type.isNotEmpty) {
+        queryParams['type'] = type;
+      }
 
       final response = await _http.get(
-        url: '${ApiConstants.taskAssignmentItems}/stats',
+        url: ApiConstants.taskStats,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       if (response is Map<String, dynamic>) {
@@ -148,7 +164,7 @@ class TaskService {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (!errorStr.contains('unauthorized') && !errorStr.contains('403')) {
-        print("Error in repository getTaskStats: $e");
+        developer.log("Error in repository getTaskStats: $e", name: "TaskService");
       }
       return null;
     }
@@ -167,14 +183,14 @@ class TaskService {
       }
 
       final response = await _http.get(
-        url: '${ApiConstants.taskAssignmentItems}/stats-by-department',
+        url: ApiConstants.taskStatsByDepartment,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       return response;
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (!errorStr.contains('unauthorized') && !errorStr.contains('403')) {
-        print("Error in repository getStatsByDepartment: $e");
+        developer.log("Error in repository getStatsByDepartment: $e", name: "TaskService");
       }
       return null;
     }
@@ -193,28 +209,27 @@ class TaskService {
       }
 
       final response = await _http.get(
-        url: '${ApiConstants.taskAssignmentItems}/stats-by-item-type',
+        url: ApiConstants.taskStatsByItemType,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       return response;
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (!errorStr.contains('unauthorized') && !errorStr.contains('403')) {
-        print("Error in repository getStatsByItemType: $e");
+        developer.log("Error in repository getStatsByItemType: $e", name: "TaskService");
       }
       return null;
     }
   }
 
-
   Future<BaseResponse<TaskModel>?> createTask(Map<String, dynamic> data) async {
     try {
-      print("🚀 Payload gửi lên tạo task: $data");
+      developer.log("Payload create task: $data", name: "TaskService");
       final response = await _http.post(
         url: ApiConstants.taskAssignmentItems,
         data: data,
       );
-      print("✅ in kết quả tạo task: $response");
+      developer.log("Create task response: $response", name: "TaskService");
 
       if (response != null) {
         return BaseResponse.fromJson(
@@ -224,7 +239,7 @@ class TaskService {
       }
       return null;
     } catch (e) {
-      print("Error in repository createTask: $e");
+      developer.log("Error in repository createTask: $e", name: "TaskService");
       rethrow;
     }
   }
@@ -235,7 +250,7 @@ class TaskService {
         url: '${ApiConstants.taskAssignmentItems}/$id',
         data: data,
       );
-      print("in kết quả cập nhật task: $response");
+      developer.log("Update task response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -244,7 +259,7 @@ class TaskService {
       }
       return null;
     } catch (e) {
-      print("Error in repository updateTask: $e");
+      developer.log("Error in repository updateTask: $e", name: "TaskService");
       rethrow;
     }
   }
@@ -252,9 +267,9 @@ class TaskService {
   Future<BaseResponse<List<TaskItemType>>?> getTaskItemTypes() async {
     try {
       final response = await _http.get(
-        url: 'task-assignment-item-types',
+        url: ApiConstants.taskAssignmentItemTypes,
       );
-      print("in kết quả item types: $response");
+      developer.log("Get item types response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -271,7 +286,7 @@ class TaskService {
       }
       return null;
     } catch (e) {
-      print("Error in repository getTaskItemTypes: $e");
+      developer.log("Error in repository getTaskItemTypes: $e", name: "TaskService");
       return null;
     }
   }
@@ -279,9 +294,9 @@ class TaskService {
   Future<BaseResponse<List<TaskAssignmentDocument>>?> getTaskAssignmentDocuments() async {
     try {
       final response = await _http.get(
-        url: 'task-assignment-documents',
+        url: ApiConstants.taskAssignmentDocuments,
       );
-      print("in kết quả task-assignment-documents: $response");
+      developer.log("Get task assignment documents response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -298,7 +313,7 @@ class TaskService {
       }
       return null;
     } catch (e) {
-      print("Error in repository getTaskAssignmentDocuments: $e");
+      developer.log("Error in repository getTaskAssignmentDocuments: $e", name: "TaskService");
       return null;
     }
   }
@@ -306,9 +321,9 @@ class TaskService {
   Future<BaseResponse<List<DepartmentModel>>?> getTaskDepartments() async {
     try {
       final response = await _http.get(
-        url: 'task-assignment-departments',
+        url: ApiConstants.taskAssignmentDepartments,
       );
-      print("in kết quả task-assignment-departments: $response");
+      developer.log("Get task departments response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -325,7 +340,7 @@ class TaskService {
       }
       return null;
     } catch (e) {
-      print("Error in repository getTaskDepartments: $e");
+      developer.log("Error in repository getTaskDepartments: $e", name: "TaskService");
       return null;
     }
   }
@@ -333,9 +348,9 @@ class TaskService {
   Future<BaseResponse<List<User>>?> getDepartmentUsers(int departmentId) async {
     try {
       final response = await _http.get(
-        url: 'task-assignment-departments/$departmentId/users',
+        url: '${ApiConstants.taskAssignmentDepartments}/$departmentId/users',
       );
-      print("in kết quả users phòng ban $departmentId: $response");
+      developer.log("Get department $departmentId users response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -367,10 +382,11 @@ class TaskService {
       }
       return null;
     } catch (e) {
-      print("Error in repository getDepartmentUsers: $e");
+      developer.log("Error in repository getDepartmentUsers: $e", name: "TaskService");
       return null;
     }
   }
 }
+
 
 

@@ -7,8 +7,6 @@ import 'package:app_baucu_version1/model/task_model.dart';
 import 'package:app_baucu_version1/untils/app_colors.dart';
 import 'package:app_baucu_version1/untils/app_strings.dart';
 import 'create_task_screen.dart';
-import '../../core/widgets/import_excel_button.dart';
-import '../../core/widgets/export_excel_button.dart';
 import '../../core/widgets/app_pagination_widget.dart';
 import '../widgets/quick_action_bottom_sheet.dart';
 
@@ -18,8 +16,26 @@ import 'widgets/stat_card_widget.dart';
 import 'widgets/task_card_widget.dart';
 import '../widgets/smart_skeleton_wrapper.dart';
 
+/// ============================================================================
+/// 📋 [TaskScreen] - MÀN HÌNH QUẢN LÝ CÔNG VIỆC (ĐANG GIAO / ĐƯỢC GIAO)
+/// ============================================================================
+/// 
+/// 📌 CHỨC NĂNG CHÍNH:
+/// 1. Hiển thị danh sách công việc theo phân loại:
+///    - `type: 'sent'` -> Công việc tôi đã giao cho người khác.
+///    - `type: 'received'` -> Công việc người khác giao cho tôi.
+/// 2. Thống kê nhanh bằng 2 lưới số liệu:
+///    - Lưới 7 ô: Trạng thái xử lý (Chưa làm, Đang làm, Chờ duyệt, Hoàn thành, Tạm dừng, Đã hủy).
+///    - Lưới 6 ô: Tiến độ công việc (Chưa đến hạn, Sớm hạn, Đúng hạn, Trễ hạn, Quá hạn, Đã hủy).
+/// 3. Bộ lọc thời gian thực: Tìm kiếm từ khóa, Lọc theo ô thống kê, Phân trang.
+/// 4. Các tiện ích: Nhập/Xuất Excel, Thêm việc mới, Chọn nhiều & Xóa hàng loạt.
+/// 5. Ứng dụng [SmartSkeletonWrapper] để hiển thị khung xương tải trang 100% Full Page.
 class TaskScreen extends StatefulWidget {
-  final String? type; // 'sent' or 'received' or null
+  /// Phân loại tab công việc:
+  /// - `'sent'`: Màn hình Công việc đang giao
+  /// - `'received'`: Màn hình Công việc được giao
+  final String? type;
+
   const TaskScreen({super.key, this.type});
 
   @override
@@ -29,22 +45,24 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   late final TaskController controller;
 
-  // Reactive filters & pagination
-  final RxString selectedStatusFilter = 'all'.obs;
-  final RxString selectedTimingFilter = 'all'.obs;
-  final RxString searchText = ''.obs;
-  final RxInt currentPage = 1.obs;
-  static const int itemsPerPage = 10;
+  // --- Các biến phản ứng (Reactive State) phục vụ tìm kiếm & bộ lọc ---
+  final RxString selectedStatusFilter = 'all'.obs;  // Bộ lọc trạng thái xử lý
+  final RxString selectedTimingFilter = 'all'.obs;  // Bộ lọc tiến độ
+  final RxString searchText = ''.obs;               // Từ khóa tìm kiếm
+  final RxInt currentPage = 1.obs;                  // Trang hiện tại
+  static const int itemsPerPage = 10;               // Số lượng việc trên mỗi trang
 
   @override
   void initState() {
     super.initState();
+    // 1. Khởi tạo / Tìm Controller
     if (!Get.isRegistered<TaskController>()) {
       controller = Get.put(TaskController());
     } else {
       controller = Get.find<TaskController>();
     }
-    // Chỉ tự động tải dữ liệu nếu danh sách đang rỗng (chưa có dữ liệu)
+
+    // 2. Tự động tải dữ liệu ban đầu cho Tab hiện tại nếu danh sách đang rỗng
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final actualTasks = controller.getTasksList(widget.type);
       if (actualTasks.isEmpty) {
@@ -83,8 +101,8 @@ class _TaskScreenState extends State<TaskScreen> {
     if (canCreate) {
       items.add(
         QuickActionItem(
-          title: 'Tạo việc mới',
-          subtitle: 'Thêm & phân công',
+          title: AppStrings.createTaskAction,
+          subtitle: AppStrings.createTaskSubtitle,
           icon: Icons.add_task_rounded,
           color: AppColors.primary,
           onTap: () => Get.to(() => const CreateTaskScreen()),
@@ -92,16 +110,11 @@ class _TaskScreenState extends State<TaskScreen> {
       );
       items.add(
         QuickActionItem(
-          title: 'Nhập Excel',
-          subtitle: 'Tải danh sách việc',
+          title: AppStrings.importExcelAction,
+          subtitle: AppStrings.importExcelSubtitle,
           icon: Icons.upload_file_rounded,
           color: Colors.green,
-          onTap: () {
-            ImportExcelButton.pickAndUpload(
-              uploadUrl: 'task-assignment-items/import',
-              onSuccess: () => controller.refreshTasks(),
-            );
-          },
+          onTap: () => controller.importExcel(),
         ),
       );
     }
@@ -109,17 +122,14 @@ class _TaskScreenState extends State<TaskScreen> {
     if (canExport) {
       items.add(
         QuickActionItem(
-          title: 'Xuất Excel',
-          subtitle: 'Tải báo cáo tệp',
+          title: AppStrings.exportExcelAction,
+          subtitle: AppStrings.exportExcelSubtitle,
           icon: Icons.download_rounded,
           color: Colors.orange,
-          onTap: () {
-            ExportExcelButton.downloadAndSave(
-              url: 'task-assignment-items/export',
-              queryParams: queryParams,
-              fileNamePrefix: fileNamePrefix,
-            );
-          },
+          onTap: () => controller.exportExcel(
+            queryParams: queryParams,
+            fileNamePrefix: fileNamePrefix,
+          ),
         ),
       );
     }
@@ -127,8 +137,8 @@ class _TaskScreenState extends State<TaskScreen> {
     if (canDelete) {
       items.add(
         QuickActionItem(
-          title: controller.isMultiSelectMode.value ? 'Hủy chọn' : 'Chọn nhiều',
-          subtitle: 'Xóa hàng loạt',
+          title: controller.isMultiSelectMode.value ? AppStrings.cancelSelectMode : AppStrings.deleteSelectedAction,
+          subtitle: AppStrings.deleteSelectedSubtitle,
           icon: controller.isMultiSelectMode.value ? Icons.close_rounded : Icons.checklist_rtl_rounded,
           color: Colors.purple,
           badge: controller.selectedTaskIds.isNotEmpty ? '${controller.selectedTaskIds.length}' : null,
@@ -144,7 +154,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
     QuickActionBottomSheet.show(
       context,
-      title: 'Thao tác công việc',
+      title: AppStrings.taskDetails,
       subtitle: 'Chọn tác vụ bạn muốn thực hiện',
       items: items,
     );
@@ -200,7 +210,7 @@ class _TaskScreenState extends State<TaskScreen> {
           return FloatingActionButton.extended(
             onPressed: () {
               Get.defaultDialog(
-                title: 'Xóa công việc',
+                title: AppStrings.deleteTask,
                 middleText: 'Bạn có chắc chắn muốn xóa ${controller.selectedTaskIds.length} công việc này?',
                 textConfirm: AppStrings.delete,
                 textCancel: AppStrings.cancel,
@@ -214,21 +224,24 @@ class _TaskScreenState extends State<TaskScreen> {
             },
             backgroundColor: Colors.red,
             icon: const Icon(Icons.delete, color: Colors.white),
-            label: Text('Xóa (${controller.selectedTaskIds.length})', style: const TextStyle(color: Colors.white)),
+            label: Text('${AppStrings.delete} (${controller.selectedTaskIds.length})', style: const TextStyle(color: Colors.white)),
           );
         }
         return const SizedBox.shrink();
       }),
+      // ======================================================================
+      // 🌟 THÂN TRANG (BODY) - TÍCH HỢP SMARTSKELETONWRAPPER ĐIỀU PHỐI TẢI
+      // ======================================================================
       body: SafeArea(
         child: Obx(() {
-          // 1. Lấy danh sách việc tương ứng với type hiện tại
+          // 1. Lấy danh sách công việc của Tab hiện tại ('sent' hoặc 'received')
           final actualTasks = controller.getTasksList(widget.type);
           final isTaskLoading = controller.isTypeLoading(widget.type);
 
-          // Chỉ hiện Skeleton khi chưa có dữ liệu HOẶC khi người dùng chủ động vuốt làm mới
-          final showSkeleton = isTaskLoading && (actualTasks.isEmpty || controller.isManualRefreshing.value);
+          // 2. Điều kiện hiển thị Skeleton: Khi Controller đang tải -> LUÔN HIỆN FULL SKELETON
+          final showSkeleton = isTaskLoading;
 
-          // Calculate statistics based on this tab's actual tasks
+          // 3. Tính toán số liệu thống kê cho 2 Lưới (Dựa trên danh sách của Tab này)
           final totalCount = actualTasks.length;
           final todoCount = actualTasks.where((t) => t.processingStatus == 'todo').length;
           final inProgressCount = actualTasks.where((t) => t.processingStatus == 'in_progress').length;
@@ -244,7 +257,7 @@ class _TaskScreenState extends State<TaskScreen> {
           final overdueCount = actualTasks.where((t) => t.isOverdue || t.timingStatus == 'overdue').length;
           final cancelledTimingCount = actualTasks.where((t) => t.timingStatus == 'cancelled').length;
 
-          // 2. Apply search and card filters
+          // 4. Áp dụng bộ lọc tìm kiếm & lọc theo ô số liệu
           var filteredTasks = List<TaskModel>.from(actualTasks);
 
           if (searchText.value.isNotEmpty) {
@@ -265,6 +278,7 @@ class _TaskScreenState extends State<TaskScreen> {
                 .toList();
           }
 
+          // 5. Tính toán phân trang dữ liệu (10 mục/trang)
           final int totalFilteredItems = filteredTasks.length;
           final int totalPages = (totalFilteredItems / itemsPerPage).ceil().clamp(1, 9999);
           if (currentPage.value > totalPages) {
@@ -273,8 +287,14 @@ class _TaskScreenState extends State<TaskScreen> {
           final int startIndex = (currentPage.value - 1) * itemsPerPage;
           final pagedTasks = filteredTasks.skip(startIndex).take(itemsPerPage).toList();
 
+          // ==================================================================
+          // 👇 VỊ TRÍ BỌC SKELETON DUY NHẤT TRÊN TOÀN MÀN HÌNH
+          // ==================================================================
           return SmartSkeletonWrapper(
+            // A. Cờ điều kiện (true -> Hiện Skeleton, false -> Hiện child)
             showSkeleton: showSkeleton,
+
+            // B. Mẫu khung xương Full Page mô phỏng 1-1 (Search + 2 Lưới + 5 Thẻ việc 68px)
             skeleton: AppSkeleton.fullPageLayout(
               statusGridCount: 7,
               statusGridCols: 4,
@@ -282,17 +302,21 @@ class _TaskScreenState extends State<TaskScreen> {
               timingGridCount: 6,
               timingGridCols: 3,
               timingGridRatio: 2.1,
-              cardCount: 4,
-              cardHeight: 110,
+              cardCount: 5,
+              cardHeight: 68,
             ),
+
+            // C. Hàm kích hoạt khi người dùng kéo xuống làm mới (Pull-to-refresh)
             onRefresh: () => controller.fetchTasks(type: widget.type, isRefresh: true, isManualPull: true),
+
+            // D. Giao diện dữ liệu thật khi đã nạp xong (KHÔNG bọc skeleton lẻ bên trong)
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // A. SEARCH BAR & FILTER BUTTON
+                  // --- KHỐI A. THANH TÌM KIẾM & BỘ LỌC ---
                   Row(
                     children: [
                       Expanded(
@@ -347,7 +371,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
                   // B. TRẠNG THÁI XỬ LÝ GRID
                   const Text(
-                    'TRẠNG THÁI XỬ LÝ',
+                    AppStrings.processingStatusSection,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 10),
@@ -360,7 +384,7 @@ class _TaskScreenState extends State<TaskScreen> {
                     childAspectRatio: 1.4,
                     children: [
                       StatCardWidget(
-                        label: 'Tổng',
+                        label: AppStrings.statusAll,
                         count: totalCount,
                         icon: Icons.filter_list,
                         color: AppColors.primary,
@@ -372,7 +396,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Chưa thực hiện',
+                        label: AppStrings.statusTodo,
                         count: todoCount,
                         icon: Icons.access_time,
                         color: AppColors.todo,
@@ -384,7 +408,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Đang thực hiện',
+                        label: AppStrings.statusInProgress,
                         count: inProgressCount,
                         icon: Icons.rotate_right,
                         color: AppColors.inProgress,
@@ -396,7 +420,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Chờ duyệt',
+                        label: AppStrings.statusPendingApproval,
                         count: pendingApprovalCount,
                         icon: Icons.error_outline,
                         color: AppColors.pendingApproval,
@@ -408,7 +432,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Hoàn thành',
+                        label: AppStrings.statusDone,
                         count: doneCount,
                         icon: Icons.check_circle_outline,
                         color: AppColors.done,
@@ -420,7 +444,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Tạm dừng',
+                        label: AppStrings.statusPaused,
                         count: pausedCount,
                         icon: Icons.pause_circle_outline,
                         color: AppColors.paused,
@@ -432,7 +456,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Đã hủy',
+                        label: AppStrings.statusCancelled,
                         count: cancelledCount,
                         icon: Icons.cancel_outlined,
                         color: AppColors.cancelled,
@@ -449,7 +473,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
                   // C. TIẾN ĐỘ CÔNG VIỆC GRID
                   const Text(
-                    'TIẾN ĐỘ CÔNG VIỆC',
+                    AppStrings.timingStatusSection,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 10),
@@ -462,7 +486,7 @@ class _TaskScreenState extends State<TaskScreen> {
                     childAspectRatio: 2.1,
                     children: [
                       StatCardWidget(
-                        label: 'Chưa đến hạn',
+                        label: AppStrings.timingUpcoming,
                         count: upcomingCount,
                         icon: Icons.access_time,
                         color: AppColors.upcoming,
@@ -474,7 +498,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Sớm hạn',
+                        label: AppStrings.timingEarly,
                         count: earlyCount,
                         icon: Icons.star_outline,
                         color: AppColors.early,
@@ -486,7 +510,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Đúng hạn',
+                        label: AppStrings.timingOnTime,
                         count: onTimeCount,
                         icon: Icons.done_all,
                         color: AppColors.onTime,
@@ -498,7 +522,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Trễ hạn',
+                        label: AppStrings.timingLate,
                         count: lateCount,
                         icon: Icons.access_time,
                         color: AppColors.late,
@@ -510,7 +534,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Quá hạn',
+                        label: AppStrings.timingOverdue,
                         count: overdueCount,
                         icon: Icons.warning_amber_outlined,
                         color: AppColors.overdue,
@@ -522,7 +546,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         isDark: isDark,
                       ),
                       StatCardWidget(
-                        label: 'Đã hủy',
+                        label: AppStrings.timingCancelled,
                         count: cancelledTimingCount,
                         icon: Icons.cancel_outlined,
                         color: AppColors.timingCancelled,
@@ -540,23 +564,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   const SizedBox(height: 10),
 
                   // D. TASKS LIST
-                  if (isTaskLoading)
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 4,
-                      itemBuilder: (_, __) => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 6.0),
-                        child: SkeletonLoader(
-                          child: SkeletonBox(
-                            width: double.infinity,
-                            height: 110,
-                            radius: 16,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (filteredTasks.isEmpty)
+                  if (filteredTasks.isEmpty)
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 40.0),

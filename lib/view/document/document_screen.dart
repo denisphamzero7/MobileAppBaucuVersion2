@@ -1124,8 +1124,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
               statusGridCols: 3,
               statusGridRatio: 2.1,
               timingGridCount: 0,
-              cardCount: 4,
-              cardHeight: 120,
+              cardCount: 5,
+              cardHeight: 68,
             ),
             onRefresh: _onRefresh,
             child: SingleChildScrollView(

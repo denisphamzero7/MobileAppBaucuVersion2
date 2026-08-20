@@ -1,20 +1,9 @@
 import '../core/api_constants.dart';
 import '../helper/dio_helper.dart';
 import '../model/base_response.dart';
+import '../model/department_model.dart';
+export '../model/department_model.dart';
 
-class DepartmentModel {
-  final int id;
-  final String name;
-
-  DepartmentModel({required this.id, required this.name});
-
-  factory DepartmentModel.fromJson(Map<String, dynamic> json) {
-    return DepartmentModel(
-      id: (json['id'] ?? 0) as int,
-      name: (json['name'] ?? '').toString(),
-    );
-  }
-}
 
 class PetitionItemModel {
   final int id;

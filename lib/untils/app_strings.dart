@@ -87,6 +87,49 @@ class AppStrings {
   static const String updateTask = 'Cập nhật công việc';
   static const String deleteTask = 'Xóa công việc';
   static const String noTasksFound = 'Không tìm thấy công việc nào';
+  static const String confirmDeleteTask = 'Bạn có chắc chắn muốn xóa công việc này?';
+  static const String confirmDeleteSelectedTasks = 'Bạn có chắc chắn muốn xóa các công việc đã chọn?';
+
+  // Tiêu đề các khối trong trang Task
+  static const String processingStatusSection = 'TRẠNG THÁI XỬ LÝ';
+  static const String timingStatusSection = 'TIẾN ĐỘ CÔNG VIỆC';
+
+  // Trạng thái xử lý (Processing Status)
+  static const String statusAll = 'Tổng';
+  static const String statusTodo = 'Chưa thực hiện';
+  static const String statusInProgress = 'Đang thực hiện';
+  static const String statusPendingApproval = 'Chờ duyệt';
+  static const String statusDone = 'Hoàn thành';
+  static const String statusPaused = 'Tạm dừng';
+  static const String statusCancelled = 'Đã hủy';
+
+  // Tiến độ công việc (Timing Status)
+  static const String timingUpcoming = 'Chưa đến hạn';
+  static const String timingEarly = 'Sớm hạn';
+  static const String timingOnTime = 'Đúng hạn';
+  static const String timingLate = 'Trễ hạn';
+  static const String timingOverdue = 'Quá hạn';
+  static const String timingCancelled = 'Đã hủy';
+
+  // Chữ in hoa dùng cho Badge tiến độ
+  static const String timingUpcomingUpper = 'CHƯA ĐẾN HẠN';
+  static const String timingEarlyUpper = 'SỚM HẠN';
+  static const String timingOnTimeUpper = 'ĐÚNG HẠN';
+  static const String timingLateUpper = 'TRỄ HẠN';
+  static const String timingOverdueUpper = 'QUÁ HẠN';
+
+  // Quick Action Menu & Nút bấm
+  static const String createTaskAction = 'Tạo việc mới';
+  static const String createTaskSubtitle = 'Thêm & phân công';
+  static const String importExcelAction = 'Nhập Excel';
+  static const String importExcelSubtitle = 'Tải danh sách việc';
+  static const String exportExcelAction = 'Xuất Excel';
+  static const String exportExcelSubtitle = 'Tải danh sách ra máy';
+  static const String deleteSelectedAction = 'Xóa đã chọn';
+  static const String deleteSelectedSubtitle = 'Xóa nhiều việc cùng lúc';
+  static const String selectAllAction = 'Chọn tất cả';
+  static const String deselectAllAction = 'Bỏ chọn';
+  static const String cancelSelectMode = 'Hủy';
 
   // ===========================================================================
   // 4. QUẢN LÝ ĐƠN THƯ & KIẾN NGHỊ (PETITIONS & DOCUMENTS)

@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import '../core/api_constants.dart';
+import '../core/widgets/import_excel_button.dart';
+import '../core/widgets/export_excel_button.dart';
 import '../model/base_response.dart';
 import '../model/task_model.dart';
 import '../model/task_stats_model.dart';
@@ -17,20 +19,41 @@ class TaskController extends GetxController {
   final PetitionService _petitionService = PetitionService();
   final UserService _userService = UserService();
 
+  /// ============================================================================
+  /// 📦 1. QUẢN LÝ DANH SÁCH CÔNG VIỆC THEO TAB
+  /// ============================================================================
+  
+  /// Danh sách công việc chung (Toàn bộ / Mới nhất tại Trang chủ)
   final RxList<TaskModel> tasksList = <TaskModel>[].obs;
+  /// Danh sách công việc tôi đã giao (Tab "Đang giao" - type: 'sent')
   final RxList<TaskModel> sentTasksList = <TaskModel>[].obs;
+  /// Danh sách công việc tôi được giao (Tab "Được giao" - type: 'received')
   final RxList<TaskModel> receivedTasksList = <TaskModel>[].obs;
 
+  /// Helper lấy danh sách RxList tương ứng với từng Tab
   RxList<TaskModel> getTasksList(String? type) {
     if (type == 'sent') return sentTasksList;
     if (type == 'received') return receivedTasksList;
     return tasksList;
   }
 
-  final RxBool isLoading = false.obs;
-  final RxMap<String, bool> isLoadingMap = <String, bool>{}.obs;
-  final RxSet<String> initialLoadedTypes = <String>{}.obs;
+  /// ============================================================================
+  /// ⏳ 2. QUẢN LÝ TRẠNG THÁI LOADING THÔNG MINH
+  /// ============================================================================
 
+  /// Cờ loading chung
+  final RxBool isLoading = false.obs;
+  /// Map theo dõi trạng thái loading độc lập cho từng tab ('sent', 'received', 'all')
+  final RxMap<String, bool> isLoadingMap = <String, bool>{}.obs;
+  /// Tập hợp lưu các tab đã tải xong lần đầu (Dùng để quyết định kích hoạt Full Skeleton)
+  final RxSet<String> initialLoadedTypes = <String>{}.obs;
+  /// Cờ xác định người dùng đang chủ động vuốt màn hình để làm mới (Pull-to-refresh)
+  final RxBool isManualRefreshing = false.obs;
+
+  /// Kiểm tra tab hiện tại có đang trong trạng thái cần hiển thị Skeleton hay không.
+  /// Trả về `true` nếu:
+  /// - Tab đang thực hiện request mạng (`isLoadingMap[key] == true`)
+  /// - Tab này chưa từng tải xong lần đầu (`!initialLoadedTypes.contains(key)`)
   bool isTypeLoading(String? type) {
     final key = type ?? 'all';
     if (isLoadingMap[key] == true) return true;
@@ -67,6 +90,7 @@ class TaskController extends GetxController {
     selectedTaskIds.assignAll(ids);
   }
 
+  /// Dữ liệu thống kê số liệu (Dùng cho Trang chủ & Trang Thống kê)
   final Rx<TaskStatsModel> stats = TaskStatsModel.empty().obs;
   final RxBool isStatsLoading = false.obs;
 
@@ -85,6 +109,7 @@ class TaskController extends GetxController {
     fetchStats();
   }
 
+  /// Tải mới toàn bộ dữ liệu (công việc chung, đang giao, được giao, thống kê)
   Future<void> refreshTasks() async {
     await Future.wait([
       fetchTasks(type: null, isRefresh: true),
@@ -94,6 +119,7 @@ class TaskController extends GetxController {
     ]);
   }
 
+  /// Tải danh sách phòng ban từ máy chủ
   Future<void> fetchDepartments() async {
     try {
       final response = await _petitionService.getAvailableDepartments();
@@ -129,7 +155,6 @@ class TaskController extends GetxController {
   final RxInt currentPage = 1.obs;
   final RxBool hasMoreTasks = true.obs;
   final RxBool isLoadingMore = false.obs;
-  final RxBool isManualRefreshing = false.obs;
 
   Future<void> fetchTasks({
     String? type, 
@@ -427,5 +452,29 @@ class TaskController extends GetxController {
       Get.snackbar('Lỗi', errorMsg, backgroundColor: Colors.red.shade100);
       return false;
     }
+  }
+
+  /// ============================================================================
+  /// 📊 3. NGHIỆP VỤ NHẬP / XUẤT DỮ LIỆU EXCEL (CHUẨN MVVM - KHÔNG HARDCODE URL)
+  /// ============================================================================
+
+  /// Nhập danh sách công việc từ file Excel và tự động làm mới dữ liệu
+  Future<void> importExcel() async {
+    await ImportExcelButton.pickAndUpload(
+      uploadUrl: ApiConstants.taskImport,
+      onSuccess: () => refreshTasks(),
+    );
+  }
+
+  /// Xuất danh sách công việc ra file Excel và lưu vào máy
+  Future<void> exportExcel({
+    required Map<String, dynamic> queryParams,
+    required String fileNamePrefix,
+  }) async {
+    await ExportExcelButton.downloadAndSave(
+      url: ApiConstants.taskExport,
+      queryParams: queryParams,
+      fileNamePrefix: fileNamePrefix,
+    );
   }
 }

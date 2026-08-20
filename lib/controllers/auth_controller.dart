@@ -90,19 +90,19 @@ class AuthController extends GetxController {
       if (response != null) {
         final LoginData data = response.data;
         if (data.availableOrganizations.isEmpty) {
-          Get.snackbar("Đăng nhập thất bại", "Tài khoản không thuộc bất kỳ tổ chức nào.", snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar("Đăng nhập thất bại", "Tài khoản không thuộc bất kỳ tổ chức nào.", snackPosition: SnackPosition.TOP);
           return null;
         }
         return data;
       } else {
-        Get.snackbar("Đăng nhập thất bại", "Không thể lấy thông tin đăng nhập từ hệ thống.", snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar("Đăng nhập thất bại", "Không thể lấy thông tin đăng nhập từ hệ thống.", snackPosition: SnackPosition.TOP);
       }
     } catch (e) {
       String errorMsg = e.toString().replaceAll("Exception: ", "");
       if (errorMsg.contains("no connect internet")) {
         errorMsg = "Vui lòng kiểm tra lại kết nối mạng của bạn.";
       }
-      Get.snackbar("Đăng nhập thất bại", errorMsg, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Đăng nhập thất bại", errorMsg, snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
     }
@@ -159,12 +159,12 @@ class AuthController extends GetxController {
         );
         return true;
       } else {
-        Get.snackbar("Thất bại", "Bạn chọn sai tổ chức");
+        Get.snackbar("Thất bại", "Bạn chọn sai tổ chức",snackPosition: SnackPosition.TOP);
         await _storage.remove('accessToken');
         return false;
       }
     } catch (e) {
-      Get.snackbar("Thất bại", "Lỗi chuyển đổi tổ chức: ${e.toString()}");
+      Get.snackbar("Thất bại", "Lỗi chuyển đổi tổ chức: ${e.toString()}",snackPosition: SnackPosition.TOP);
       await _storage.remove('accessToken');
       return false;
     }
@@ -186,13 +186,13 @@ class AuthController extends GetxController {
         phone: phone,
       );
       if (response != null) {
-        Get.snackbar("Thành công", "Đăng ký tài khoản thành công!");
+        Get.snackbar("Thành công", "Đăng ký tài khoản thành công!",snackPosition: SnackPosition.TOP);
         return true;
       }
       return false;
     } catch (e) {
       String errorMsg = e.toString().replaceAll("Exception: ", "");
-      Get.snackbar("Đăng ký thất bại", errorMsg, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar("Đăng ký thất bại", errorMsg, snackPosition: SnackPosition.TOP);
       return false;
     } finally {
       isLoading.value = false;
@@ -260,12 +260,12 @@ class AuthController extends GetxController {
           taskCtrl.fetchStats();
         }
         
-        Get.snackbar("Thành công", "Đã chuyển đổi tổ chức thành công!");
+        Get.snackbar("Thành công", "Đã chuyển đổi tổ chức thành công!",snackPosition: SnackPosition.TOP);
       } else {
-        Get.snackbar("Thất bại", "Không thể chuyển sang tổ chức này.");
+        Get.snackbar("Thất bại", "Không thể chuyển sang tổ chức này.",snackPosition: SnackPosition.TOP);
       }
     } catch (e) {
-      Get.snackbar("Lỗi", "Lỗi khi chuyển đổi tổ chức: $e");
+      Get.snackbar("Lỗi", "Lỗi khi chuyển đổi tổ chức: $e",snackPosition: SnackPosition.TOP);
     } finally {
       isLoading.value = false;
     }

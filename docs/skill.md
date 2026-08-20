@@ -120,8 +120,54 @@ if (orgId != null) {
 
 ---
 
-## 5. Quy tắc quản lý và sử dụng Bảng màu (Color Palette Rules)
+## 5. Quy tắc quản lý và sử dụng Bảng màu & Chuỗi văn bản (Colors & Strings)
 
-* **Bắt buộc sử dụng màu từ hệ thống**: Mọi màu sắc được sử dụng trên giao diện Trang chủ (HomeScreen), Thống kê (StatisticScreen), các thẻ, nhãn hay biểu đồ bắt buộc phải được khai báo và gọi từ class **`AppColors`** tại file **[`app_colors.dart`](file:///c:/LTMB_Tools/class1/project01/app_baucu_version1/lib/untils/app_colors.dart)**.
-* **Tuyệt đối không tự ý tạo màu sắc khác**: Nghiêm cấm sử dụng trực tiếp các constructor màu dạng cứng hoặc mã HEX tùy biến khác (ví dụ: `Color(0xFF...)`) ở các lớp View hoặc Widget. Nếu phát sinh nhu cầu sử dụng màu sắc mới, bắt buộc phải khai báo tĩnh màu đó vào trong `AppColors` trước, sau đó mới gọi sử dụng.
+* **Bắt buộc sử dụng màu từ hệ thống**: Mọi màu sắc được sử dụng trên giao diện bắt buộc phải được khai báo và gọi từ class **`AppColors`** tại file **[`app_colors.dart`](file:///c:/LTMB_Tools/class1/project01/app_baucu_version1/lib/untils/app_colors.dart)**. Tuyệt đối không tự ý viết mã HEX hoặc `Color(0xFF...)` trực tiếp trong View.
+* **Bắt buộc sử dụng chuỗi từ AppStrings**: Toàn bộ tiêu đề, nhãn nút, thông báo lỗi/thành công phải gọi từ **`AppStrings`** tại file **[`app_strings.dart`](file:///c:/LTMB_Tools/class1/project01/app_baucu_version1/lib/untils/app_strings.dart)**.
+
+---
+
+## 6. Nguyên tắc DRY & Danh mục Tài nguyên Dùng chung (Resource Reuse Catalog)
+
+**Quy tắc bất di bất dịch**: Luôn kiểm tra và tái sử dụng tài nguyên đã có trong dự án trước khi định nghĩa mới. Chỉ tạo hàm, model, service hoặc widget mới khi dự án chưa có thành phần tương ứng.
+
+### Danh mục tài nguyên cốt lõi cần tái sử dụng:
+
+| Lĩnh vực | File / Thành phần có sẵn | Cách sử dụng / Mục đích |
+| :--- | :--- | :--- |
+| **API & Network** | `lib/helper/dio_helper.dart` (`DioHelper.dio`) | Gọi API đã cấu hình sẵn Interceptors (Token, Organization-Id). |
+| **Response Model** | `lib/model/base_response.dart` (`BaseResponse<T>`) | Định dạng dữ liệu trả về chuẩn từ backend. |
+| **Endpoints URL** | `lib/core/api_constants.dart` (`ApiConstants`) | Tập trung tất cả đường dẫn API. |
+| **Thông báo (Snackbar)** | `lib/helper/custom_snackbar.dart` (`CustomSnackbar`) | `CustomSnackbar.showSuccess()`, `CustomSnackbar.showError()`, `showWarning()`, `showInfo()`. |
+| **Hiệu ứng Loading** | `lib/view/widgets/skeleton_loader.dart`<br>`lib/view/widgets/smart_skeleton_wrapper.dart` | `SkeletonLoader`, `SkeletonBox`, `SkeletonCard`, `SmartSkeletonWrapper` cho trạng thái tải dữ liệu Shimmer. Tuyệt đối không dùng CircularProgressIndicator đơn điệu cho danh sách. |
+| **Phân trang danh sách** | `lib/core/widgets/app_pagination_widget.dart` (`AppPaginationWidget`) | Phân trang chuẩn 10 phần tử/trang cho mọi màn hình danh sách. |
+| **Kéo làm mới** | `lib/core/widgets/app_refresher.dart` (`AppRefresher`) | Kéo xuống để tải lại dữ liệu. |
+| **Phân quyền (CASL)** | `lib/core/widgets/can_access.dart` (`CanAccess`)<br>`lib/controllers/auth_controller.dart` (`authCtrl.can()`) | Kiểm tra quyền hành động (`'create'`, `'read'`, `'update'`, `'destroy'`). |
+| **Ô nhập liệu** | `lib/view/widgets/custom_textfield.dart` (`CustomTextField`) | Input chuẩn kèm icon, validation, label. |
+| **Thẻ danh mục/Card** | `lib/view/widgets/custom_card.dart` (`CustomCard`) | Card viền bo, đổ bóng chuẩn giao diện dự án. |
+| **Thanh tìm kiếm** | `lib/view/widgets/custom_search.dart` (`CustomSearch`) | Ô tìm kiếm dùng chung. |
+| **Đường kẻ phân cách** | `lib/core/widgets/app_divider.dart` (`AppDivider`) | Phân cách khối giao diện. |
+
+---
+
+## 7. Quy trình 4 Bước Chuẩn hóa khi Phát triển Tính năng Mới
+
+```mermaid
+flowchart TD
+    A[Nhận yêu cầu tính năng] --> B{Kiểm tra tài nguyên có sẵn?}
+    B -- Có sẵn --> C[Tái sử dụng Helper/Widget/Service/Utils có sẵn]
+    B -- Chưa có --> D[Bổ sung Model/Service mới hoặc mở rộng class hiện có]
+    C --> E[Xử lý Logic & State trong Controller]
+    D --> E
+    E --> F[Xây dựng View với Obx, AppColors, AppStrings & Skeleton/Pagination]
+    F --> G[Kiểm tra phân quyền với CanAccess]
+```
+
+1. **Bước 1 (Check & Reuse)**: Kiểm tra các thư mục `core/`, `helper/`, `untils/`, `view/widgets/` xem đã có thành phần tương ứng chưa.
+2. **Bước 2 (Extend or Create)**: 
+   - Nếu đã có Service/Model liên quan: Mở rộng phương thức vào class hiện tại thay vì tạo file mới rời rạc.
+   - Nếu là module nghiệp vụ hoàn toàn mới: Tạo mới Model, Service theo đúng mẫu chuẩn của dự án (`BaseResponse`, `DioHelper`).
+3. **Bước 3 (State in Controller)**: Quản lý trạng thái bằng `GetxController` (`RxList`, `RxBool`, `RxInt`), xử lý lỗi mạng hiển thị qua `CustomSnackbar`.
+4. **Bước 4 (View Implementation)**: Xây dựng UI bằng các widget dùng chung, bọc `Obx`, dùng `SkeletonLoader` cho trạng thái tải lần đầu và `AppPaginationWidget` khi danh sách phân trang.
+
 
