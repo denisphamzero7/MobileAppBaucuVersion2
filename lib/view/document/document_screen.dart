@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
 import '../../controllers/auth_controller.dart';
 import '../../untils/app_colors.dart';
+import '../../untils/app_textstyles.dart';
+import '../../helper/date_helper.dart';
 import '../../service/petition_service.dart';
 import '../../core/widgets/import_excel_button.dart';
 import '../../core/widgets/export_excel_button.dart';
@@ -11,6 +13,7 @@ import '../../view/widgets/quick_action_bottom_sheet.dart';
 import '../../view/widgets/skeleton_loader.dart';
 import '../../view/widgets/smart_skeleton_wrapper.dart';
 import '../../view/task/widgets/stat_card_widget.dart';
+import 'widgets/petition_details_dialog.dart';
 
 class DocumentScreen extends StatefulWidget {
   const DocumentScreen({super.key});
@@ -132,7 +135,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
     final canCreate = authCtrl.can('create', 'TaskAssignmentPetitions');
     final canDelete = authCtrl.can('destroy', 'TaskAssignmentPetitions');
     final canExport = authCtrl.can('read', 'TaskAssignmentPetitions');
-    final canUpdate = authCtrl.can('update', 'TaskAssignmentPetitions');
 
     final List<QuickActionItem> items = [];
 
@@ -232,17 +234,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
       Get.snackbar('Lỗi', 'Có lỗi xảy ra khi xóa hàng loạt', backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
       _onRefresh();
     }
-  }
-
-  String _formatDate(String? rawDate) {
-    if (rawDate == null || rawDate.isEmpty) return '--/--/----';
-    try {
-      final parsed = DateTime.tryParse(rawDate);
-      if (parsed != null) {
-        return '${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}';
-      }
-    } catch (_) {}
-    return rawDate;
   }
 
   void _showDepartmentFilterModal(BuildContext context, bool isDark) {
@@ -632,36 +623,58 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           final payload = <String, dynamic>{
                             'title': titleCtrl.text.trim(),
                             'sender_name': senderNameCtrl.text.trim(),
-                            'sender_phone': senderPhoneCtrl.text.trim(),
-                            'sender_email': senderEmailCtrl.text.trim(),
-                            'sender_cccd': senderCccdCtrl.text.trim(),
-                            'sender_address': senderAddressCtrl.text.trim(),
-                            'department_id': selectedDeptId,
                             'content': contentCtrl.text.trim(),
                             'processing_status': selectedStatus,
                           };
+
+                          if (senderPhoneCtrl.text.trim().isNotEmpty) {
+                            payload['sender_phone'] = senderPhoneCtrl.text.trim();
+                          }
+                          if (senderEmailCtrl.text.trim().isNotEmpty) {
+                            payload['sender_email'] = senderEmailCtrl.text.trim();
+                          }
+                          if (senderCccdCtrl.text.trim().isNotEmpty) {
+                            payload['sender_cccd'] = senderCccdCtrl.text.trim();
+                          }
+                          if (senderAddressCtrl.text.trim().isNotEmpty) {
+                            payload['sender_address'] = senderAddressCtrl.text.trim();
+                          }
+                          if (selectedDeptId != null) {
+                            payload['department_id'] = selectedDeptId;
+                          }
                           if (deadlineDate != null) {
-                            payload['deadline_date'] = '${deadlineDate!.year}-${deadlineDate!.month.toString().padLeft(2, '0')}-${deadlineDate!.day.toString().padLeft(2, '0')}';
+                            payload['deadline_date'] = DateHelper.formatForApi(deadlineDate, includeTime: false);
                           }
 
                           Navigator.pop(ctx);
 
-                          if (isEdit) {
-                            final res = await _petitionService.updatePetition(petitionToEdit.id, payload);
-                            if (res != null) {
-                              Get.snackbar('Thành công', 'Đã cập nhật đơn thư', backgroundColor: Colors.green, colorText: Colors.white);
-                              _onRefresh();
+                          try {
+                            if (isEdit) {
+                              final res = await _petitionService.updatePetition(petitionToEdit.id, payload);
+                              if (res != null) {
+                                Get.snackbar('Thành công', 'Đã cập nhật đơn thư', backgroundColor: Colors.green, colorText: Colors.white);
+                                _onRefresh();
+                              } else {
+                                Get.snackbar('Lỗi', 'Cập nhật đơn thư thất bại', backgroundColor: Colors.red, colorText: Colors.white);
+                              }
                             } else {
-                              Get.snackbar('Lỗi', 'Cập nhật đơn thư thất bại', backgroundColor: Colors.red, colorText: Colors.white);
+                              final res = await _petitionService.createPetition(payload);
+                              if (res != null) {
+                                Get.snackbar('Thành công', 'Đã tạo đơn thư mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
+                                _onRefresh();
+                              } else {
+                                Get.snackbar('Lỗi', 'Tạo đơn thư thất bại', backgroundColor: Colors.red, colorText: Colors.white);
+                              }
                             }
-                          } else {
-                            final res = await _petitionService.createPetition(payload);
-                            if (res != null) {
-                              Get.snackbar('Thành công', 'Đã tạo đơn thư mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
-                              _onRefresh();
-                            } else {
-                              Get.snackbar('Lỗi', 'Tạo đơn thư thất bại', backgroundColor: Colors.red, colorText: Colors.white);
-                            }
+                          } catch (e) {
+                            final errorMsg = e.toString().replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
+                            Get.snackbar(
+                              'Lỗi',
+                              'Thao tác thất bại: $errorMsg',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 4),
+                            );
                           }
                         },
                         icon: const Icon(Icons.check_circle_outline, size: 18),
@@ -718,317 +731,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
   }
 
   void _showPetitionDetails(BuildContext context, PetitionItemModel petition, bool isDark) {
-    final authCtrl = Get.find<AuthController>();
-    final canUpdate = authCtrl.can('update', 'TaskAssignmentPetitions');
-    final canDelete = authCtrl.can('destroy', 'TaskAssignmentPetitions');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.4,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (_, scrollController) {
-            return Container(
-              padding: const EdgeInsets.all(20),
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.grey[400],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    petition.title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  // Status & Timing Badges Row
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _buildPetitionStatusBadge(petition.processingStatus, isDark),
-                      _buildPetitionTimingBadge(petition),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  // Progress Bar Card
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.white10 : AppColors.lightBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Tiến độ xử lý',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? AppColors.white70 : AppColors.grey[800],
-                              ),
-                            ),
-                            Text(
-                              '${petition.completionPercent}%',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: (petition.completionPercent / 100).clamp(0.0, 1.0),
-                            backgroundColor: isDark ? AppColors.white10 : AppColors.grey[300],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              petition.completionPercent >= 100
-                                  ? AppColors.done
-                                  : AppColors.primary,
-                            ),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _buildDetailRow('Người gửi:', petition.senderName),
-                  if (petition.senderCccd != null && petition.senderCccd!.isNotEmpty)
-                    _buildDetailRow('Số CCCD:', petition.senderCccd!),
-                  if (petition.senderPhone != null && petition.senderPhone!.isNotEmpty)
-                    _buildDetailRow('Số điện thoại:', petition.senderPhone!),
-                  if (petition.senderEmail != null && petition.senderEmail!.isNotEmpty)
-                    _buildDetailRow('Email:', petition.senderEmail!),
-                  if (petition.senderAddress != null && petition.senderAddress!.isNotEmpty)
-                    _buildDetailRow('Địa chỉ:', petition.senderAddress!),
-                  _buildDetailRow('Phòng ban xử lý:', petition.departmentName),
-                  _buildDetailRow('Ngày tiếp nhận:', _formatDate(petition.submissionDate)),
-                  _buildDetailRow('Hạn xử lý:', _formatDate(petition.deadlineDate)),
-                  if (petition.completedAt != null && petition.completedAt!.isNotEmpty)
-                    _buildDetailRow('Ngày hoàn thành:', _formatDate(petition.completedAt)),
-                  if (petition.documentNumber != null && petition.documentNumber!.isNotEmpty)
-                    _buildDetailRow('Số hiệu văn bản:', petition.documentNumber!),
-                  const SizedBox(height: 12),
-                  const Text('Nội dung phản ánh:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardItemDark : AppColors.lightBg,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      petition.content.isNotEmpty ? petition.content : 'Không có nội dung chi tiết',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  if (petition.responseContent != null && petition.responseContent!.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    const Text('Nội dung trả lời:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.cardItemDark : AppColors.badgeGreenBg.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        petition.responseContent!,
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-
-                  // Actions row in details bottom sheet
-                  Row(
-                    children: [
-                      if (canDelete) ...[
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          ),
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            Get.defaultDialog(
-                              title: 'Xác nhận xóa',
-                              middleText: 'Bạn có chắc chắn muốn xóa đơn thư này?',
-                              textConfirm: 'Xóa',
-                              textCancel: 'Hủy',
-                              confirmTextColor: Colors.white,
-                              buttonColor: Colors.red,
-                              onConfirm: () {
-                                Get.back();
-                                _deleteSinglePetition(petition.id);
-                              },
-                            );
-                          },
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('Xóa', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      if (canUpdate) ...[
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            ),
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              _showCreateEditPetitionModal(context, petitionToEdit: petition);
-                            },
-                            icon: const Icon(Icons.edit_note_rounded, size: 18),
-                            label: const Text('Cập nhật đơn thư', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.grey, fontWeight: FontWeight.w500)),
-          ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPetitionStatusBadge(String status, bool isDark) {
-    Color color;
-    Color bgColor;
-    String label;
-
-    switch (status.toLowerCase()) {
-      case 'new':
-      case 'todo':
-        color = AppColors.grey[700]!;
-        bgColor = isDark ? AppColors.white10 : AppColors.lightBg;
-        label = 'Mới tiếp nhận';
-        break;
-      case 'processing':
-      case 'in_progress':
-        color = AppColors.primary;
-        bgColor = AppColors.badgeBlueBg;
-        label = 'Đang xử lý';
-        break;
-      case 'completed':
-      case 'done':
-        color = AppColors.done;
-        bgColor = AppColors.badgeGreenBg;
-        label = 'Hoàn thành';
-        break;
-      case 'paused':
-        color = AppColors.paused;
-        bgColor = AppColors.bgYellowLight;
-        label = 'Tạm dừng';
-        break;
-      case 'cancelled':
-        color = AppColors.overdue;
-        bgColor = AppColors.badgeRedBg;
-        label = 'Đã hủy';
-        break;
-      default:
-        color = AppColors.grey[700]!;
-        bgColor = isDark ? AppColors.white10 : AppColors.lightBg;
-        label = status;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildPetitionTimingBadge(PetitionItemModel petition) {
-    Color color = AppColors.done;
-    Color bgColor = AppColors.badgeGreenBg;
-    String label = 'Đúng hạn';
-
-    if (petition.isOverdue || petition.timingStatus == 'overdue') {
-      color = AppColors.overdue;
-      bgColor = AppColors.badgeRedBg;
-      label = 'Quá hạn';
-    } else if (petition.timingStatus == 'late') {
-      color = AppColors.late;
-      bgColor = AppColors.bgYellowLight;
-      label = 'Trễ hạn';
-    } else if (petition.timingStatus == 'early') {
-      color = AppColors.early;
-      bgColor = AppColors.badgeGreenBg;
-      label = 'Sớm hạn';
-    } else if (petition.timingStatus == 'upcoming') {
-      color = AppColors.primary;
-      bgColor = AppColors.badgeBlueBg;
-      label = 'Chưa đến hạn';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-      ),
+    PetitionDetailsBottomSheet.show(
+      context,
+      petition: petition,
+      isDark: isDark,
+      onRefreshParent: () => _onRefresh(),
+      onEditPetition: (p) => _showCreateEditPetitionModal(context, petitionToEdit: p),
     );
   }
 
@@ -1491,7 +1199,9 @@ class _DocumentScreenState extends State<DocumentScreen> {
                 children: [
                   Text(
                     petition.title,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? AppColors.white : AppColors.black87),
+                    style: AppTextStyle.cardTitle.copyWith(
+                      color: isDark ? AppColors.white : AppColors.black87,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1509,13 +1219,18 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           ),
                           child: Text(
                             petition.senderName,
-                            style: TextStyle(fontSize: 9, color: isDark ? AppColors.white70 : AppColors.grey[700]),
+                            style: AppTextStyle.chipText.copyWith(
+                              color: isDark ? AppColors.white70 : AppColors.grey[700],
+                            ),
                           ),
                         ),
                         const SizedBox(width: 6),
                         const Icon(Icons.circle, size: 3, color: AppColors.grey),
                         const SizedBox(width: 6),
-                        Text('Hạn: $deadlineStr', style: const TextStyle(fontSize: 9, color: AppColors.grey)),
+                        Text(
+                          'Hạn: $deadlineStr',
+                          style: AppTextStyle.chipText.copyWith(color: AppColors.grey),
+                        ),
                         const SizedBox(width: 6),
                         const Icon(Icons.circle, size: 3, color: AppColors.grey),
                         const SizedBox(width: 6),
@@ -1527,7 +1242,10 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           ),
                           child: Text(
                             '• ${petition.completionPercent}%',
-                            style: const TextStyle(fontSize: 9, color: AppColors.primary, fontWeight: FontWeight.bold),
+                            style: AppTextStyle.chipText.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -1551,10 +1269,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       ),
                       child: Text(
                         statusText,
-                        style: TextStyle(
+                        style: AppTextStyle.badgeText.copyWith(
                           color: statusColor,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -1583,10 +1299,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
                   ),
                   child: Text(
                     timingText,
-                    style: TextStyle(
+                    style: AppTextStyle.badgeText.copyWith(
                       color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -1602,12 +1316,21 @@ class _DocumentScreenState extends State<DocumentScreen> {
 
       if (isMultiSelectMode.value && canDelete) {
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Checkbox(
-              value: isSelected,
-              onChanged: (_) => togglePetitionSelection(petition.id),
-              activeColor: Colors.red,
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Checkbox(
+                value: isSelected,
+                onChanged: (_) => togglePetitionSelection(petition.id),
+                activeColor: Colors.red,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               child: GestureDetector(
                 onTap: () => togglePetitionSelection(petition.id),

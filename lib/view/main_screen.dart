@@ -1,6 +1,7 @@
 import 'package:app_baucu_version1/controllers/navigation.dart';
 import 'package:app_baucu_version1/controllers/theme_controller.dart';
 import 'package:app_baucu_version1/view/document/document_screen.dart';
+import 'package:app_baucu_version1/view/task_document/task_document_screen.dart';
 import 'package:app_baucu_version1/view/home/home_screen.dart';
 import 'package:app_baucu_version1/view/task/task_screen.dart';
 import 'package:app_baucu_version1/view/statistic/statistic_screen.dart';
@@ -32,6 +33,7 @@ class _MainScreenState extends State<MainScreen> {
                 TaskScreen(type: 'sent'),
                 TaskScreen(type: 'received'),
                 const DocumentScreen(),
+                const TaskDocumentScreen(),
                 const StatisticScreen(),
                 const ProfileScreen(),
               ],

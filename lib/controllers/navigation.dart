@@ -16,7 +16,7 @@ class NavigationController extends GetxController {
         taskCtrl.fetchTasks(type: 'sent');
       } else if (index == 2) {
         taskCtrl.fetchTasks(type: 'received');
-      } else if (index == 4) {
+      } else if (index == 5) {
         taskCtrl.fetchStats();
       }
     }

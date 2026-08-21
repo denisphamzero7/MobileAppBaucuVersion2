@@ -5,6 +5,8 @@ import '../../../controllers/task_controller.dart';
 import '../../../model/task_model.dart';
 import '../../../untils/app_colors.dart';
 import '../../../untils/app_strings.dart';
+import '../../../untils/app_textstyles.dart';
+import '../../../helper/date_helper.dart';
 import 'task_details_dialog.dart';
 
 class TaskCardWidget extends GetView<TaskController> {
@@ -18,31 +20,6 @@ class TaskCardWidget extends GetView<TaskController> {
     required this.isDark,
     required this.primaryColor,
   });
-
-  String _formatDate(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return '';
-    final trimmed = raw.trim();
-    try {
-      if (trimmed.contains(' ')) {
-        final parts = trimmed.split(' ');
-        if (parts.length >= 2) {
-          if (parts[0].contains('-')) {
-            final dateParts = parts[0].split('-');
-            if (dateParts.length == 3) {
-              return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-            }
-          }
-          return parts[0];
-        }
-      } else if (trimmed.contains('-')) {
-        final dateParts = trimmed.split('-');
-        if (dateParts.length == 3) {
-          return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-        }
-      }
-    } catch (_) {}
-    return trimmed;
-  }
 
   Color _getDotColor(TaskModel task) {
     if (task.isOverdue || task.timingStatus == 'overdue' || task.priority.toLowerCase() == 'urgent' || task.priority.toLowerCase() == 'high') {
@@ -68,7 +45,7 @@ class TaskCardWidget extends GetView<TaskController> {
         : (task.assignerName != null && task.assignerName!.isNotEmpty ? task.assignerName! : 'nhanviec1');
 
     final bool isOverdue = task.isOverdue || task.timingStatus == 'overdue';
-    final String deadlineFormatted = _formatDate(task.endAt);
+    final String deadlineFormatted = DateHelper.formatDate(task.endAt);
     final dotColor = _getDotColor(task);
 
     final Widget cardContent = Container(
@@ -109,9 +86,7 @@ class TaskCardWidget extends GetView<TaskController> {
                 Expanded(
                   child: Text(
                     titleText,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
+                    style: AppTextStyle.cardTitle.copyWith(
                       color: isDark ? AppColors.white : AppColors.black87,
                     ),
                     maxLines: 1,
@@ -134,8 +109,7 @@ class TaskCardWidget extends GetView<TaskController> {
                   ),
                   child: Text(
                     userName,
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: AppTextStyle.chipText.copyWith(
                       fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.white70 : AppColors.grey[800],
                     ),
@@ -154,8 +128,7 @@ class TaskCardWidget extends GetView<TaskController> {
                     ),
                     child: Text(
                       deadlineFormatted,
-                      style: const TextStyle(
-                        fontSize: 11,
+                      style: AppTextStyle.chipText.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.overdue,
                       ),
@@ -173,8 +146,7 @@ class TaskCardWidget extends GetView<TaskController> {
                   ),
                   child: Text(
                     '${task.completionPercent}%',
-                    style: const TextStyle(
-                      fontSize: 11,
+                    style: AppTextStyle.chipText.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
@@ -208,12 +180,21 @@ class TaskCardWidget extends GetView<TaskController> {
 
       if (controller.isMultiSelectMode.value && canDelete) {
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Checkbox(
-              value: isSelected,
-              onChanged: (_) => controller.toggleTaskSelection(task.id),
-              activeColor: Colors.red,
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Checkbox(
+                value: isSelected,
+                onChanged: (_) => controller.toggleTaskSelection(task.id),
+                activeColor: Colors.red,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               child: GestureDetector(
                 onTap: () => controller.toggleTaskSelection(task.id),

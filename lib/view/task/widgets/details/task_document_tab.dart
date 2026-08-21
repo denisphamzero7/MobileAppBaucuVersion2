@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../model/task_model.dart';
 import '../../../../untils/app_colors.dart';
+import '../../../../helper/date_helper.dart';
 
 class TaskDocumentTab extends StatelessWidget {
   final TaskModel task;
@@ -12,31 +13,6 @@ class TaskDocumentTab extends StatelessWidget {
     required this.task,
     required this.isDark,
   });
-
-  String _formatDate(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return '-';
-    final trimmed = raw.trim();
-    try {
-      if (trimmed.contains(' ')) {
-        final parts = trimmed.split(' ');
-        if (parts.length >= 2) {
-          if (parts[0].contains('-')) {
-            final dateParts = parts[0].split('-');
-            if (dateParts.length == 3) {
-              return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-            }
-          }
-          return parts[0];
-        }
-      } else if (trimmed.contains('-')) {
-        final dateParts = trimmed.split('-');
-        if (dateParts.length == 3) {
-          return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-        }
-      }
-    } catch (_) {}
-    return trimmed;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +58,7 @@ class TaskDocumentTab extends StatelessWidget {
           _buildInfoItem(
             icon: Icons.calendar_today_outlined,
             label: 'NGÀY BAN HÀNH',
-            value: _formatDate(task.createdAt),
+            value: DateHelper.formatDate(task.createdAt, fallback: '-'),
             isDark: isDark,
           ),
           const SizedBox(height: 14),

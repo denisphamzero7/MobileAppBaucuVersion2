@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../model/task_model.dart';
 import '../../../../untils/app_colors.dart';
+import '../../../../helper/date_helper.dart';
 
 class TaskInfoTab extends StatefulWidget {
   final TaskModel task;
@@ -19,31 +20,6 @@ class TaskInfoTab extends StatefulWidget {
 
 class _TaskInfoTabState extends State<TaskInfoTab> {
   bool _isDescriptionExpanded = false;
-
-  String _formatDate(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return '-';
-    final trimmed = raw.trim();
-    try {
-      if (trimmed.contains(' ')) {
-        final parts = trimmed.split(' ');
-        if (parts.length >= 2) {
-          if (parts[0].contains('-')) {
-            final dateParts = parts[0].split('-');
-            if (dateParts.length == 3) {
-              return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-            }
-          }
-          return parts[0];
-        }
-      } else if (trimmed.contains('-')) {
-        final dateParts = trimmed.split('-');
-        if (dateParts.length == 3) {
-          return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-        }
-      }
-    } catch (_) {}
-    return trimmed;
-  }
 
   String _getStatusLabel(String status) {
     switch (status.toLowerCase()) {
@@ -202,7 +178,7 @@ class _TaskInfoTabState extends State<TaskInfoTab> {
                     _buildInfoItem(
                       icon: Icons.calendar_today_outlined,
                       label: 'NGÀY BẮT ĐẦU',
-                      value: _formatDate(task.startAt),
+                      value: DateHelper.formatDate(task.startAt, fallback: '-'),
                       isDark: isDark,
                     ),
                     const SizedBox(height: 12),
@@ -245,7 +221,7 @@ class _TaskInfoTabState extends State<TaskInfoTab> {
                     _buildInfoItem(
                       icon: Icons.calendar_today_outlined,
                       label: 'NGÀY KẾT THÚC',
-                      value: _formatDate(task.endAt),
+                      value: DateHelper.formatDate(task.endAt, fallback: '-'),
                       isDark: isDark,
                     ),
                     const SizedBox(height: 12),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../model/task_model.dart';
 import '../../../../untils/app_colors.dart';
+import '../../../../helper/date_helper.dart';
 
 class TaskReportTab extends StatelessWidget {
   final TaskModel task;
@@ -13,31 +14,6 @@ class TaskReportTab extends StatelessWidget {
     required this.isDark,
     required this.onAddReport,
   });
-
-  String _formatDate(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return '-';
-    final trimmed = raw.trim();
-    try {
-      if (trimmed.contains(' ')) {
-        final parts = trimmed.split(' ');
-        if (parts.length >= 2) {
-          if (parts[0].contains('-')) {
-            final dateParts = parts[0].split('-');
-            if (dateParts.length == 3) {
-              return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-            }
-          }
-          return parts[0];
-        }
-      } else if (trimmed.contains('-')) {
-        final dateParts = trimmed.split('-');
-        if (dateParts.length == 3) {
-          return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
-        }
-      }
-    } catch (_) {}
-    return trimmed;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +99,7 @@ class TaskReportTab extends StatelessWidget {
             runSpacing: 16,
             children: reports.map((item) {
               final percent = item.percent;
-              final dateStr = _formatDate(item.date);
+              final dateStr = DateHelper.formatDate(item.date, fallback: '-');
               return Column(
                 children: [
                   Stack(

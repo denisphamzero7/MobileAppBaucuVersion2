@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../untils/app_colors.dart';
+import '../../../untils/app_textstyles.dart';
 
 class StatCardWidget extends StatelessWidget {
   final String label;
@@ -32,7 +33,7 @@ class StatCardWidget extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
@@ -63,7 +64,7 @@ class StatCardWidget extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   count.toString(),
-                  style: TextStyle(
+                  style: AppTextStyle.caption.copyWith(
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
                     color: isSelected
@@ -74,17 +75,20 @@ class StatCardWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected
-                    ? AppColors.primary
-                    : (isDark ? AppColors.grey[400] : AppColors.grey[600]),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: AppTextStyle.caption.copyWith(
+                  fontSize: 9.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isDark ? AppColors.grey[400] : AppColors.grey[600]),
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

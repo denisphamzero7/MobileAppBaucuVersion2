@@ -1,4 +1,4 @@
-﻿import '../../untils/app_colors.dart';
+import '../../untils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
@@ -26,7 +26,7 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -5),
             )
@@ -71,6 +71,11 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
               icon: Icon(Icons.description_outlined),
               activeIcon: Icon(Icons.description),
               label: 'Đơn thư',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.insert_drive_file_outlined),
+              activeIcon: Icon(Icons.insert_drive_file),
+              label: 'Văn bản',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.pie_chart_outline),

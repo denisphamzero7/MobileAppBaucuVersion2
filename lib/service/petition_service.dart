@@ -112,17 +112,36 @@ class PetitionItemModel {
       } catch (_) {}
     }
 
+    final String contentStr = (json['content'] ?? json['description'] ?? json['body'] ?? json['summary'] ?? '').toString().trim();
+    String titleStr = (json['title'] ?? json['subject'] ?? json['name'] ?? '').toString().trim();
+
+    if (titleStr.isEmpty ||
+        titleStr.toLowerCase() == 'đơn thư & kiến nghị' ||
+        titleStr.toLowerCase() == 'đơn thư và kiến nghị' ||
+        titleStr.toLowerCase() == 'đơn thư' ||
+        titleStr.toLowerCase() == 'kiến nghị') {
+      if (contentStr.isNotEmpty) {
+        titleStr = contentStr;
+      } else if (json['document_excerpt'] != null && json['document_excerpt'].toString().trim().isNotEmpty) {
+        titleStr = json['document_excerpt'].toString().trim();
+      } else if (titleStr.isEmpty) {
+        titleStr = 'Đơn thư #${json['id'] ?? ''}';
+      }
+    }
+
+    final String sender = (json['sender_name'] ?? json['petitioner'] ?? json['citizen_name'] ?? json['name'] ?? 'Công dân').toString().trim();
+
     return PetitionItemModel(
       id: (json['id'] ?? 0) as int,
       departmentId: json['department_id'] as int?,
       departmentName: deptName.isNotEmpty ? deptName : 'Chưa phân công',
-      title: (json['title'] ?? json['subject'] ?? json['name'] ?? 'Đơn thư & Kiến nghị').toString(),
-      senderName: (json['sender_name'] ?? json['petitioner'] ?? json['name'] ?? 'Công dân').toString(),
+      title: titleStr,
+      senderName: sender.isNotEmpty ? sender : 'Công dân',
       senderAddress: json['sender_address']?.toString(),
       senderCccd: json['sender_cccd']?.toString(),
       senderPhone: json['sender_phone']?.toString(),
       senderEmail: json['sender_email']?.toString(),
-      content: (json['content'] ?? json['description'] ?? json['body'] ?? '').toString(),
+      content: contentStr,
       processingStatus: pStatus,
       submissionDate: (json['submission_date'] ?? json['created_at'] ?? '').toString(),
       deadlineDate: dDate,
@@ -275,10 +294,15 @@ class PetitionService {
         data: data,
       );
       if (response != null) {
-        return BaseResponse.fromJson(
-          response,
-          (json) => PetitionItemModel.fromJson(json is Map<String, dynamic> ? json : {}),
-        );
+        if (response is Map<String, dynamic>) {
+          final rawData = response.containsKey('data') ? response['data'] : response;
+          final item = PetitionItemModel.fromJson(rawData is Map<String, dynamic> ? rawData : response);
+          return BaseResponse<PetitionItemModel>(
+            statusCode: response['statusCode'] as int? ?? (response['success'] == true ? 200 : 200),
+            message: response['message'] as String? ?? 'Tạo đơn thư thành công',
+            data: item,
+          );
+        }
       }
       return null;
     } catch (e) {
@@ -293,10 +317,15 @@ class PetitionService {
         data: data,
       );
       if (response != null) {
-        return BaseResponse.fromJson(
-          response,
-          (json) => PetitionItemModel.fromJson(json is Map<String, dynamic> ? json : {}),
-        );
+        if (response is Map<String, dynamic>) {
+          final rawData = response.containsKey('data') ? response['data'] : response;
+          final item = PetitionItemModel.fromJson(rawData is Map<String, dynamic> ? rawData : response);
+          return BaseResponse<PetitionItemModel>(
+            statusCode: response['statusCode'] as int? ?? (response['success'] == true ? 200 : 200),
+            message: response['message'] as String? ?? 'Cập nhật thành công',
+            data: item,
+          );
+        }
       }
       return null;
     } catch (e) {
