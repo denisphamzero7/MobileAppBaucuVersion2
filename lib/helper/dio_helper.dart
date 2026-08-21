@@ -17,14 +17,12 @@ class DioHelper {
 
   // Cấu hình Base URL và Timeout
   // (Bạn nên lấy từ file api_constants.dart như đã bàn trước đó)
-  static const String _baseUrl = ApiConstants.baseUrl;
-
   DioHelper._internal() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 15), // 15s timeout kết nối
-        receiveTimeout: const Duration(seconds: 30), // 30s timeout nhận dữ liệu
+        baseUrl: ApiConstants.baseUrl,
+        connectTimeout: const Duration(seconds: 25), // 25s timeout kết nối
+        receiveTimeout: const Duration(seconds: 35), // 35s timeout nhận dữ liệu
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
@@ -33,7 +31,7 @@ class DioHelper {
       ),
     );
 
-    // Bypass SSL Verification because we are connecting to IP directly
+    // Bypass SSL Verification for development and custom domains
     _dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
@@ -43,6 +41,11 @@ class DioHelper {
     );
 
     _initializeInterceptors();
+  }
+
+  /// Cập nhật Base URL khi cần thay đổi động
+  void updateBaseUrl(String newBaseUrl) {
+    _dio.options.baseUrl = newBaseUrl;
   }
 
   // Getter để truy cập trực tiếp Dio nếu cần
@@ -62,13 +65,11 @@ class DioHelper {
             }
           }
 
-          // Thêm ID tổ chức vào Header nếu có
-          final orgId = _box.read('organizationId');
-          if (orgId != null) {
-            options.headers["X-Organization-Id"] = orgId.toString();
-          }
+          // Thêm ID tổ chức vào Header
+          final orgId = _box.read('organizationId') ?? _box.read('current_organization_id') ?? '1';
+          options.headers["X-Organization-Id"] = orgId.toString();
 
-          log("🚀 [REQ] >> ${options.method} ${options.path} | OrgID: ${orgId ?? 'None'}");
+          log("🚀 [REQ] >> ${options.method} ${options.path} | OrgID: $orgId");
 
           return handler.next(options);
         },

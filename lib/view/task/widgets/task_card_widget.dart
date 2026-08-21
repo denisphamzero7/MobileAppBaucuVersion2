@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controllers/task_controller.dart';
 import '../../../controllers/auth_controller.dart';
+import '../../../controllers/task_controller.dart';
 import '../../../model/task_model.dart';
 import '../../../untils/app_colors.dart';
 import '../../../untils/app_strings.dart';
-import '../create_task_screen.dart';
 import 'task_details_dialog.dart';
 
 class TaskCardWidget extends GetView<TaskController> {
@@ -14,210 +13,189 @@ class TaskCardWidget extends GetView<TaskController> {
   final Color primaryColor;
 
   const TaskCardWidget({
-    Key? key,
+    super.key,
     required this.task,
     required this.isDark,
     required this.primaryColor,
-  }) : super(key: key);
+  });
+
+  String _formatDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    final trimmed = raw.trim();
+    try {
+      if (trimmed.contains(' ')) {
+        final parts = trimmed.split(' ');
+        if (parts.length >= 2) {
+          if (parts[0].contains('-')) {
+            final dateParts = parts[0].split('-');
+            if (dateParts.length == 3) {
+              return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
+            }
+          }
+          return parts[0];
+        }
+      } else if (trimmed.contains('-')) {
+        final dateParts = trimmed.split('-');
+        if (dateParts.length == 3) {
+          return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]}';
+        }
+      }
+    } catch (_) {}
+    return trimmed;
+  }
+
+  Color _getDotColor(TaskModel task) {
+    if (task.isOverdue || task.timingStatus == 'overdue' || task.priority.toLowerCase() == 'urgent' || task.priority.toLowerCase() == 'high') {
+      return const Color(0xFFEF4444); // Red dot
+    } else if (task.priority.toLowerCase() == 'medium') {
+      return const Color(0xFFF59E0B); // Orange dot
+    } else {
+      return const Color(0xFF10B981); // Green dot
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final authCtrl = Get.find<AuthController>();
-    final bool canUpdate = authCtrl.can('update', 'TaskAssignmentItems');
     final bool canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
 
-    // Determine status text and colors
-    String statusText = AppStrings.statusInProgress;
-    Color statusColor = AppColors.primary;
-    Color statusBgColor = AppColors.badgeBlueBg;
+    final titleText = (task.documentName != null && task.documentName!.isNotEmpty)
+        ? task.documentName!
+        : task.name;
 
-    if (task.processingStatus == 'todo') {
-      statusText = AppStrings.statusTodo;
-      statusColor = AppColors.textGrayDark;
-      statusBgColor = isDark ? AppColors.white10 : AppColors.lightBg;
-    } else if (task.processingStatus == 'pending_approval' || task.processingStatus == 'pending') {
-      statusText = AppStrings.statusPendingApproval;
-      statusColor = AppColors.pendingApproval;
-      statusBgColor = isDark ? AppColors.cardItemDark : AppColors.bgPurpleLight;
-    } else if (task.processingStatus == 'done' || task.processingStatus == 'completed') {
-      statusText = AppStrings.statusDone;
-      statusColor = AppColors.done;
-      statusBgColor = AppColors.badgeGreenBg;
-    } else if (task.processingStatus == 'paused') {
-      statusText = AppStrings.statusPaused;
-      statusColor = AppColors.paused;
-      statusBgColor = AppColors.bgYellowLight;
-    } else if (task.processingStatus == 'cancelled') {
-      statusText = AppStrings.statusCancelled;
-      statusColor = AppColors.overdue;
-      statusBgColor = AppColors.badgeRedBg;
-    }
+    final userName = (task.assigneeName != null && task.assigneeName!.isNotEmpty)
+        ? task.assigneeName!
+        : (task.assignerName != null && task.assignerName!.isNotEmpty ? task.assignerName! : 'nhanviec1');
 
-    // Determine timing text
-    String timingText = AppStrings.timingOnTimeUpper;
-    if (task.isOverdue || task.timingStatus == 'overdue') {
-      timingText = AppStrings.timingOverdueUpper;
-    } else if (task.timingStatus == 'late') {
-      timingText = AppStrings.timingLateUpper;
-    } else if (task.timingStatus == 'early') {
-      timingText = AppStrings.timingEarlyUpper;
-    } else if (task.timingStatus == 'upcoming') {
-      timingText = AppStrings.timingUpcomingUpper;
-    }
+    final bool isOverdue = task.isOverdue || task.timingStatus == 'overdue';
+    final String deadlineFormatted = _formatDate(task.endAt);
+    final dotColor = _getDotColor(task);
 
-    // Format deadline
-    String deadlineStr = 'N/A';
-    if (task.endAt != null && task.endAt!.isNotEmpty) {
-      try {
-        final spaceParts = task.endAt!.trim().split(' ');
-        String datePart = spaceParts.length >= 2 ? spaceParts[1] : spaceParts[0];
-        if (datePart.contains('/')) {
-          final dateParts = datePart.split('/');
-          if (dateParts.length >= 2) {
-            deadlineStr = '${dateParts[0]}/${dateParts[1]}';
-          }
-        } else if (datePart.contains('-')) {
-          final dateParts = datePart.split('-');
-          if (dateParts.length >= 3) {
-            if (dateParts[0].length == 4) {
-              deadlineStr = '${dateParts[2]}/${dateParts[1]}';
-            } else {
-              deadlineStr = '${dateParts[0]}/${dateParts[1]}';
-            }
-          }
-        }
-      } catch (_) {}
-    }
-
-    Widget card = Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
+    final Widget cardContent = Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? AppColors.white10 : AppColors.black.withOpacity(0.04)),
+        border: Border.all(
+          color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.01),
-            blurRadius: 4,
+            color: AppColors.black.withValues(alpha: 0.015),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: () => showTaskDetailsDialog(context, task, isDark, primaryColor),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: AppColors.paused,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.name,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.black87),
-                    maxLines: 2,
+            // 1. HÀNG TRÊN: Chấm tròn màu + Tên văn bản / Công việc
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    titleText,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.white : AppColors.black87,
+                    ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.white10 : AppColors.lightBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('Nguyễn Văn Hùng', style: TextStyle(fontSize: 9, color: AppColors.grey[700])),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(Icons.circle, size: 3, color: AppColors.grey),
-                        const SizedBox(width: 6),
-                        Text('Hạn: $deadlineStr', style: const TextStyle(fontSize: 9, color: AppColors.grey)),
-                        const SizedBox(width: 6),
-                        const Icon(Icons.circle, size: 3, color: AppColors.grey),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('• ${task.completionPercent}%', style: const TextStyle(fontSize: 9, color: AppColors.primary, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusBgColor,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    if (canUpdate) ...[
-                      const SizedBox(width: 6),
-                      InkWell(
-                        onTap: () => Get.to(() => CreateTaskScreen(taskToUpdate: task)),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.white10 : AppColors.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(Icons.edit_outlined, size: 14, color: AppColors.primary),
-                        ),
-                      ),
-                    ],
-                  ],
                 ),
-                const SizedBox(height: 6),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // 2. HÀNG DƯỚI: Tag người nhận, Tag ngày quá hạn, Tag % tiến độ, Icon biểu đồ sóng bên phải
+            Row(
+              children: [
+                // Tag người nhận việc
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
-                    borderRadius: BorderRadius.circular(4),
+                    color: isDark ? AppColors.white10 : AppColors.lightBg,
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    timingText,
+                    userName,
                     style: TextStyle(
-                      color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.white70 : AppColors.grey[800],
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
+
+                // Tag ngày quá hạn (nếu có)
+                if (isOverdue && deadlineFormatted.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgRedLight,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFCA5A5), width: 0.8),
+                    ),
+                    child: Text(
+                      deadlineFormatted,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.overdue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+
+                // Tag % tiến độ
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.badgeBlueBg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '${task.completionPercent}%',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Icon bên phải: Sóng nhịp (khi có tiến độ > 0%) hoặc Đồng hồ (khi 0%)
+                if (task.completionPercent > 0 || task.processingStatus == 'in_progress')
+                  const Icon(
+                    Icons.ssid_chart,
+                    size: 20,
+                    color: AppColors.primary,
+                  )
+                else
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 18,
+                    color: isDark ? AppColors.white70 : AppColors.grey[400],
+                  ),
               ],
             ),
           ],
@@ -227,51 +205,57 @@ class TaskCardWidget extends GetView<TaskController> {
 
     return Obx(() {
       final isSelected = controller.selectedTaskIds.contains(task.id);
-      
+
       if (controller.isMultiSelectMode.value && canDelete) {
         return Row(
-           children: [
-             Checkbox(
-               value: isSelected,
-               onChanged: (_) => controller.toggleTaskSelection(task.id),
-               activeColor: Colors.red,
-             ),
-             Expanded(child: GestureDetector(
-               onTap: () => controller.toggleTaskSelection(task.id),
-               child: card
-             )),
-           ]
+          children: [
+            Checkbox(
+              value: isSelected,
+              onChanged: (_) => controller.toggleTaskSelection(task.id),
+              activeColor: Colors.red,
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => controller.toggleTaskSelection(task.id),
+                child: cardContent,
+              ),
+            ),
+          ],
         );
       } else if (canDelete) {
         return Dismissible(
           key: Key(task.id.toString()),
           direction: DismissDirection.endToStart,
           background: Container(
-            color: Colors.red,
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(16),
+            ),
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
           confirmDismiss: (direction) async {
-             return await Get.defaultDialog<bool>(
-               title: AppStrings.deleteTask,
-               middleText: AppStrings.confirmDeleteTask,
-               textConfirm: AppStrings.delete,
-               textCancel: AppStrings.cancel,
-               confirmTextColor: Colors.white,
-               onConfirm: () => Get.back(result: true),
-               onCancel: () => Get.back(result: false),
-             );
+            return await Get.defaultDialog<bool>(
+              title: AppStrings.deleteTask,
+              middleText: AppStrings.confirmDeleteTask,
+              textConfirm: AppStrings.delete,
+              textCancel: AppStrings.cancel,
+              confirmTextColor: Colors.white,
+              buttonColor: Colors.red,
+              onConfirm: () => Get.back(result: true),
+              onCancel: () => Get.back(result: false),
+            );
           },
           onDismissed: (direction) {
             controller.deleteTask(task.id);
           },
-          child: card,
+          child: cardContent,
         );
       } else {
-        return card;
+        return cardContent;
       }
     });
   }
 }
-

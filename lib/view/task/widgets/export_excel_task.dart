@@ -11,12 +11,12 @@ class ExportExcelTask extends GetView<TaskController> {
   final RxString selectedTimingFilter;
 
   const ExportExcelTask({
-    Key? key,
+    super.key,
     this.type,
     required this.searchText,
     required this.selectedStatusFilter,
     required this.selectedTimingFilter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

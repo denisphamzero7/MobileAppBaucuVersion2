@@ -1,209 +1,264 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../create_task_screen.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../controllers/task_controller.dart';
 import '../../../model/task_model.dart';
 import '../../../untils/app_colors.dart';
+import 'details/task_details_actions.dart';
+import 'details/task_discussion_tab.dart';
+import 'details/task_document_tab.dart';
+import 'details/task_info_tab.dart';
+import 'details/task_report_tab.dart';
 
-class TaskDetailsBottomSheet extends StatelessWidget {
+class TaskDetailsBottomSheet extends StatefulWidget {
   final TaskModel task;
   final bool isDark;
   final Color primaryColor;
 
   const TaskDetailsBottomSheet({
-    Key? key,
+    super.key,
     required this.task,
     required this.isDark,
     required this.primaryColor,
-  }) : super(key: key);
+  });
 
-  String _formatDateTime(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return 'Không có';
-    final trimmed = raw.trim();
-    try {
-      if (trimmed.contains(' ')) {
-        final parts = trimmed.split(' ');
-        if (parts.length >= 2) {
-          // If format is "HH:mm:ss dd/MM/yyyy"
-          if (parts[0].contains(':') && parts[1].contains('/')) {
-            final timePart = parts[0].length >= 5 ? parts[0].substring(0, 5) : parts[0];
-            return '${parts[1]} ($timePart)';
-          }
-          // If format is "yyyy-MM-dd HH:mm:ss"
-          if (parts[0].contains('-') && parts[1].contains(':')) {
-            final dateParts = parts[0].split('-');
-            final timePart = parts[1].length >= 5 ? parts[1].substring(0, 5) : parts[1];
-            if (dateParts.length == 3) {
-              return '${dateParts[2]}/${dateParts[1]}/${dateParts[0]} ($timePart)';
-            }
-          }
-        }
-      }
-    } catch (_) {}
-    return trimmed;
-  }
+  @override
+  State<TaskDetailsBottomSheet> createState() => _TaskDetailsBottomSheetState();
+}
 
-  Widget _buildPriorityBadge(String priority) {
-    Color color;
-    Color bgColor;
-    String label;
+class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
+  int _selectedTabIndex = 0; // 0: Thông tin, 1: Báo cáo, 2: Trao đổi, 3: Văn bản
 
-    switch (priority.toLowerCase()) {
-      case 'urgent':
-        color = AppColors.red;
-        bgColor = AppColors.badgeRedBg;
-        label = 'Khẩn cấp';
-        break;
-      case 'high':
-        color = AppColors.red[700]!;
-        bgColor = AppColors.red[50]!;
-        label = 'Cao';
-        break;
-      case 'medium':
-        color = AppColors.orange[700]!;
-        bgColor = AppColors.orange[50]!;
-        label = 'Trung bình';
-        break;
-      case 'low':
-      default:
-        color = AppColors.green[700]!;
-        bgColor = AppColors.green[50]!;
-        label = 'Thấp';
-        break;
-    }
+  final List<String> _tabs = [
+    'Thông tin',
+    'Báo cáo',
+    'Trao đổi',
+    'Văn bản',
+  ];
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-      ),
+  void _handleTogglePause(BuildContext context) {
+    final taskCtrl = Get.find<TaskController>();
+    final isPaused = widget.task.processingStatus == 'paused';
+    final actionText = isPaused ? 'tiếp tục thực hiện' : 'tạm dừng';
+
+    Get.defaultDialog(
+      title: 'Xác nhận ${isPaused ? "tiếp tục" : "tạm dừng"}',
+      middleText: 'Bạn có chắc chắn muốn $actionText công việc "${widget.task.name}"?',
+      textConfirm: 'Đồng ý',
+      textCancel: 'Hủy',
+      confirmTextColor: AppColors.white,
+      buttonColor: isPaused ? AppColors.primary : AppColors.paused,
+      onConfirm: () async {
+        Get.back();
+        Navigator.pop(context);
+        await taskCtrl.togglePauseTask(widget.task);
+      },
     );
   }
 
-  Widget _buildStatusBadge(String status) {
-    Color color;
-    Color bgColor;
-    String label;
-
-    switch (status.toLowerCase()) {
-      case 'todo':
-        color = AppColors.grey[700]!;
-        bgColor = AppColors.grey[200]!;
-        label = 'Chưa làm';
-        break;
-      case 'pending_approval':
-      case 'pending':
-        color = AppColors.pendingApproval;
-        bgColor = AppColors.bgPurpleLight;
-        label = 'Chờ duyệt';
-        break;
-      case 'in_progress':
-      case 'processing':
-        color = AppColors.blue[700]!;
-        bgColor = AppColors.badgeBlueBg;
-        label = 'Đang làm';
-        break;
-      case 'completed':
-      case 'done':
-        color = AppColors.done;
-        bgColor = AppColors.badgeGreenBg;
-        label = 'Hoàn thành';
-        break;
-      case 'paused':
-        color = AppColors.paused;
-        bgColor = AppColors.bgYellowLight;
-        label = 'Tạm dừng';
-        break;
-      case 'cancelled':
-        color = AppColors.cancelled;
-        bgColor = AppColors.bgRedLight;
-        label = 'Đã hủy';
-        break;
-      default:
-        color = AppColors.grey[700]!;
-        bgColor = AppColors.grey[200]!;
-        label = status;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-      ),
+  void _handleCancelTask(BuildContext context) {
+    final taskCtrl = Get.find<TaskController>();
+    Get.defaultDialog(
+      title: 'Xác nhận hủy công việc',
+      middleText: 'Bạn có chắc chắn muốn hủy công việc "${widget.task.name}"?',
+      textConfirm: 'Hủy công việc',
+      textCancel: 'Đóng',
+      confirmTextColor: AppColors.white,
+      buttonColor: AppColors.overdue,
+      onConfirm: () async {
+        Get.back();
+        Navigator.pop(context);
+        await taskCtrl.cancelTaskStatus(widget.task);
+      },
     );
   }
 
-  Widget _buildTimingBadge() {
-    Color color = AppColors.done;
-    Color bgColor = AppColors.badgeGreenBg;
-    String label = 'Đúng hạn';
+  void _handleTransferTask(BuildContext context) {
+    final taskCtrl = Get.find<TaskController>();
+    final users = taskCtrl.usersList;
 
-    if (task.isOverdue || task.timingStatus == 'overdue') {
-      color = AppColors.overdue;
-      bgColor = AppColors.badgeRedBg;
-      label = 'Quá hạn';
-    } else if (task.timingStatus == 'late') {
-      color = AppColors.late;
-      bgColor = AppColors.bgYellowLight;
-      label = 'Trễ hạn';
-    } else if (task.timingStatus == 'early') {
-      color = AppColors.early;
-      bgColor = AppColors.badgeGreenBg;
-      label = 'Sớm hạn';
-    } else if (task.timingStatus == 'upcoming') {
-      color = AppColors.primary;
-      bgColor = AppColors.badgeBlueBg;
-      label = 'Chưa đến hạn';
+    if (users.isEmpty) {
+      taskCtrl.fetchMetadata();
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: widget.isDark ? AppColors.darkBg : AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-      ),
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Điều chuyển công việc',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              Text(
+                'Chọn nhân sự tiếp nhận công việc này',
+                style: TextStyle(fontSize: 12, color: AppColors.grey[600]),
+              ),
+              const Divider(height: 20),
+              Expanded(
+                child: Obx(() {
+                  final list = taskCtrl.usersList;
+                  if (list.isEmpty) {
+                    return const Center(child: Text('Đang tải danh sách nhân sự...'));
+                  }
+                  return ListView.separated(
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (c, idx) {
+                      final u = list[idx];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                          child: Text(
+                            u.name.isNotEmpty ? u.name[0].toUpperCase() : 'U',
+                            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        title: Text(u.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        subtitle: u.email.isNotEmpty ? Text(u.email, style: const TextStyle(fontSize: 11)) : null,
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.grey),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          Navigator.pop(context);
+                          await taskCtrl.reassignTask(widget.task, u.id, newUserName: u.name);
+                        },
+                      );
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddReportDialog(BuildContext context) {
+    int currentPercent = widget.task.completionPercent;
+    final noteCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Nộp báo cáo tiến độ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Tiến độ:', style: TextStyle(fontSize: 13)),
+                      Text('$currentPercent%', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    ],
+                  ),
+                  Slider(
+                    value: currentPercent.toDouble(),
+                    min: 0,
+                    max: 100,
+                    divisions: 20,
+                    activeColor: AppColors.primary,
+                    label: '$currentPercent%',
+                    onChanged: (val) {
+                      setDialogState(() {
+                        currentPercent = val.round();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: noteCtrl,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: 'Ghi chú / Nội dung báo cáo',
+                      hintText: 'Nhập tóm tắt công việc đã hoàn thành...',
+                      labelStyle: TextStyle(fontSize: 12, color: AppColors.grey[600]),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Hủy', style: TextStyle(color: AppColors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () async {
+                    final percent = currentPercent;
+                    final note = noteCtrl.text.trim();
+                    final taskCtrl = Get.find<TaskController>();
+                    Navigator.pop(ctx);
+                    Navigator.pop(context);
+                    await taskCtrl.submitProgressReport(widget.task, percent, note);
+                  },
+                  child: const Text('Gửi báo cáo'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final task = widget.task;
     final authCtrl = Get.find<AuthController>();
     final canUpdate = authCtrl.can('update', 'TaskAssignmentItems');
-    final canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
+    final titleText = (task.documentName != null && task.documentName!.isNotEmpty)
+        ? task.documentName!
+        : task.name;
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag Handle
+          // 1. Drag Handle
+          const SizedBox(height: 10),
           Center(
             child: Container(
-              width: 40,
+              width: 44,
               height: 4,
               decoration: BoxDecoration(
                 color: isDark ? AppColors.white24 : AppColors.grey[300],
@@ -211,271 +266,213 @@ class TaskDetailsBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Header: Title & Close Button
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  task.name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                    color: isDark ? AppColors.white : AppColors.black87,
+          // 2. Header: Title & Close Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    titleText,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      color: isDark ? AppColors.white : AppColors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => Navigator.pop(context),
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Icon(Icons.close, size: 20, color: isDark ? AppColors.white.withValues(alpha: 0.6) : AppColors.grey[600]),
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.white10 : AppColors.grey[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      size: 18,
+                      color: isDark ? AppColors.white70 : AppColors.grey[600],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
 
-          // Scrollable Middle Body (Ngăn chặn tràn màn hình khi mô tả dài)
+          // 3. Middle Scrollable Content (Ngăn tràn màn hình)
           Flexible(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Badges Row
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _buildStatusBadge(task.processingStatus),
-                      _buildPriorityBadge(task.priority),
-                      _buildTimingBadge(),
-                    ],
-                  ),
+                  // --- Khối: Tiến độ thực hiện ---
+                  _buildProgressBarBox(isDark, task),
+                  const SizedBox(height: 14),
+
+                  // --- Khối: Tab Selector (4 Tabs: Thông tin, Báo cáo, Trao đổi, Văn bản) ---
+                  _buildTabBar(isDark),
+                  const SizedBox(height: 14),
+
+                  // --- Nội dung tương ứng của từng Tab ---
+                  _buildTabContent(isDark, task),
                   const SizedBox(height: 16),
-
-                  // Progress Bar Card
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.white10 : AppColors.lightBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Tiến độ thực hiện',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.white70 : AppColors.grey[700],
-                              ),
-                            ),
-                            Text(
-                              '${task.completionPercent}%',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: (task.completionPercent.clamp(0, 100)) / 100.0,
-                            backgroundColor: isDark ? AppColors.white24 : AppColors.grey[300],
-                            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Dates Row
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.white10 : AppColors.lightBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.play_circle_outline, size: 16, color: AppColors.primary),
-                            const SizedBox(width: 8),
-                            Text('Bắt đầu:', style: TextStyle(fontSize: 12, color: AppColors.grey[600])),
-                            const Spacer(),
-                            Text(
-                              _formatDateTime(task.startAt),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.white : AppColors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 6),
-                          child: Divider(height: 1, thickness: 0.5),
-                        ),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.flag_outlined,
-                              size: 16,
-                              color: task.isOverdue ? AppColors.red : AppColors.done,
-                            ),
-                            const SizedBox(width: 8),
-                            Text('Hạn chót:', style: TextStyle(fontSize: 12, color: AppColors.grey[600])),
-                            const Spacer(),
-                            Text(
-                              _formatDateTime(task.endAt),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: task.isOverdue
-                                    ? AppColors.red
-                                    : (isDark ? AppColors.white : AppColors.black87),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Description Section
-                  if (task.description.isNotEmpty) ...[
-                    Text(
-                      'Mô tả chi tiết',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: isDark ? AppColors.white70 : AppColors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.white10 : AppColors.lightBg,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        task.description,
-                        style: TextStyle(
-                          color: isDark ? AppColors.grey[300] : AppColors.black87,
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 14),
 
-          // Actions Row (Cố định ở đáy, luôn hiển thị rõ ràng)
-          Row(
-            children: [
-              if (canDelete) ...[
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Get.defaultDialog(
-                      title: 'Xác nhận xóa',
-                      middleText: 'Bạn có chắc chắn muốn xóa công việc "${task.name}"?',
-                      textConfirm: 'Xóa',
-                      textCancel: 'Hủy',
-                      confirmTextColor: Colors.white,
-                      buttonColor: Colors.red,
-                      onConfirm: () {
-                        Get.back();
-                        if (Get.isRegistered<TaskController>()) {
-                          Get.find<TaskController>().deleteTask(task.id);
-                        }
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Xóa', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 10),
-              ] else if (!canUpdate) ...[
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: isDark ? AppColors.white24 : AppColors.grey[300]!),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Đóng',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.white70 : AppColors.grey[800],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-              if (canUpdate) ...[
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Get.to(() => CreateTaskScreen(taskToUpdate: task));
-                    },
-                    icon: const Icon(Icons.edit_note_rounded, size: 20),
-                    label: const Text(
-                      'Cập nhật công việc',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          // 4. Action Buttons (Cố định ở đáy, chia 2 hàng chuẩn theo hình)
+          TaskDetailsActions(
+            task: task,
+            isDark: isDark,
+            canUpdate: canUpdate,
+            onTogglePause: () => _handleTogglePause(context),
+            onCancelTask: () => _handleCancelTask(context),
+            onTransferTask: () => _handleTransferTask(context),
+            onClose: () => Navigator.pop(context),
           ),
         ],
       ),
     );
   }
+
+  /// Khối hiển thị thanh tiến độ phần trăm
+  Widget _buildProgressBarBox(bool isDark, TaskModel task) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardItemDark : AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tiến độ thực hiện',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.white70 : AppColors.grey[700],
+                ),
+              ),
+              Text(
+                '${task.completionPercent}%',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: (task.completionPercent.clamp(0, 100)) / 100.0,
+              backgroundColor: isDark ? AppColors.white10 : AppColors.grey[200],
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Thanh chuyển đổi 4 Tab dạng Pill (Thông tin, Báo cáo, Trao đổi, Văn bản)
+  Widget _buildTabBar(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.white10 : AppColors.lightBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: List.generate(_tabs.length, (index) {
+          final isSelected = _selectedTabIndex == index;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedTabIndex = index;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? AppColors.cardDark : AppColors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    _tabs[index],
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected
+                          ? AppColors.primary
+                          : (isDark ? AppColors.white70 : AppColors.grey[600]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  /// Bộ điều phối nội dung theo Tab đang chọn
+  Widget _buildTabContent(bool isDark, TaskModel task) {
+    switch (_selectedTabIndex) {
+      case 0:
+        return TaskInfoTab(task: task, isDark: isDark);
+      case 1:
+        return TaskReportTab(
+          task: task,
+          isDark: isDark,
+          onAddReport: () => _showAddReportDialog(context),
+        );
+      case 2:
+        return TaskDiscussionTab(task: task, isDark: isDark);
+      case 3:
+        return TaskDocumentTab(task: task, isDark: isDark);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 }
 
-// Helper to show Task Details Bottom Sheet
+/// Hàm triệu gọi Task Details Bottom Sheet
 void showTaskDetailsDialog(BuildContext context, TaskModel task, bool isDark, Color primaryColor) {
   showModalBottomSheet(
     context: context,
@@ -488,5 +485,3 @@ void showTaskDetailsDialog(BuildContext context, TaskModel task, bool isDark, Co
     ),
   );
 }
-
-

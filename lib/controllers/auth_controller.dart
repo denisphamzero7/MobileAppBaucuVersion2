@@ -1,4 +1,3 @@
-import '../untils/app_colors.dart';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -117,7 +116,7 @@ class AuthController extends GetxController {
       final response = await _authService.switchOrganization(orgId);
       if (response != null && response.statusCode == 200) {
         final newData = response.data;
-        final String finalToken = (newData != null && newData.accessToken.isNotEmpty) 
+        final String finalToken = (newData.accessToken.isNotEmpty) 
             ? newData.accessToken 
             : loginData.accessToken;
 
@@ -125,18 +124,18 @@ class AuthController extends GetxController {
         await _storage.write('organizationId', orgId);
         currentOrganizationId.value = orgId;
 
-        final orgsList = (newData != null && newData.availableOrganizations.isNotEmpty) 
+        final orgsList = (newData.availableOrganizations.isNotEmpty) 
             ? newData.availableOrganizations 
             : loginData.availableOrganizations;
         final orgsJson = orgsList.map((x) => x.toJson()).toList();
         await _storage.write('availableOrganizations', orgsJson);
 
-        final user = (newData != null && newData.user.id != 0) ? newData.user : loginData.user;
+        final user = (newData.user.id != 0) ? newData.user : loginData.user;
         currentUser.value = user;
         await _storage.write('userInfo', user.toJson());
         await _storage.write('userId', user.id.toString());
 
-        final abilities = (newData != null && newData.abilities.isNotEmpty) ? newData.abilities : loginData.abilities;
+        final abilities = (newData.abilities.isNotEmpty) ? newData.abilities : loginData.abilities;
         userAbilities.value = abilities; 
         await _storage.write('abilities', abilities);
 

@@ -440,6 +440,7 @@ class TaskController extends GetxController {
       if (response != null && response.statusCode == 200) {
         fetchTasks(type: 'sent');
         fetchTasks(type: 'received');
+        fetchTasks(type: null);
         fetchStats();
         return true;
       } else {
@@ -452,6 +453,103 @@ class TaskController extends GetxController {
       Get.snackbar('Lỗi', errorMsg, backgroundColor: Colors.red.shade100);
       return false;
     }
+  }
+
+  /// Tạm dừng hoặc tiếp tục công việc
+  Future<bool> togglePauseTask(TaskModel task) async {
+    final newStatus = task.processingStatus == 'paused' ? 'in_progress' : 'paused';
+    final actionName = newStatus == 'paused' ? 'Tạm dừng' : 'Tiếp tục';
+    
+    final payload = <String, dynamic>{
+      'name': task.name,
+      'processing_status': newStatus,
+    };
+    
+    final success = await updateTask(task.id, payload);
+    if (success) {
+      Get.snackbar(
+        'Thành công',
+        '$actionName công việc thành công',
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+      );
+    }
+    return success;
+  }
+
+  /// Hủy công việc
+  Future<bool> cancelTaskStatus(TaskModel task) async {
+    final payload = <String, dynamic>{
+      'name': task.name,
+      'processing_status': 'cancelled',
+    };
+    
+    final success = await updateTask(task.id, payload);
+    if (success) {
+      Get.snackbar(
+        'Thành công',
+        'Đã hủy công việc thành công',
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+      );
+    }
+    return success;
+  }
+
+  /// Điều chuyển công việc cho người dùng mới
+  Future<bool> reassignTask(TaskModel task, int newUserId, {String? newUserName}) async {
+    final userObj = usersList.firstWhereOrNull((u) => u.id == newUserId);
+    final defaultDeptId = departments.isNotEmpty ? departments.first.id : 1;
+    final deptId = userObj?.departmentId ?? defaultDeptId;
+
+    final payload = <String, dynamic>{
+      'name': task.name,
+      'assignee_ids': [newUserId],
+      'user_ids': [newUserId],
+      'users': [
+        {
+          'user_id': newUserId,
+          'department_id': deptId,
+          'department_role': userObj?.departmentRole ?? 'main',
+          'assignment_role': userObj?.assignmentRole ?? 'main',
+        }
+      ],
+    };
+
+    final success = await updateTask(task.id, payload);
+    if (success) {
+      Get.snackbar(
+        'Thành công',
+        'Đã điều chuyển công việc cho ${newUserName ?? userObj?.name ?? 'nhân viên mới'}',
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+      );
+    }
+    return success;
+  }
+
+  /// Nộp báo cáo tiến độ mới
+  Future<bool> submitProgressReport(TaskModel task, int newPercent, String? note) async {
+    final status = newPercent >= 100 ? 'done' : (task.processingStatus == 'todo' ? 'in_progress' : task.processingStatus);
+    final payload = <String, dynamic>{
+      'name': task.name,
+      'completion_percent': newPercent,
+      'processing_status': status,
+    };
+    if (note != null && note.isNotEmpty) {
+      payload['report_note'] = note;
+    }
+
+    final success = await updateTask(task.id, payload);
+    if (success) {
+      Get.snackbar(
+        'Thành công',
+        'Đã cập nhật tiến độ $newPercent%',
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+      );
+    }
+    return success;
   }
 
   /// ============================================================================

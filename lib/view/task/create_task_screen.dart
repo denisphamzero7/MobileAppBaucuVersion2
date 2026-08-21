@@ -86,7 +86,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     super.dispose();
   }
 
-  Future<void> _pickDateTime(BuildContext context, {required bool isStart}) async {
+  Future<void> _pickDateTime({required bool isStart}) async {
     final initial = (isStart ? _startDate : _endDate) ?? DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
@@ -103,12 +103,12 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       },
     );
 
-    if (pickedDate != null) {
-      if (!mounted) return;
+    if (pickedDate != null && mounted) {
       final pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(initial),
       );
+      if (!mounted) return;
 
       final result = DateTime(
         pickedDate.year,
@@ -173,7 +173,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                                 title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                                 subtitle: user.email.isNotEmpty ? Text(user.email, style: const TextStyle(fontSize: 12)) : null,
                                 secondary: CircleAvatar(
-                                  backgroundColor: AppColors.primary.withOpacity(0.15),
+                                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                                   child: Text(
                                     user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
                                     style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
@@ -431,7 +431,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           label: 'Bắt đầu',
                           date: _startDate,
                           isDark: isDark,
-                          onTap: () => _pickDateTime(context, isStart: true),
+                          onTap: () => _pickDateTime(isStart: true),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -440,7 +440,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           label: 'Hạn chót *',
                           date: _endDate,
                           isDark: isDark,
-                          onTap: _deadlineType == 'has_deadline' ? () => _pickDateTime(context, isStart: false) : null,
+                          onTap: _deadlineType == 'has_deadline' ? () => _pickDateTime(isStart: false) : null,
                         ),
                       ),
                     ],
@@ -604,7 +604,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? itemColor.withOpacity(0.2) : (isDark ? AppColors.cardDark : Colors.white),
+                    color: isSelected ? itemColor.withValues(alpha: 0.2) : (isDark ? AppColors.cardDark : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected ? itemColor : (isDark ? Colors.white10 : Colors.black12),
@@ -641,7 +641,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               setState(() => _deadlineType = 'has_deadline');
             }
           },
-          selectedColor: AppColors.primary.withOpacity(0.2),
+          selectedColor: AppColors.primary.withValues(alpha: 0.2),
           labelStyle: TextStyle(
             color: _deadlineType == 'has_deadline' ? AppColors.primary : (isDark ? Colors.white70 : Colors.black87),
             fontWeight: _deadlineType == 'has_deadline' ? FontWeight.bold : FontWeight.normal,
@@ -656,7 +656,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               setState(() => _deadlineType = 'no_deadline');
             }
           },
-          selectedColor: AppColors.primary.withOpacity(0.2),
+          selectedColor: AppColors.primary.withValues(alpha: 0.2),
           labelStyle: TextStyle(
             color: _deadlineType == 'no_deadline' ? AppColors.primary : (isDark ? Colors.white70 : Colors.black87),
             fontWeight: _deadlineType == 'no_deadline' ? FontWeight.bold : FontWeight.normal,
