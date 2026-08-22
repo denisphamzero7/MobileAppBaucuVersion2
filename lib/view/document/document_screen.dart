@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../untils/app_colors.dart';
 import '../../untils/app_textstyles.dart';
 import '../../helper/date_helper.dart';
+import '../../core/widgets/app_tag.dart';
 import '../../service/petition_service.dart';
 import '../../core/widgets/import_excel_button.dart';
 import '../../core/widgets/export_excel_button.dart';
@@ -1187,8 +1188,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
               margin: const EdgeInsets.only(top: 4),
               width: 8,
               height: 8,
-              decoration: const BoxDecoration(
-                color: AppColors.paused,
+              decoration: BoxDecoration(
+                color: statusColor,
                 shape: BoxShape.circle,
               ),
             ),
@@ -1211,42 +1212,24 @@ class _DocumentScreenState extends State<DocumentScreen> {
                     alignment: Alignment.centerLeft,
                     child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.white10 : AppColors.lightBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            petition.senderName,
-                            style: AppTextStyle.chipText.copyWith(
-                              color: isDark ? AppColors.white70 : AppColors.grey[700],
-                            ),
-                          ),
+                        AppTag.info(
+                          label: petition.senderName,
+                          isDark: isDark,
                         ),
                         const SizedBox(width: 6),
                         const Icon(Icons.circle, size: 3, color: AppColors.grey),
                         const SizedBox(width: 6),
-                        Text(
-                          'Hạn: $deadlineStr',
-                          style: AppTextStyle.chipText.copyWith(color: AppColors.grey),
+                        AppTag.date(
+                          dateText: deadlineStr,
+                          isDark: isDark,
                         ),
                         const SizedBox(width: 6),
                         const Icon(Icons.circle, size: 3, color: AppColors.grey),
                         const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '• ${petition.completionPercent}%',
-                            style: AppTextStyle.chipText.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        AppTag.percent(
+                          percent: petition.completionPercent,
+                          isDark: isDark,
+                          showBullet: false,
                         ),
                       ],
                     ),
@@ -1261,18 +1244,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusBgColor,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: AppTextStyle.badgeText.copyWith(
-                          color: statusColor,
-                        ),
-                      ),
+                    AppTag.status(
+                      label: statusText,
+                      color: statusColor,
+                      backgroundColor: statusBgColor,
+                      borderRadius: 20,
+                      isDark: isDark,
                     ),
                     if (canUpdate) ...[
                       const SizedBox(width: 6),
@@ -1291,18 +1268,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    timingText,
-                    style: AppTextStyle.badgeText.copyWith(
-                      color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
-                    ),
-                  ),
+                AppTag.status(
+                  label: timingText,
+                  color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
+                  backgroundColor: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
+                  borderRadius: 4,
+                  isDark: isDark,
                 ),
               ],
             ),

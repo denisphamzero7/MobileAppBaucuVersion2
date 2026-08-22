@@ -236,6 +236,47 @@ class TaskController extends GetxController {
     }
   }
 
+  Future<TaskModel?> fetchTaskDetails(int id) async {
+    try {
+      TaskModel? detailedTask;
+      final detailRes = await _taskService.getTaskDetails(id);
+      if (detailRes != null && detailRes.statusCode == 200 && detailRes.data != null) {
+        detailedTask = detailRes.data!;
+      }
+
+      // Lấy danh sách timeline (báo cáo tiến độ & trao đổi) từ endpoint /timeline
+      final timelineData = await _taskService.getTaskTimelineData(id);
+
+      final current = detailedTask ?? 
+          tasksList.firstWhereOrNull((t) => t.id == id) ?? 
+          sentTasksList.firstWhereOrNull((t) => t.id == id) ?? 
+          receivedTasksList.firstWhereOrNull((t) => t.id == id);
+
+      if (current != null) {
+        final updated = current.copyWith(
+          progressReports: timelineData.reports.isNotEmpty ? timelineData.reports : current.progressReports,
+          discussions: timelineData.discussions.isNotEmpty ? timelineData.discussions : current.discussions,
+        );
+        _updateTaskInList(updated);
+        return updated;
+      }
+    } catch (e) {
+      log("❌ Lỗi khi lấy chi tiết công việc #$id: $e");
+    }
+    return null;
+  }
+
+  void _updateTaskInList(TaskModel updated) {
+    int idx = sentTasksList.indexWhere((t) => t.id == updated.id);
+    if (idx != -1) sentTasksList[idx] = updated;
+
+    idx = receivedTasksList.indexWhere((t) => t.id == updated.id);
+    if (idx != -1) receivedTasksList[idx] = updated;
+
+    idx = tasksList.indexWhere((t) => t.id == updated.id);
+    if (idx != -1) tasksList[idx] = updated;
+  }
+
 
   Future<void> deleteTask(int id) async {
     sentTasksList.removeWhere((t) => t.id == id);
@@ -530,22 +571,60 @@ class TaskController extends GetxController {
 
   /// Nộp báo cáo tiến độ mới
   Future<bool> submitProgressReport(TaskModel task, int newPercent, String? note) async {
-    final status = newPercent >= 100 ? 'done' : (task.processingStatus == 'todo' ? 'in_progress' : task.processingStatus);
-    final payload = <String, dynamic>{
-      'name': task.name,
-      'completion_percent': newPercent,
-      'processing_status': status,
-    };
-    if (note != null && note.isNotEmpty) {
-      payload['report_note'] = note;
+    // Kiểm tra ràng buộc: Tiến độ sau phải lớn hơn hoặc bằng tiến độ trước đó
+    int previousPercent = task.completionPercent;
+    if (task.progressReports != null && task.progressReports!.isNotEmpty) {
+      for (final r in task.progressReports!) {
+        if (r.percent > previousPercent) {
+          previousPercent = r.percent;
+        }
+      }
     }
 
-    final success = await updateTask(task.id, payload);
+    if (newPercent < previousPercent) {
+      Get.snackbar(
+        'Không hợp lệ',
+        'Tiến độ mới ($newPercent%) phải lớn hơn hoặc bằng tiến độ trước đó ($previousPercent%)',
+        backgroundColor: Colors.orange.shade700,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    final status = newPercent >= 100 ? 'done' : (task.processingStatus == 'todo' ? 'in_progress' : task.processingStatus);
+
+    // 1. Tạo bản ghi báo cáo mới vào bảng task_assignment_item_reports (Web dùng bảng này)
+    final reportCreated = await _taskService.createTaskReport(
+      task.id,
+      completionPercent: newPercent,
+      note: note,
+    );
+
+    // 2. Cập nhật tiến độ của task
+    final progressUpdated = await _taskService.updateTaskProgress(
+      task.id,
+      completionPercent: newPercent,
+      processingStatus: status,
+      note: note,
+    );
+
+    final success = reportCreated || progressUpdated;
+
     if (success) {
       Get.snackbar(
         'Thành công',
         'Đã cập nhật tiến độ $newPercent%',
         backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+      );
+      // Tải lại chi tiết và danh sách sau khi nộp báo cáo
+      await fetchTaskDetails(task.id);
+      fetchStats();
+    } else {
+      Get.snackbar(
+        'Lỗi',
+        'Không thể cập nhật tiến độ công việc',
+        backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
     }

@@ -7,6 +7,8 @@ import '../../../untils/app_colors.dart';
 import '../../../untils/app_strings.dart';
 import '../../../untils/app_textstyles.dart';
 import '../../../helper/date_helper.dart';
+import '../../../core/widgets/app_tag.dart';
+import '../../../core/widgets/app_priority_indicator.dart';
 import 'task_details_dialog.dart';
 
 class TaskCardWidget extends GetView<TaskController> {
@@ -21,32 +23,21 @@ class TaskCardWidget extends GetView<TaskController> {
     required this.primaryColor,
   });
 
-  Color _getDotColor(TaskModel task) {
-    if (task.isOverdue || task.timingStatus == 'overdue' || task.priority.toLowerCase() == 'urgent' || task.priority.toLowerCase() == 'high') {
-      return const Color(0xFFEF4444); // Red dot
-    } else if (task.priority.toLowerCase() == 'medium') {
-      return const Color(0xFFF59E0B); // Orange dot
-    } else {
-      return const Color(0xFF10B981); // Green dot
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authCtrl = Get.find<AuthController>();
     final bool canDelete = authCtrl.can('destroy', 'TaskAssignmentItems');
 
-    final titleText = (task.documentName != null && task.documentName!.isNotEmpty)
-        ? task.documentName!
-        : task.name;
+    final titleText = task.name.trim().isNotEmpty
+        ? task.name.trim()
+        : (task.documentName != null && task.documentName!.isNotEmpty ? task.documentName! : 'Công việc');
 
-    final userName = (task.assigneeName != null && task.assigneeName!.isNotEmpty)
-        ? task.assigneeName!
-        : (task.assignerName != null && task.assignerName!.isNotEmpty ? task.assignerName! : 'nhanviec1');
+    final String typeName = (task.itemTypeName != null && task.itemTypeName!.trim().isNotEmpty)
+        ? task.itemTypeName!.trim()
+        : 'Chưa phân loại';
 
     final bool isOverdue = task.isOverdue || task.timingStatus == 'overdue';
-    final String deadlineFormatted = DateHelper.formatDate(task.endAt);
-    final dotColor = _getDotColor(task);
+    final String deadlineFormatted = DateHelper.formatDayMonth(task.endAt);
 
     final Widget cardContent = Container(
       margin: const EdgeInsets.symmetric(vertical: 5),
@@ -71,18 +62,15 @@ class TaskCardWidget extends GetView<TaskController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. HÀNG TRÊN: Chấm tròn màu + Tên văn bản / Công việc
+            // 1. HÀNG TRÊN: Chấm tròn mức độ ưu tiên (Chạm vào hiện Tooltip popup) + Tên công việc
             Row(
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: dotColor,
-                    shape: BoxShape.circle,
-                  ),
+                AppPriorityIndicator(
+                  priority: task.priority,
+                  size: 8,
+                  isDark: isDark,
+                  padding: const EdgeInsets.only(right: 8),
                 ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     titleText,
@@ -97,60 +85,31 @@ class TaskCardWidget extends GetView<TaskController> {
             ),
             const SizedBox(height: 10),
 
-            // 2. HÀNG DƯỚI: Tag người nhận, Tag ngày quá hạn, Tag % tiến độ, Icon biểu đồ sóng bên phải
+            // 2. HÀNG DƯỚI: Tag loại công việc, Tag ngày quá hạn, Tag % tiến độ, Icon biểu đồ sóng bên phải
             Row(
               children: [
-                // Tag người nhận việc
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.white10 : AppColors.lightBg,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    userName,
-                    style: AppTextStyle.chipText.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.white70 : AppColors.grey[800],
-                    ),
-                  ),
+                // Tag loại công việc
+                AppTag.info(
+                  label: typeName,
+                  isDark: isDark,
                 ),
                 const SizedBox(width: 6),
 
                 // Tag ngày quá hạn (nếu có)
                 if (isOverdue && deadlineFormatted.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgRedLight,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFFCA5A5), width: 0.8),
-                    ),
-                    child: Text(
-                      deadlineFormatted,
-                      style: AppTextStyle.chipText.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.overdue,
-                      ),
-                    ),
+                  AppTag.date(
+                    dateText: deadlineFormatted,
+                    isOverdue: true,
+                    isDark: isDark,
                   ),
                   const SizedBox(width: 6),
                 ],
 
                 // Tag % tiến độ
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '${task.completionPercent}%',
-                    style: AppTextStyle.chipText.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                AppTag.percent(
+                  percent: task.completionPercent,
+                  isDark: isDark,
+                  showBullet: false,
                 ),
 
                 const Spacer(),

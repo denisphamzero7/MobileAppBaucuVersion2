@@ -23,6 +23,11 @@ class AppColors {
   static const Color late = Color(0xFFEC4899); // Trễ hạn (Hồng nhạt)
   static const Color overdue = Color(0xFFEF4444); // Quá hạn (Đỏ)
   static const Color timingCancelled = Color(0xFF6B7280); // Đã hủy (Xám)
+  // --- HỆ THỐNG MÀU ĐỘ ƯU TIÊN (PRIORITY COLORS) ---
+  static const Color priorityUrgent = Color(0xFFEF4444); // Khẩn cấp (Đỏ)
+  static const Color priorityHigh = Color(0xFFF97316);   // Cao (Cam đậm)
+  static const Color priorityMedium = Color(0xFF0EA5E9); // Trung bình (Xanh dương)
+  static const Color priorityLow = Color(0xFF94A3B8);    // Thấp (Xám Slate)
 
   // --- MÀU GIAO DIỆN & NỀN THẺ (UI & BACKGROUNDS) ---
   static const Color lightBg = Color(0xFFF3F4F6); // Nền sáng mặc định

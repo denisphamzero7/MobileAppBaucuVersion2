@@ -64,6 +64,210 @@ class TaskService {
     }
   }
 
+  Future<BaseResponse<TaskModel>?> getTaskDetails(int id) async {
+    try {
+      final response = await _http.get(
+        url: '${ApiConstants.taskAssignmentItems}/$id',
+      );
+      developer.log("Get task details response: $response", name: "TaskService");
+      if (response != null) {
+        return BaseResponse.fromJson(
+          response,
+          (json) => TaskModel.fromJson(json is Map<String, dynamic> ? json : {}),
+        );
+      }
+      return null;
+    } catch (e) {
+      developer.log("Error in repository getTaskDetails: $e", name: "TaskService");
+      return null;
+    }
+  }
+
+  Future<bool> updateTaskProgress(int id, {required int completionPercent, String? processingStatus, String? note}) async {
+    try {
+      final status = processingStatus ?? (completionPercent >= 100 ? 'done' : 'in_progress');
+      final Map<String, dynamic> data = {
+        'completion_percent': completionPercent,
+        'processing_status': status,
+      };
+      if (note != null && note.isNotEmpty) {
+        data['note'] = note;
+      }
+
+      final response = await _http.patch(
+        url: '${ApiConstants.taskAssignmentItems}/$id/progress',
+        data: data,
+      );
+      developer.log("Update task progress response: $response", name: "TaskService");
+      return response != null;
+    } catch (e) {
+      developer.log("Error in repository updateTaskProgress: $e", name: "TaskService");
+      return false;
+    }
+  }
+
+  /// Tạo báo cáo tiến độ mới (lưu vào bảng task_assignment_item_reports)
+  Future<bool> createTaskReport(int taskId, {required int completionPercent, String? note, int? assigneeUserId}) async {
+    try {
+      final Map<String, dynamic> data = {
+        'task_assignment_item_id': taskId,
+        'completion_percent': completionPercent,
+      };
+      if (note != null && note.isNotEmpty) {
+        data['report_document_content'] = note;
+        data['report_document_excerpt'] = note;
+      }
+      if (assigneeUserId != null && assigneeUserId > 0) {
+        data['assignee_user_id'] = assigneeUserId;
+      }
+      if (completionPercent >= 100) {
+        data['completed_at'] = DateTime.now().toIso8601String().split('T').first;
+      }
+
+      final response = await _http.post(
+        url: ApiConstants.taskAssignmentItemReports,
+        data: data,
+      );
+      developer.log("Create task report response: $response", name: "TaskService");
+      return response != null;
+    } catch (e) {
+      developer.log("Error in repository createTaskReport: $e", name: "TaskService");
+      return false;
+    }
+  }
+
+  /// Lấy danh sách lịch sử báo cáo công việc từ endpoint task-assignment-item-reports
+  Future<List<TaskProgressReport>> getTaskItemReports(int taskId) async {
+    try {
+      final response = await _http.get(
+        url: ApiConstants.taskAssignmentItemReports,
+        queryParameters: {
+          'task_assignment_item_id': taskId,
+          'limit': 50,
+          'sort_by': 'created_at',
+          'sort_order': 'asc',
+        },
+      );
+      developer.log("Get task reports response for #$taskId: $response", name: "TaskService");
+
+      List list = [];
+      if (response != null) {
+        if (response['data'] is List) {
+          list = response['data'] as List;
+        } else if (response['data'] is Map && response['data']['data'] is List) {
+          list = response['data']['data'] as List;
+        }
+      }
+
+      final List<TaskProgressReport> reports = [];
+      for (final item in list) {
+        if (item is Map<String, dynamic>) {
+          final rawPercent = item['completion_percent'] ?? item['progress'] ?? item['percent'];
+          int parsedPercent = 0;
+          if (rawPercent is num) {
+            parsedPercent = rawPercent.toInt();
+          } else if (rawPercent != null) {
+            parsedPercent = int.tryParse(rawPercent.toString()) ?? 0;
+          }
+
+          final date = item['created_at'] ?? item['completed_at'] ?? item['date'] ?? item['timestamp'] ?? '';
+          final note = item['report_document_content'] ?? item['report_document_excerpt'] ?? item['content'] ?? item['note'];
+          final reporter = item['user'] is Map ? item['user']['name'] : (item['assignee_user'] is Map ? item['assignee_user']['name'] : null);
+
+          reports.add(TaskProgressReport(
+            percent: parsedPercent,
+            date: date.toString(),
+            note: note?.toString(),
+            reporterName: reporter?.toString(),
+          ));
+        }
+      }
+      return reports;
+    } catch (e) {
+      developer.log("Error in repository getTaskItemReports: $e", name: "TaskService");
+      return [];
+    }
+  }
+
+  Future<({List<TaskProgressReport> reports, List<TaskDiscussionNote> discussions})> getTaskTimelineData(int id) async {
+    try {
+      // 1. Gọi song song cả API task-assignment-item-reports và API timeline
+      final itemReportsFuture = getTaskItemReports(id);
+      final timelineFuture = _http.get(
+        url: '${ApiConstants.taskAssignmentItems}/$id/timeline',
+        queryParameters: {'limit': 50},
+      );
+
+      final results = await Future.wait([itemReportsFuture, timelineFuture]);
+      final List<TaskProgressReport> reports = List<TaskProgressReport>.from(results[0] as List<TaskProgressReport>);
+      final response = results[1];
+
+      developer.log("Get task timeline response: $response", name: "TaskService");
+
+      List list = [];
+      if (response != null) {
+        if (response['data'] is List) {
+          list = response['data'] as List;
+        } else if (response['data'] is Map && response['data']['data'] is List) {
+          list = response['data']['data'] as List;
+        } else if (response['timeline'] is List) {
+          list = response['timeline'] as List;
+        }
+      }
+
+      final List<TaskDiscussionNote> discussions = [];
+
+      for (final item in list) {
+        if (item is Map<String, dynamic>) {
+          final type = item['type']?.toString().toLowerCase() ?? '';
+          final data = item['data'] is Map<String, dynamic> ? item['data'] as Map<String, dynamic> : null;
+
+          // Phân loại tin nhắn trao đổi (type: "note", "comment", "discussion")
+          if (type == 'note' || type == 'comment' || type == 'discussion') {
+            discussions.add(TaskDiscussionNote.fromJson(item));
+          }
+
+          // Phân loại báo cáo tiến độ phụ trợ nếu endpoint itemReports chưa có
+          final rawPercent = data?['percent'] ?? 
+              data?['completion_percent'] ?? 
+              data?['progress'] ?? 
+              data?['new_percent'] ?? 
+              item['percent'] ?? 
+              item['completion_percent'];
+
+          if (rawPercent != null || type.contains('progress') || type == 'report') {
+            int parsedPercent = 0;
+            if (rawPercent is num) {
+              parsedPercent = rawPercent.toInt();
+            } else if (rawPercent != null) {
+              parsedPercent = int.tryParse(rawPercent.toString()) ?? 0;
+            }
+
+            final date = item['timestamp'] ?? item['created_at'] ?? item['date'] ?? data?['date'] ?? '';
+            final note = data?['note'] ?? data?['content'] ?? data?['report_note'] ?? data?['comment'] ?? item['note'] ?? item['content'];
+            final reporter = item['actor'] is Map ? item['actor']['name'] : (item['user'] is Map ? item['user']['name'] : item['actor']);
+
+            if (parsedPercent > 0 || (note != null && type.contains('progress'))) {
+              final exists = reports.any((r) => r.percent == parsedPercent && r.date == date.toString());
+              if (!exists) {
+                reports.add(TaskProgressReport(
+                  percent: parsedPercent,
+                  date: date.toString(),
+                  note: note?.toString(),
+                  reporterName: reporter?.toString(),
+                ));
+              }
+            }
+          }
+        }
+      }
+      return (reports: reports, discussions: discussions);
+    } catch (e) {
+      developer.log("Error in repository getTaskTimelineData: $e", name: "TaskService");
+    }
+    return (reports: <TaskProgressReport>[], discussions: <TaskDiscussionNote>[]);
+  }
+
   Future<dynamic> exportTasks({String? type, int? userId, String? keyword, String? status, String? timingStatus}) async {
     try {
       final Map<String, dynamic> queryParams = {};

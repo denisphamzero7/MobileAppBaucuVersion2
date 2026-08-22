@@ -3,6 +3,7 @@ import '../../../model/task_assignment_document_model.dart';
 import '../../../untils/app_colors.dart';
 import '../../../untils/app_textstyles.dart';
 import '../../../helper/date_helper.dart';
+import '../../../core/widgets/app_tag.dart';
 
 class TaskDocumentCard extends StatelessWidget {
   final TaskAssignmentDocumentModel document;
@@ -97,80 +98,33 @@ class TaskDocumentCard extends StatelessWidget {
                         child: Row(
                           children: [
                             // 1. Type chip
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.white10 : AppColors.borderLight,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                'Văn bản',
-                                style: AppTextStyle.chipText.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.white70 : AppColors.textMain,
-                                ),
-                              ),
+                            AppTag.info(
+                              label: 'Văn bản',
+                              isDark: isDark,
                             ),
                             const SizedBox(width: 6),
 
                             // 2. Date / Document Number chip
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.white10 : AppColors.borderLight,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                DateHelper.formatDate(document.documentDate ?? document.documentNumber, fallback: '--/--/----'),
-                                style: AppTextStyle.chipText.copyWith(
-                                  color: isDark ? AppColors.white70 : AppColors.textGrayDark,
-                                ),
-                              ),
+                            AppTag.date(
+                              dateText: DateHelper.formatDate(document.documentDate ?? document.documentNumber, fallback: '--/--/----'),
+                              prefix: '',
+                              isDark: isDark,
                             ),
                             const SizedBox(width: 6),
 
                             // 3. Task count chip
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.white10 : AppColors.borderLight,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.layers_outlined,
-                                    size: 12,
-                                    color: isDark ? AppColors.white70 : AppColors.textMuted,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '${document.taskCount} CV',
-                                    style: AppTextStyle.chipText.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: isDark ? AppColors.white70 : AppColors.textGrayDark,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            AppTag(
+                              label: '${document.taskCount} CV',
+                              icon: Icons.layers_outlined,
+                              isDark: isDark,
                             ),
                             const SizedBox(width: 6),
 
                             // 4. Progress % chip
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.white10 : AppColors.badgeBlueBg,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                '${document.completionPercent}%',
-                                style: AppTextStyle.chipText.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
+                            AppTag.percent(
+                              percent: document.completionPercent,
+                              showBullet: false,
+                              isDark: isDark,
                             ),
                           ],
                         ),

@@ -10,10 +10,32 @@ class DateHelper {
     if (raw == null || raw.trim().isEmpty) return fallback;
     final trimmed = raw.trim();
     try {
+      // 1. Dạng có khoảng trắng "HH:mm:ss dd/MM/yyyy" hoặc "dd/MM/yyyy HH:mm:ss"
       if (trimmed.contains(' ')) {
         final parts = trimmed.split(' ');
-        if (parts.isNotEmpty && parts[0].contains('-')) {
-          final dateParts = parts[0].split('-');
+        for (final p in parts) {
+          if (p.contains('/')) {
+            final slashParts = p.split('/');
+            if (slashParts.length == 3) {
+              return '${slashParts[0].padLeft(2, '0')}/${slashParts[1].padLeft(2, '0')}/${slashParts[2]}';
+            }
+          }
+        }
+      }
+
+      // 2. Dạng "dd/MM/yyyy"
+      if (trimmed.contains('/')) {
+        final slashParts = trimmed.split(' ').last.split('/');
+        if (slashParts.length == 3) {
+          return '${slashParts[0].padLeft(2, '0')}/${slashParts[1].padLeft(2, '0')}/${slashParts[2]}';
+        }
+      }
+
+      // 3. Dạng "yyyy-MM-dd" hoặc "yyyy-MM-dd HH:mm:ss"
+      if (trimmed.contains('-')) {
+        final datePart = trimmed.split(' ').firstWhere((e) => e.contains('-'), orElse: () => '');
+        if (datePart.isNotEmpty) {
+          final dateParts = datePart.split('-');
           if (dateParts.length == 3) {
             if (dateParts[0].length == 4) {
               return '${dateParts[2].padLeft(2, '0')}/${dateParts[1].padLeft(2, '0')}/${dateParts[0]}';
@@ -21,18 +43,9 @@ class DateHelper {
               return '${dateParts[0].padLeft(2, '0')}/${dateParts[1].padLeft(2, '0')}/${dateParts[2]}';
             }
           }
-          return parts[0];
-        }
-      } else if (trimmed.contains('-')) {
-        final dateParts = trimmed.split('-');
-        if (dateParts.length == 3) {
-          if (dateParts[0].length == 4) {
-            return '${dateParts[2].padLeft(2, '0')}/${dateParts[1].padLeft(2, '0')}/${dateParts[0]}';
-          } else {
-            return '${dateParts[0].padLeft(2, '0')}/${dateParts[1].padLeft(2, '0')}/${dateParts[2]}';
-          }
         }
       }
+
       final parsed = DateTime.tryParse(trimmed);
       if (parsed != null) {
         return DateFormat('dd/MM/yyyy').format(parsed);

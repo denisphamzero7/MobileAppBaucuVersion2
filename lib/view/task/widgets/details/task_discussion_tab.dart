@@ -18,7 +18,7 @@ class TaskDiscussionTab extends StatefulWidget {
 
 class _TaskDiscussionTabState extends State<TaskDiscussionTab> {
   final TextEditingController _commentController = TextEditingController();
-  final List<Map<String, dynamic>> _comments = [];
+  final List<TaskDiscussionNote> _localComments = [];
 
   @override
   void dispose() {
@@ -30,10 +30,12 @@ class _TaskDiscussionTabState extends State<TaskDiscussionTab> {
     final text = _commentController.text.trim();
     if (text.isNotEmpty) {
       setState(() {
-        _comments.add({
-          'user': 'Tôi',
-          'text': text,
-        });
+        _localComments.add(TaskDiscussionNote(
+          id: DateTime.now().millisecondsSinceEpoch,
+          authorName: 'Tôi',
+          content: text,
+          createdAt: 'Vừa xong',
+        ));
         _commentController.clear();
       });
     }
@@ -42,6 +44,10 @@ class _TaskDiscussionTabState extends State<TaskDiscussionTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
+    final allComments = [
+      ...?widget.task.discussions,
+      ..._localComments,
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -54,7 +60,7 @@ class _TaskDiscussionTabState extends State<TaskDiscussionTab> {
       ),
       child: Column(
         children: [
-          if (_comments.isEmpty)
+          if (allComments.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Column(
@@ -72,25 +78,26 @@ class _TaskDiscussionTabState extends State<TaskDiscussionTab> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _comments.length,
+              itemCount: allComments.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, idx) {
-                final c = _comments[idx];
+                final c = allComments[idx];
+                final initial = c.authorName.isNotEmpty ? c.authorName[0].toUpperCase() : 'U';
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
                       radius: 14,
                       backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                      child: const Text(
-                        'U',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
+                      child: Text(
+                        initial,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: isDark ? AppColors.cardDark : AppColors.lightBg,
                           borderRadius: BorderRadius.circular(10),
@@ -98,9 +105,35 @@ class _TaskDiscussionTabState extends State<TaskDiscussionTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(c['user'] ?? 'Tôi', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 2),
-                            Text(c['text'] ?? '', style: const TextStyle(fontSize: 12)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  c.authorName,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? AppColors.white : AppColors.black87,
+                                  ),
+                                ),
+                                if (c.createdAt.isNotEmpty)
+                                  Text(
+                                    c.createdAt,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isDark ? AppColors.white70 : AppColors.grey[500],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              c.content,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? AppColors.white70 : AppColors.grey[800],
+                              ),
+                            ),
                           ],
                         ),
                       ),

@@ -8,6 +8,8 @@ import '../../../untils/app_colors.dart';
 import '../../widgets/skeleton_loader.dart';
 
 import '../../../untils/app_textstyles.dart';
+import '../../../core/widgets/app_tag.dart';
+import '../../../core/widgets/app_priority_indicator.dart';
 
 class HomeLatestTasksSection extends StatelessWidget {
   final bool isDark;
@@ -134,13 +136,16 @@ class HomeLatestTasksSection extends StatelessWidget {
 
                 final deadlineStr = DateHelper.formatDayMonth(task.endAt);
 
-                final assigneeName = (task.assigneeIds != null && task.assigneeIds!.isNotEmpty)
-                    ? '${task.assigneeIds!.length} người thực hiện'
-                    : 'Chưa phân công';
+                final typeName = (task.itemTypeName != null && task.itemTypeName!.isNotEmpty)
+                    ? task.itemTypeName!
+                    : ((task.assigneeIds != null && task.assigneeIds!.isNotEmpty)
+                        ? '${task.assigneeIds!.length} người thực hiện'
+                        : 'Chưa phân công');
 
                 return _buildTaskItem(
                   task.name,
-                  assigneeName,
+                  task.priority,
+                  typeName,
                   deadlineStr,
                   task.completionPercent,
                   statusText,
@@ -157,7 +162,8 @@ class HomeLatestTasksSection extends StatelessWidget {
 
   Widget _buildTaskItem(
     String title,
-    String assignee,
+    String priority,
+    String typeOrAssignee,
     String deadline,
     int percent,
     String statusText,
@@ -181,17 +187,14 @@ class HomeLatestTasksSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Orange dot status indicator
-          Container(
-            margin: const EdgeInsets.only(top: 4),
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.paused,
-              shape: BoxShape.circle,
-            ),
+          // Dynamic priority indicator dot with tap tooltip
+          AppPriorityIndicator(
+            priority: priority,
+            size: 8,
+            isDark: isDark,
+            padding: const EdgeInsets.only(top: 4, right: 6),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 4),
           // Task Details Column
           Expanded(
             child: Column(
@@ -212,47 +215,24 @@ class HomeLatestTasksSection extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.white10 : AppColors.lightBg,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          assignee,
-                          style: AppTextStyle.chipText.copyWith(
-                            fontSize: 9.5,
-                            color: isDark ? AppColors.white70 : AppColors.grey[700],
-                          ),
-                        ),
+                      AppTag.info(
+                        label: typeOrAssignee,
+                        isDark: isDark,
                       ),
                       const SizedBox(width: 6),
                       const Icon(Icons.circle, size: 3, color: AppColors.grey),
                       const SizedBox(width: 6),
-                      Text(
-                        'Hạn: $deadline',
-                        style: AppTextStyle.chipText.copyWith(
-                          fontSize: 9.5,
-                          color: AppColors.grey,
-                        ),
+                      AppTag.date(
+                        dateText: deadline,
+                        isDark: isDark,
                       ),
                       const SizedBox(width: 6),
                       const Icon(Icons.circle, size: 3, color: AppColors.grey),
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.badgeBlueBg,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '• $percent%',
-                          style: AppTextStyle.chipText.copyWith(
-                            fontSize: 9.5,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      AppTag.percent(
+                        percent: percent,
+                        isDark: isDark,
+                        showBullet: false,
                       ),
                     ],
                   ),
@@ -265,33 +245,20 @@ class HomeLatestTasksSection extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusText == 'Hoàn thành' ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  statusText,
-                  style: AppTextStyle.badgeText.copyWith(
-                    color: statusText == 'Hoàn thành' ? AppColors.done : AppColors.primary,
-                  ),
-                ),
+              AppTag.status(
+                label: statusText,
+                color: statusText == 'Hoàn thành' ? AppColors.done : AppColors.primary,
+                backgroundColor: statusText == 'Hoàn thành' ? AppColors.badgeGreenBg : AppColors.badgeBlueBg,
+                borderRadius: 20,
+                isDark: isDark,
               ),
               const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  timingText,
-                  style: AppTextStyle.badgeText.copyWith(
-                    fontSize: 8.5,
-                    color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
-                  ),
-                ),
+              AppTag.status(
+                label: timingText,
+                color: timingText == 'QUÁ HẠN' ? AppColors.overdue : AppColors.done,
+                backgroundColor: timingText == 'QUÁ HẠN' ? AppColors.badgeRedBg : AppColors.badgeGreenBg,
+                borderRadius: 4,
+                isDark: isDark,
               ),
             ],
           ),

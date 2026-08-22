@@ -376,6 +376,112 @@ class _TaskInfoTabState extends State<TaskInfoTab> {
                     ],
                   ),
                 )),
+
+          // 8. DANH SÁCH BÁO CÁO TIẾN ĐỘ (GIỐNG WEB)
+          () {
+            final infoReports = (task.progressReports != null && task.progressReports!.isNotEmpty)
+                ? task.progressReports!
+                : (task.completionPercent > 0
+                    ? [
+                        TaskProgressReport(
+                          percent: task.completionPercent,
+                          date: task.createdAt,
+                          note: 'Tiến độ ghi nhận',
+                        )
+                      ]
+                    : <TaskProgressReport>[]);
+
+            if (infoReports.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Text(
+                      'Danh sách báo cáo',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.white70 : AppColors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.badgeBlueBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${infoReports.length}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 14,
+                  children: infoReports.map((item) {
+                    final percent = item.percent;
+                    final dateStr = DateHelper.formatDate(item.date, fallback: item.date.isNotEmpty ? item.date : '-');
+                    final ringColor = percent >= 100 ? AppColors.done : const Color(0xFF10B981);
+
+                    return Column(
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: CircularProgressIndicator(
+                                value: (percent.clamp(0, 100)) / 100.0,
+                                strokeWidth: 3.5,
+                                backgroundColor: isDark ? AppColors.white10 : AppColors.lightBg,
+                                valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                              ),
+                            ),
+                            Text(
+                              '$percent%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? AppColors.white : AppColors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.cardDark : AppColors.badgeGreenBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            dateStr,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.done,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          }(),
         ],
       ),
     );

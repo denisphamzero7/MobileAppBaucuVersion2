@@ -30,18 +30,29 @@ class TaskProgressReport {
   final int percent;
   final String date;
   final String? note;
+  final String? reporterName;
 
   TaskProgressReport({
     required this.percent,
     required this.date,
     this.note,
+    this.reporterName,
   });
 
   factory TaskProgressReport.fromJson(Map<String, dynamic> json) {
+    int parsedPercent = 0;
+    final rawPercent = json['percent'] ?? json['completion_percent'] ?? json['progress'];
+    if (rawPercent is num) {
+      parsedPercent = rawPercent.toInt();
+    } else if (rawPercent != null) {
+      parsedPercent = int.tryParse(rawPercent.toString()) ?? 0;
+    }
+
     return TaskProgressReport(
-      percent: (json['percent'] ?? json['completion_percent'] ?? json['progress'] ?? 0) as int,
-      date: (json['date'] ?? json['created_at'] ?? json['submission_date'] ?? '').toString(),
-      note: json['note']?.toString() ?? json['content']?.toString(),
+      percent: parsedPercent,
+      date: (json['date'] ?? json['created_at'] ?? json['submission_date'] ?? json['report_date'] ?? '').toString(),
+      note: json['note']?.toString() ?? json['content']?.toString() ?? json['report_note']?.toString() ?? json['description']?.toString(),
+      reporterName: json['user']?['name']?.toString() ?? json['reporter']?['name']?.toString() ?? json['user_name']?.toString() ?? json['reporter_name']?.toString(),
     );
   }
 
@@ -49,6 +60,47 @@ class TaskProgressReport {
     'percent': percent,
     'date': date,
     'note': note,
+    'reporter_name': reporterName,
+  };
+}
+
+class TaskDiscussionNote {
+  final int id;
+  final String authorName;
+  final String? authorAvatar;
+  final String? authorRole;
+  final String content;
+  final String createdAt;
+
+  TaskDiscussionNote({
+    required this.id,
+    required this.authorName,
+    this.authorAvatar,
+    this.authorRole,
+    required this.content,
+    required this.createdAt,
+  });
+
+  factory TaskDiscussionNote.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json;
+    final author = data['author'] is Map ? data['author'] : (json['actor'] is Map ? json['actor'] : null);
+    return TaskDiscussionNote(
+      id: json['id'] as int? ?? data['id'] as int? ?? 0,
+      authorName: author?['name']?.toString() ?? json['actor']?['name']?.toString() ?? 'Người dùng',
+      authorAvatar: author?['avatar']?.toString() ?? json['actor']?['avatar']?.toString(),
+      authorRole: data['author_role']?.toString() ?? json['author_role']?.toString(),
+      content: data['content']?.toString() ?? json['content']?.toString() ?? '',
+      createdAt: data['created_at']?.toString() ?? json['timestamp']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'author_name': authorName,
+    'author_avatar': authorAvatar,
+    'author_role': authorRole,
+    'content': content,
+    'created_at': createdAt,
   };
 }
 
@@ -145,6 +197,7 @@ class TaskModel {
   final List<TaskAttachment>? attachmentList;
   final List<TaskReminder>? reminderList;
   final List<TaskProgressReport>? progressReports;
+  final List<TaskDiscussionNote>? discussions;
   final Map<String, dynamic>? rawJson;
 
   TaskModel({
@@ -172,6 +225,7 @@ class TaskModel {
     this.attachmentList,
     this.reminderList,
     this.progressReports,
+    this.discussions,
     this.rawJson,
   });
 
@@ -195,6 +249,8 @@ class TaskModel {
     String? typeName;
     if (json['type'] is Map) {
       typeName = json['type']['name'] ?? json['type']['title'];
+    } else if (json['item_type'] is Map) {
+      typeName = json['item_type']['name'] ?? json['item_type']['title'];
     } else if (json['task_assignment_item_type'] is Map) {
       typeName = json['task_assignment_item_type']['name'] ?? json['task_assignment_item_type']['title'];
     } else if (json['item_type_name'] != null) {
@@ -255,10 +311,18 @@ class TaskModel {
     }
 
     List<TaskProgressReport>? reports;
-    if (json['progress_reports'] is List) {
-      reports = (json['progress_reports'] as List).map((e) => TaskProgressReport.fromJson(e as Map<String, dynamic>)).toList();
-    } else if (json['reports'] is List) {
-      reports = (json['reports'] as List).map((e) => TaskProgressReport.fromJson(e as Map<String, dynamic>)).toList();
+    final dynamic rawReports = json['progress_reports'] ?? 
+        json['reports'] ?? 
+        json['task_progress_reports'] ?? 
+        json['task_reports'] ?? 
+        json['progress_report_list'] ?? 
+        json['histories'] ?? 
+        json['task_histories'];
+    if (rawReports is List) {
+      reports = rawReports
+          .whereType<Map<String, dynamic>>()
+          .map((e) => TaskProgressReport.fromJson(e))
+          .toList();
     }
 
     return TaskModel(
@@ -312,4 +376,62 @@ class TaskModel {
     "assignee_name": assigneeName,
     "reminder": reminder,
   };
+
+  TaskModel copyWith({
+    int? id,
+    String? name,
+    String? description,
+    String? deadlineType,
+    String? startAt,
+    String? endAt,
+    String? processingStatus,
+    int? completionPercent,
+    String? priority,
+    bool? isOverdue,
+    String? timingStatus,
+    String? createdAt,
+    int? taskAssignmentDocumentId,
+    int? taskAssignmentItemTypeId,
+    List<int>? assigneeIds,
+    String? documentName,
+    String? itemTypeName,
+    String? assignerName,
+    String? assigneeName,
+    String? reminder,
+    List<dynamic>? attachments,
+    List<TaskAttachment>? attachmentList,
+    List<TaskReminder>? reminderList,
+    List<TaskProgressReport>? progressReports,
+    List<TaskDiscussionNote>? discussions,
+    Map<String, dynamic>? rawJson,
+  }) {
+    return TaskModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      deadlineType: deadlineType ?? this.deadlineType,
+      startAt: startAt ?? this.startAt,
+      endAt: endAt ?? this.endAt,
+      processingStatus: processingStatus ?? this.processingStatus,
+      completionPercent: completionPercent ?? this.completionPercent,
+      priority: priority ?? this.priority,
+      isOverdue: isOverdue ?? this.isOverdue,
+      timingStatus: timingStatus ?? this.timingStatus,
+      createdAt: createdAt ?? this.createdAt,
+      taskAssignmentDocumentId: taskAssignmentDocumentId ?? this.taskAssignmentDocumentId,
+      taskAssignmentItemTypeId: taskAssignmentItemTypeId ?? this.taskAssignmentItemTypeId,
+      assigneeIds: assigneeIds ?? this.assigneeIds,
+      documentName: documentName ?? this.documentName,
+      itemTypeName: itemTypeName ?? this.itemTypeName,
+      assignerName: assignerName ?? this.assignerName,
+      assigneeName: assigneeName ?? this.assigneeName,
+      reminder: reminder ?? this.reminder,
+      attachments: attachments ?? this.attachments,
+      attachmentList: attachmentList ?? this.attachmentList,
+      reminderList: reminderList ?? this.reminderList,
+      progressReports: progressReports ?? this.progressReports,
+      discussions: discussions ?? this.discussions,
+      rawJson: rawJson ?? this.rawJson,
+    );
+  }
 }

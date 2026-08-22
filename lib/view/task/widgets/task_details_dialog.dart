@@ -28,6 +28,9 @@ class TaskDetailsBottomSheet extends StatefulWidget {
 
 class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
   int _selectedTabIndex = 0; // 0: Thông tin, 1: Báo cáo, 2: Trao đổi, 3: Văn bản
+  TaskModel? _currentTask;
+
+  TaskModel get _task => _currentTask ?? widget.task;
 
   final List<String> _tabs = [
     'Thông tin',
@@ -35,6 +38,23 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
     'Trao đổi',
     'Văn bản',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTask = widget.task;
+    _fetchFullDetails();
+  }
+
+  Future<void> _fetchFullDetails() async {
+    final taskCtrl = Get.find<TaskController>();
+    final detailed = await taskCtrl.fetchTaskDetails(widget.task.id);
+    if (detailed != null && mounted) {
+      setState(() {
+        _currentTask = detailed;
+      });
+    }
+  }
 
   void _handleTogglePause(BuildContext context) {
     final taskCtrl = Get.find<TaskController>();
@@ -155,7 +175,16 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
   }
 
   void _showAddReportDialog(BuildContext context) {
-    int currentPercent = widget.task.completionPercent;
+    int highestPrevious = _task.completionPercent;
+    if (_task.progressReports != null && _task.progressReports!.isNotEmpty) {
+      for (final r in _task.progressReports!) {
+        if (r.percent > highestPrevious) {
+          highestPrevious = r.percent;
+        }
+      }
+    }
+
+    int currentPercent = highestPrevious;
     final noteCtrl = TextEditingController();
 
     showDialog(
@@ -163,6 +192,8 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final divisions = (100 - highestPrevious) > 0 ? (100 - highestPrevious) : 1;
+
             return AlertDialog(
               title: const Text('Nộp báo cáo tiến độ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               content: Column(
@@ -172,15 +203,15 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Tiến độ:', style: TextStyle(fontSize: 13)),
+                      const Text('Tiến độ mới:', style: TextStyle(fontSize: 13)),
                       Text('$currentPercent%', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
                     ],
                   ),
                   Slider(
-                    value: currentPercent.toDouble(),
-                    min: 0,
+                    value: currentPercent.toDouble().clamp(highestPrevious.toDouble(), 100.0),
+                    min: highestPrevious.toDouble(),
                     max: 100,
-                    divisions: 20,
+                    divisions: divisions > 20 ? 20 : divisions,
                     activeColor: AppColors.primary,
                     label: '$currentPercent%',
                     onChanged: (val) {
@@ -189,7 +220,15 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
                       });
                     },
                   ),
-                  const SizedBox(height: 8),
+                  if (highestPrevious > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Text(
+                        '* Tiến độ phải ≥ $highestPrevious% (tiến độ trước đó)',
+                        style: TextStyle(fontSize: 11, color: AppColors.grey[600], fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
                   TextField(
                     controller: noteCtrl,
                     maxLines: 2,
@@ -215,12 +254,23 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
+                    if (currentPercent < highestPrevious) {
+                      Get.snackbar(
+                        'Không hợp lệ',
+                        'Tiến độ mới ($currentPercent%) phải lớn hơn hoặc bằng tiến độ trước ($highestPrevious%)',
+                        backgroundColor: Colors.orange.shade700,
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
                     final percent = currentPercent;
                     final note = noteCtrl.text.trim();
                     final taskCtrl = Get.find<TaskController>();
                     Navigator.pop(ctx);
-                    Navigator.pop(context);
-                    await taskCtrl.submitProgressReport(widget.task, percent, note);
+                    final success = await taskCtrl.submitProgressReport(_task, percent, note);
+                    if (success && mounted) {
+                      await _fetchFullDetails();
+                    }
                   },
                   child: const Text('Gửi báo cáo'),
                 ),
@@ -235,12 +285,12 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final task = widget.task;
+    final task = _task;
     final authCtrl = Get.find<AuthController>();
     final canUpdate = authCtrl.can('update', 'TaskAssignmentItems');
-    final titleText = (task.documentName != null && task.documentName!.isNotEmpty)
-        ? task.documentName!
-        : task.name;
+    final titleText = task.name.trim().isNotEmpty
+        ? task.name.trim()
+        : (task.documentName != null && task.documentName!.isNotEmpty ? task.documentName! : 'Công việc');
 
     return Container(
       constraints: BoxConstraints(

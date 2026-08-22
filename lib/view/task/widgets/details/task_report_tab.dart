@@ -17,7 +17,17 @@ class TaskReportTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reports = task.progressReports ?? [];
+    final reports = (task.progressReports != null && task.progressReports!.isNotEmpty)
+        ? task.progressReports!
+        : (task.completionPercent > 0
+            ? [
+                TaskProgressReport(
+                  percent: task.completionPercent,
+                  date: task.createdAt,
+                  note: 'Tiến độ ghi nhận',
+                )
+              ]
+            : <TaskProgressReport>[]);
 
     if (reports.isEmpty) {
       return Container(
@@ -99,7 +109,9 @@ class TaskReportTab extends StatelessWidget {
             runSpacing: 16,
             children: reports.map((item) {
               final percent = item.percent;
-              final dateStr = DateHelper.formatDate(item.date, fallback: '-');
+              final dateStr = DateHelper.formatDate(item.date, fallback: item.date.isNotEmpty ? item.date : '-');
+              final ringColor = percent >= 100 ? AppColors.done : const Color(0xFF10B981);
+
               return Column(
                 children: [
                   Stack(
@@ -111,8 +123,8 @@ class TaskReportTab extends StatelessWidget {
                         child: CircularProgressIndicator(
                           value: (percent.clamp(0, 100)) / 100.0,
                           strokeWidth: 4,
-                          backgroundColor: isDark ? AppColors.white10 : AppColors.badgeBlueBg,
-                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          backgroundColor: isDark ? AppColors.white10 : AppColors.lightBg,
+                          valueColor: AlwaysStoppedAnimation<Color>(ringColor),
                         ),
                       ),
                       Text(
@@ -129,15 +141,15 @@ class TaskReportTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : AppColors.lightBg,
+                      color: isDark ? AppColors.cardDark : AppColors.badgeGreenBg,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       dateStr,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.white70 : AppColors.grey[700],
+                        color: AppColors.done,
                       ),
                     ),
                   ),
