@@ -15,6 +15,9 @@ import '../widgets/skeleton_loader.dart';
 import 'widgets/stat_card_widget.dart';
 import 'widgets/task_card_widget.dart';
 import '../widgets/smart_skeleton_wrapper.dart';
+import '../../model/advanced_filter_data.dart';
+import '../../core/widgets/app_advanced_filter_bottom_sheet.dart';
+import '../../helper/date_helper.dart';
 
 /// ============================================================================
 /// 📋 [TaskScreen] - MÀN HÌNH QUẢN LÝ CÔNG VIỆC (ĐANG GIAO / ĐƯỢC GIAO)
@@ -48,6 +51,7 @@ class _TaskScreenState extends State<TaskScreen> {
   // --- Các biến phản ứng (Reactive State) phục vụ tìm kiếm & bộ lọc ---
   final RxString selectedStatusFilter = 'all'.obs;  // Bộ lọc trạng thái xử lý
   final RxString selectedTimingFilter = 'all'.obs;  // Bộ lọc tiến độ
+  final Rx<AdvancedFilterData> advancedFilter = AdvancedFilterData.initial.obs; // Bộ lọc nâng cao
   final RxString searchText = ''.obs;               // Từ khóa tìm kiếm
   final RxInt currentPage = 1.obs;                  // Trang hiện tại
   static const int itemsPerPage = 10;               // Số lượng việc trên mỗi trang
@@ -257,7 +261,7 @@ class _TaskScreenState extends State<TaskScreen> {
           final overdueCount = actualTasks.where((t) => t.isOverdue || t.timingStatus == 'overdue').length;
           final cancelledTimingCount = actualTasks.where((t) => t.timingStatus == 'cancelled').length;
 
-          // 4. Áp dụng bộ lọc tìm kiếm & lọc theo ô số liệu
+          // 4. Áp dụng bộ lọc tìm kiếm, bộ lọc nhanh & bộ lọc nâng cao
           var filteredTasks = List<TaskModel>.from(actualTasks);
 
           if (searchText.value.isNotEmpty) {
@@ -276,6 +280,55 @@ class _TaskScreenState extends State<TaskScreen> {
             filteredTasks = filteredTasks
                 .where((t) => t.timingStatus == selectedTimingFilter.value)
                 .toList();
+          }
+
+          // --- BỘ LỌC NÂNG CAO (ADVANCED FILTER) ---
+          final af = advancedFilter.value;
+          if (af.priority != 'all') {
+            filteredTasks = filteredTasks
+                .where((t) => t.priority.toLowerCase() == af.priority.toLowerCase())
+                .toList();
+          }
+
+          if (af.deadlineType != 'all') {
+            if (af.deadlineType == 'has_deadline') {
+              filteredTasks = filteredTasks
+                  .where((t) => t.deadlineType != 'no_deadline' && (t.endAt != null && t.endAt!.isNotEmpty))
+                  .toList();
+            } else if (af.deadlineType == 'no_deadline') {
+              filteredTasks = filteredTasks
+                  .where((t) => t.deadlineType == 'no_deadline' || t.endAt == null || t.endAt!.isEmpty)
+                  .toList();
+            }
+          }
+
+          if (af.departmentId != null) {
+            filteredTasks = filteredTasks.where((t) {
+              if (t.rawJson != null) {
+                final users = t.rawJson!['users'];
+                if (users is List) {
+                  return users.any((u) => u is Map && u['department_id'] == af.departmentId);
+                }
+              }
+              return true;
+            }).toList();
+          }
+
+          if (af.fromDate != null) {
+            filteredTasks = filteredTasks.where((t) {
+              final date = DateHelper.parseDateTime(t.createdAt) ?? DateHelper.parseDateTime(t.startAt);
+              if (date == null) return true;
+              return date.isAfter(af.fromDate!) || date.isAtSameMomentAs(af.fromDate!);
+            }).toList();
+          }
+
+          if (af.toDate != null) {
+            final endOfDay = DateTime(af.toDate!.year, af.toDate!.month, af.toDate!.day, 23, 59, 59);
+            filteredTasks = filteredTasks.where((t) {
+              final date = DateHelper.parseDateTime(t.createdAt) ?? DateHelper.parseDateTime(t.endAt);
+              if (date == null) return true;
+              return date.isBefore(endOfDay) || date.isAtSameMomentAs(endOfDay);
+            }).toList();
           }
 
           // 5. Tính toán phân trang dữ liệu (10 mục/trang)
@@ -346,25 +399,80 @@ class _TaskScreenState extends State<TaskScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.cardDark : AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05),
-                          ),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.filter_alt_outlined, size: 18, color: AppColors.grey),
-                          onPressed: () {
-                            selectedStatusFilter.value = 'all';
-                            selectedTimingFilter.value = 'all';
-                            searchText.value = '';
-                          },
-                        ),
-                      ),
+
+                      // NÚT BỘ LỌC NÂNG CAO (CLICK MỞ BOTTOM SHEET TIỆN LỢI)
+                      Obx(() {
+                        final isFilterActive = advancedFilter.value.isActive;
+                        final activeCount = advancedFilter.value.activeCount;
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                color: isFilterActive
+                                    ? AppColors.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                                    : (isDark ? AppColors.cardDark : AppColors.white),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isFilterActive
+                                      ? AppColors.primary
+                                      : (isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05)),
+                                  width: isFilterActive ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.filter_alt_outlined,
+                                  size: 18,
+                                  color: isFilterActive ? AppColors.primary : AppColors.grey,
+                                ),
+                                onPressed: () {
+                                  AppAdvancedFilterBottomSheet.show(
+                                    context,
+                                    initialData: advancedFilter.value,
+                                    departments: controller.departments,
+                                    onApply: (data) {
+                                      advancedFilter.value = data;
+                                      currentPage.value = 1;
+                                    },
+                                    onReset: () {
+                                      advancedFilter.value = AdvancedFilterData.initial;
+                                      currentPage.value = 1;
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            if (isFilterActive && activeCount > 0)
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                  child: Center(
+                                    child: Text(
+                                      '$activeCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      }),
                       const SizedBox(width: 8),
                       Container(
                         height: 40,

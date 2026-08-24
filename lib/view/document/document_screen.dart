@@ -15,6 +15,8 @@ import '../../view/widgets/skeleton_loader.dart';
 import '../../view/widgets/smart_skeleton_wrapper.dart';
 import '../../view/task/widgets/stat_card_widget.dart';
 import 'widgets/petition_details_dialog.dart';
+import '../../model/advanced_filter_data.dart';
+import '../../core/widgets/app_advanced_filter_bottom_sheet.dart';
 
 class DocumentScreen extends StatefulWidget {
   const DocumentScreen({super.key});
@@ -25,6 +27,7 @@ class DocumentScreen extends StatefulWidget {
 
 class _DocumentScreenState extends State<DocumentScreen> {
   final RxString selectedStatusFilter = 'all'.obs;
+  final Rx<AdvancedFilterData> advancedFilter = AdvancedFilterData.initial.obs;
   final RxString searchText = ''.obs;
   final TextEditingController searchController = TextEditingController();
   final RxInt currentPage = 1.obs;
@@ -235,90 +238,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
       Get.snackbar('Lỗi', 'Có lỗi xảy ra khi xóa hàng loạt', backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
       _onRefresh();
     }
-  }
-
-  void _showDepartmentFilterModal(BuildContext context, bool isDark) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Lọc theo phòng ban',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.white : AppColors.black87,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  'Tất cả phòng ban',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: selectedDepartment.value == null ? FontWeight.bold : FontWeight.normal,
-                    color: selectedDepartment.value == null ? AppColors.primary : (isDark ? AppColors.white70 : AppColors.black87),
-                  ),
-                ),
-                trailing: selectedDepartment.value == null ? const Icon(Icons.check, color: AppColors.primary) : null,
-                onTap: () {
-                  selectedDepartment.value = null;
-                  Navigator.pop(ctx);
-                  _fetchPetitions();
-                },
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: departments.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, index) {
-                    final dept = departments[index];
-                    final isSelected = selectedDepartment.value?.id == dept.id;
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        dept.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? AppColors.primary : (isDark ? AppColors.white70 : AppColors.black87),
-                        ),
-                      ),
-                      trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
-                      onTap: () {
-                        selectedDepartment.value = dept;
-                        Navigator.pop(ctx);
-                        _fetchPetitions();
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   void _showCreateEditPetitionModal(BuildContext context, {PetitionItemModel? petitionToEdit}) {
@@ -818,13 +737,46 @@ class _DocumentScreenState extends State<DocumentScreen> {
           final dynamicPaused = st.paused > 0 ? st.paused : petitionsList.where((p) => p.processingStatus == 'paused').length;
           final dynamicCancelled = st.cancelled > 0 ? st.cancelled : petitionsList.where((p) => p.processingStatus == 'cancelled').length;
 
-          final int totalFilteredItems = petitionsList.length;
+          // --- ÁP DỤNG BỘ LỌC NÂNG CAO CHO ĐƠN THƯ ---
+          var filteredPetitions = List<PetitionItemModel>.from(petitionsList);
+
+          final af = advancedFilter.value;
+          if (af.departmentId != null) {
+            filteredPetitions = filteredPetitions.where((p) => p.departmentId == af.departmentId).toList();
+          }
+
+          if (af.deadlineType != 'all') {
+            if (af.deadlineType == 'has_deadline') {
+              filteredPetitions = filteredPetitions.where((p) => p.deadlineDate.isNotEmpty).toList();
+            } else if (af.deadlineType == 'no_deadline') {
+              filteredPetitions = filteredPetitions.where((p) => p.deadlineDate.isEmpty).toList();
+            }
+          }
+
+          if (af.fromDate != null) {
+            filteredPetitions = filteredPetitions.where((p) {
+              final date = DateHelper.parseDateTime(p.submissionDate);
+              if (date == null) return true;
+              return date.isAfter(af.fromDate!) || date.isAtSameMomentAs(af.fromDate!);
+            }).toList();
+          }
+
+          if (af.toDate != null) {
+            final endOfDay = DateTime(af.toDate!.year, af.toDate!.month, af.toDate!.day, 23, 59, 59);
+            filteredPetitions = filteredPetitions.where((p) {
+              final date = DateHelper.parseDateTime(p.submissionDate);
+              if (date == null) return true;
+              return date.isBefore(endOfDay) || date.isAtSameMomentAs(endOfDay);
+            }).toList();
+          }
+
+          final int totalFilteredItems = filteredPetitions.length;
           final int totalPages = (totalFilteredItems / itemsPerPage).ceil().clamp(1, 9999);
           if (currentPage.value > totalPages) {
             currentPage.value = totalPages;
           }
           final int startIndex = (currentPage.value - 1) * itemsPerPage;
-          final pagedPetitions = petitionsList.skip(startIndex).take(itemsPerPage).toList();
+          final pagedPetitions = filteredPetitions.skip(startIndex).take(itemsPerPage).toList();
 
           return SmartSkeletonWrapper(
             showSkeleton: showSkeleton,
@@ -843,7 +795,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // A. SEARCH BAR & FILTER BUTTON
+                  // A. SEARCH BAR & ADVANCED FILTER BUTTON
                   Row(
                     children: [
                       Expanded(
@@ -883,30 +835,92 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.cardDark : AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05),
-                          ),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.filter_alt_outlined,
-                            size: 18,
-                            color: selectedDepartment.value != null ? AppColors.primary : AppColors.grey,
-                          ),
-                          tooltip: 'Lọc theo phòng ban',
-                          onPressed: () => _showDepartmentFilterModal(context, isDark),
-                        ),
-                      ),
+                      // NÚT BỘ LỌC NÂNG CAO ĐƠN THƯ
+                      Obx(() {
+                        final isFilterActive = advancedFilter.value.isActive;
+                        final activeCount = advancedFilter.value.activeCount;
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                color: isFilterActive
+                                    ? AppColors.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                                    : (isDark ? AppColors.cardDark : AppColors.white),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isFilterActive
+                                      ? AppColors.primary
+                                      : (isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05)),
+                                  width: isFilterActive ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.filter_alt_outlined,
+                                  size: 18,
+                                  color: isFilterActive ? AppColors.primary : AppColors.grey,
+                                ),
+                                tooltip: 'Bộ lọc nâng cao',
+                                onPressed: () {
+                                  AppAdvancedFilterBottomSheet.show(
+                                    context,
+                                    initialData: advancedFilter.value,
+                                    departments: departments,
+                                    showPriority: false, // Đơn thư không có mức ưu tiên
+                                    onApply: (data) {
+                                      advancedFilter.value = data;
+                                      if (data.departmentId != null) {
+                                        final found = departments.where((d) => d.id == data.departmentId);
+                                        selectedDepartment.value = found.isNotEmpty ? found.first : null;
+                                      } else {
+                                        selectedDepartment.value = null;
+                                      }
+                                      currentPage.value = 1;
+                                    },
+                                    onReset: () {
+                                      advancedFilter.value = AdvancedFilterData.initial;
+                                      selectedDepartment.value = null;
+                                      currentPage.value = 1;
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            if (isFilterActive && activeCount > 0)
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                  child: Center(
+                                    child: Text(
+                                      '$activeCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      }),
                     ],
                   ),
 
-                  if (selectedDepartment.value != null) ...[
+                  if (advancedFilter.value.departmentName != null || selectedDepartment.value != null) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -919,13 +933,14 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Phòng ban: ${selectedDepartment.value!.name}',
+                            'Phòng ban: ${advancedFilter.value.departmentName ?? selectedDepartment.value?.name}',
                             style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(width: 4),
                           InkWell(
                             onTap: () {
                               selectedDepartment.value = null;
+                              advancedFilter.value = advancedFilter.value.copyWith(clearDepartment: true);
                               currentPage.value = 1;
                               _fetchPetitions();
                             },
