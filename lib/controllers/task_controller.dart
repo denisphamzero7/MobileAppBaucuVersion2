@@ -378,6 +378,23 @@ class TaskController extends GetxController {
     }
   }
 
+  final RxBool isDocumentsLoading = false.obs;
+
+  Future<void> fetchTaskDocuments() async {
+    isDocumentsLoading.value = true;
+    try {
+      final res = await _taskService.getTaskAssignmentDocuments();
+      if (res != null && res.data != null) {
+        taskDocuments.assignAll(res.data);
+        log("✅ Tải danh sách văn bản giao việc thành công: ${taskDocuments.length} văn bản");
+      }
+    } catch (e) {
+      log("❌ Lỗi tải văn bản giao việc: $e");
+    } finally {
+      isDocumentsLoading.value = false;
+    }
+  }
+
   Future<void> fetchStats() async {
     isStatsLoading.value = true;
     try {
@@ -392,6 +409,7 @@ class TaskController extends GetxController {
       await Future.wait([
         fetchDepartmentStats(),
         fetchItemTypeStats(),
+        fetchTaskDocuments(),
       ]);
     } catch (e) {
       log("❌ Lỗi tải thống kê: $e");
