@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
-import 'package:intl/intl.dart';
 import 'dart:developer' as dev;
+import '../../helper/date_helper.dart';
 import '../../helper/dio_helper.dart';
 import '../../untils/app_colors.dart';
 
@@ -84,7 +84,7 @@ class ExportExcelButton extends StatefulWidget {
         await dir.create(recursive: true);
       }
 
-      final timeStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final timeStamp = DateHelper.getExcelTimestamp();
       final savePath = '${dir.path}/${fileNamePrefix}_$timeStamp.xlsx';
 
       dev.log("📥 [EXCEL EXPORT] Bắt đầu tải: $url -> $savePath | params: $queryParams", name: "ExportExcel");
@@ -185,7 +185,7 @@ class _ExportExcelButtonState extends State<ExportExcelButton> {
         await dir.create(recursive: true);
       }
 
-      final timeStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final timeStamp = DateHelper.getExcelTimestamp();
       final savePath = '${dir.path}/${widget.fileNamePrefix}_$timeStamp.xlsx';
 
       dev.log("📥 [EXCEL EXPORT] Bắt đầu tải widget: ${widget.url} -> $savePath", name: "ExportExcel");
