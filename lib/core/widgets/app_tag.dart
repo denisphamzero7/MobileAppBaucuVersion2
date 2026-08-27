@@ -29,7 +29,7 @@ class AppTag extends StatelessWidget {
     this.icon,
     this.iconColor,
     this.iconSize = 12,
-    this.fontSize = 10.5,
+    this.fontSize = 9.5,
     this.fontWeight = FontWeight.w600,
     this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     this.borderRadius = 6,

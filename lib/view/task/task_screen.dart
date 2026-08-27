@@ -8,6 +8,7 @@ import 'package:app_baucu_version1/untils/app_colors.dart';
 import 'package:app_baucu_version1/untils/app_strings.dart';
 import 'create_task_screen.dart';
 import '../../core/widgets/app_pagination_widget.dart';
+import '../../core/widgets/app_paged_list_wrapper.dart';
 import '../widgets/quick_action_bottom_sheet.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -45,7 +46,10 @@ class TaskScreen extends StatefulWidget {
   State<TaskScreen> createState() => _TaskScreenState();
 }
 
-class _TaskScreenState extends State<TaskScreen> {
+class _TaskScreenState extends State<TaskScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late final TaskController controller;
 
   // --- Các biến phản ứng (Reactive State) phục vụ tìm kiếm & bộ lọc ---
@@ -54,7 +58,15 @@ class _TaskScreenState extends State<TaskScreen> {
   final Rx<AdvancedFilterData> advancedFilter = AdvancedFilterData.initial.obs; // Bộ lọc nâng cao
   final RxString searchText = ''.obs;               // Từ khóa tìm kiếm
   final RxInt currentPage = 1.obs;                  // Trang hiện tại
+  final RxBool isPageChanging = false.obs;          // Cờ hiệu ứng chuyển trang cục bộ
+  final ScrollController _scrollController = ScrollController(); // Điều khiển cuộn mượt về đầu trang
   static const int itemsPerPage = 10;               // Số lượng việc trên mỗi trang
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -66,12 +78,9 @@ class _TaskScreenState extends State<TaskScreen> {
       controller = Get.find<TaskController>();
     }
 
-    // 2. Tự động tải dữ liệu ban đầu cho Tab hiện tại nếu danh sách đang rỗng
+    // 2. Tự động tải dữ liệu ban đầu cho Tab hiện tại
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final actualTasks = controller.getTasksList(widget.type);
-      if (actualTasks.isEmpty) {
-        controller.fetchTasks(type: widget.type, isRefresh: true);
-      }
+      controller.fetchTasks(type: widget.type, isRefresh: true);
     });
   }
 
@@ -166,6 +175,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
 
@@ -364,6 +374,7 @@ class _TaskScreenState extends State<TaskScreen> {
 
             // D. Giao diện dữ liệu thật khi đã nạp xong (KHÔNG bọc skeleton lẻ bên trong)
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 20.0),
               child: Column(
@@ -721,14 +732,19 @@ class _TaskScreenState extends State<TaskScreen> {
                   else
                     Column(
                       children: [
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: pagedTasks.length,
-                          itemBuilder: (context, index) {
-                            final task = pagedTasks[index];
-                            return TaskCardWidget(task: task, isDark: isDark, primaryColor: primaryColor);
-                          },
+                        // Bọc danh sách bằng AppPagedListWrapper để hiển thị Skeleton cục bộ khi đổi trang
+                        AppPagedListWrapper(
+                          isChangingPage: isPageChanging.value,
+                          skeleton: AppSkeleton.listCards(count: 5, height: 68),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: pagedTasks.length,
+                            itemBuilder: (context, index) {
+                              final task = pagedTasks[index];
+                              return TaskCardWidget(task: task, isDark: isDark, primaryColor: primaryColor);
+                            },
+                          ),
                         ),
                         if (totalFilteredItems > 0) ...[
                           const SizedBox(height: 16),
@@ -737,9 +753,25 @@ class _TaskScreenState extends State<TaskScreen> {
                             totalPages: totalPages,
                             totalItems: totalFilteredItems,
                             itemsPerPage: itemsPerPage,
-                            isLoading: isTaskLoading,
-                            onPageChanged: (newPage) {
+                            isLoading: isTaskLoading || isPageChanging.value,
+                            onPageChanged: (newPage) async {
+                              if (currentPage.value == newPage) return;
+                              // 1. Bật cờ hiệu ứng chuyển trang cục bộ
+                              isPageChanging.value = true;
                               currentPage.value = newPage;
+
+                              // 2. Cuộn nhẹ lên đầu danh sách để đọc từ mục đầu tiên
+                              if (_scrollController.hasClients) {
+                                _scrollController.animateTo(
+                                  0,
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+
+                              // 3. Tắt trạng thái nạp sau khi hoàn tất hiệu ứng êm dịu (200ms)
+                              await Future.delayed(const Duration(milliseconds: 200));
+                              isPageChanging.value = false;
                             },
                           ),
                         ],

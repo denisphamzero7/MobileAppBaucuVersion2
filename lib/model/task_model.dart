@@ -1,4 +1,5 @@
 export 'task_assignment_document_model.dart';
+import 'user_model.dart';
 
 class TaskItemType {
   final int id;
@@ -230,11 +231,34 @@ class TaskModel {
   });
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
-    List<int>? assignees;
+    List<int> assignees = [];
     if (json['assignee_ids'] is List) {
-      assignees = (json['assignee_ids'] as List).map((e) => int.tryParse(e.toString()) ?? 0).toList();
+      assignees = (json['assignee_ids'] as List)
+          .map((e) => int.tryParse(e.toString()) ?? 0)
+          .where((id) => id > 0)
+          .toList();
     } else if (json['assignees'] is List) {
-      assignees = (json['assignees'] as List).map((e) => e is Map ? (e['id'] as int? ?? 0) : (int.tryParse(e.toString()) ?? 0)).toList();
+      assignees = (json['assignees'] as List)
+          .map((e) => e is Map
+              ? (int.tryParse((e['id'] ?? e['user_id'])?.toString() ?? '0') ?? 0)
+              : (int.tryParse(e.toString()) ?? 0))
+          .where((id) => id > 0)
+          .toList();
+    } else if (json['users'] is List) {
+      assignees = (json['users'] as List)
+          .map((e) => e is Map
+              ? (int.tryParse((e['id'] ?? e['user_id'] ?? (e['user'] is Map ? e['user']['id'] : null))?.toString() ?? '0') ?? 0)
+              : (int.tryParse(e.toString()) ?? 0))
+          .where((id) => id > 0)
+          .toList();
+    }
+    if (json['assignee_id'] != null) {
+      final aId = int.tryParse(json['assignee_id'].toString());
+      if (aId != null && aId > 0 && !assignees.contains(aId)) assignees.add(aId);
+    }
+    if (json['assignee'] is Map && json['assignee']['id'] != null) {
+      final aId = int.tryParse(json['assignee']['id'].toString());
+      if (aId != null && aId > 0 && !assignees.contains(aId)) assignees.add(aId);
     }
 
     String? docName;
@@ -261,7 +285,13 @@ class TaskModel {
     if (json['assigner'] is Map) {
       assigner = json['assigner']['name'] ?? json['assigner']['user_name'] ?? json['assigner']['full_name'];
     } else if (json['assigned_by_user'] is Map) {
-      assigner = json['assigned_by_user']['name'];
+      assigner = json['assigned_by_user']['name'] ?? json['assigned_by_user']['user_name'];
+    } else if (json['creator'] is Map) {
+      assigner = json['creator']['name'] ?? json['creator']['user_name'];
+    } else if (json['user'] is Map) {
+      assigner = json['user']['name'] ?? json['user']['user_name'];
+    } else if (json['created_by_user'] is Map) {
+      assigner = json['created_by_user']['name'];
     } else if (json['assigner_name'] != null) {
       assigner = json['assigner_name']?.toString();
     }
@@ -433,5 +463,116 @@ class TaskModel {
       discussions: discussions ?? this.discussions,
       rawJson: rawJson ?? this.rawJson,
     );
+  }
+
+  /// 🔍 Kiểm tra xem [user] có phải là NGƯỜI GIAO VIỆC (Đang giao) hay không
+  bool isAssignedByMe(User? user) {
+    if (user == null) return false;
+
+    final raw = rawJson ?? {};
+    final uId = user.id.toString();
+    final uName = user.name.trim().toLowerCase();
+    final uUserName = user.userName.trim().toLowerCase();
+    final uEmail = user.email.trim().toLowerCase();
+
+    // 1. Kiểm tra theo ID người tạo / người giao
+    if (user.id > 0) {
+      final assignerId = raw['assigner_id'] ?? raw['created_by'] ?? raw['assigned_by'] ?? raw['user_id'];
+      if (assignerId != null && assignerId.toString() == uId) return true;
+      if (raw['assigner'] is Map && (raw['assigner']['id'] ?? raw['assigner']['user_id'])?.toString() == uId) return true;
+      if (raw['creator'] is Map && (raw['creator']['id'] ?? raw['creator']['user_id'])?.toString() == uId) return true;
+      if (raw['user'] is Map && (raw['user']['id'] ?? raw['user']['user_id'])?.toString() == uId) return true;
+      if (raw['assigned_by_user'] is Map && (raw['assigned_by_user']['id'] ?? raw['assigned_by_user']['user_id'])?.toString() == uId) return true;
+    }
+
+    // 2. Kiểm tra theo Tên / Username / Email của người giao
+    if (assignerName != null && assignerName!.trim().isNotEmpty) {
+      final aName = assignerName!.trim().toLowerCase();
+      if (uName.isNotEmpty && (aName.contains(uName) || uName.contains(aName))) return true;
+      if (uUserName.isNotEmpty && (aName.contains(uUserName) || uUserName.contains(aName))) return true;
+    }
+    if (raw['assigner'] is Map) {
+      final a = raw['assigner'];
+      final name = (a['name'] ?? a['user_name'] ?? a['full_name'] ?? '').toString().trim().toLowerCase();
+      if (uName.isNotEmpty && name.isNotEmpty && (name.contains(uName) || uName.contains(name))) return true;
+      if (uUserName.isNotEmpty && name.isNotEmpty && (name.contains(uUserName) || uUserName.contains(name))) return true;
+      final email = (a['email'] ?? '').toString().trim().toLowerCase();
+      if (uEmail.isNotEmpty && email.isNotEmpty && email == uEmail) return true;
+    }
+    if (raw['creator'] is Map) {
+      final c = raw['creator'];
+      final name = (c['name'] ?? c['user_name'] ?? c['full_name'] ?? '').toString().trim().toLowerCase();
+      if (uName.isNotEmpty && name.isNotEmpty && (name.contains(uName) || uName.contains(name))) return true;
+      final email = (c['email'] ?? '').toString().trim().toLowerCase();
+      if (uEmail.isNotEmpty && email.isNotEmpty && email == uEmail) return true;
+    }
+
+    return false;
+  }
+
+  /// 🔍 Kiểm tra xem [user] có phải là NGƯỜI ĐƯỢC GIAO VIỆC (Được giao) hay không
+  bool isAssignedToMe(User? user) {
+    if (user == null) return false;
+
+    final raw = rawJson ?? {};
+    final uId = user.id.toString();
+    final uName = user.name.trim().toLowerCase();
+    final uUserName = user.userName.trim().toLowerCase();
+    final uEmail = user.email.trim().toLowerCase();
+
+    // 1. Kiểm tra theo ID người nhận
+    if (user.id > 0) {
+      if (assigneeIds != null && assigneeIds!.contains(user.id)) return true;
+      if (raw['assignee_id'] != null && raw['assignee_id'].toString() == uId) return true;
+      if (raw['assignee'] is Map && (raw['assignee']['id'] ?? raw['assignee']['user_id'])?.toString() == uId) return true;
+      if (raw['users'] is List) {
+        final hasUser = (raw['users'] as List).any((u) {
+          if (u is Map) {
+            final id = (u['id'] ?? u['user_id'] ?? (u['user'] is Map ? u['user']['id'] : null))?.toString();
+            return id != null && id == uId;
+          }
+          return u.toString() == uId;
+        });
+        if (hasUser) return true;
+      }
+      if (raw['assignees'] is List) {
+        final hasAssignee = (raw['assignees'] as List).any((u) {
+          if (u is Map) {
+            final id = (u['id'] ?? u['user_id'] ?? (u['user'] is Map ? u['user']['id'] : null))?.toString();
+            return id != null && id == uId;
+          }
+          return u.toString() == uId;
+        });
+        if (hasAssignee) return true;
+      }
+    }
+
+    // 2. Kiểm tra theo Tên / Username / Email của người nhận
+    if (assigneeName != null && assigneeName!.trim().isNotEmpty) {
+      final aName = assigneeName!.trim().toLowerCase();
+      if (uName.isNotEmpty && (aName.contains(uName) || uName.contains(aName))) return true;
+      if (uUserName.isNotEmpty && (aName.contains(uUserName) || uUserName.contains(aName))) return true;
+    }
+    if (raw['assignee'] is Map) {
+      final a = raw['assignee'];
+      final name = (a['name'] ?? a['user_name'] ?? '').toString().trim().toLowerCase();
+      if (uName.isNotEmpty && name.isNotEmpty && (name.contains(uName) || uName.contains(name))) return true;
+      final email = (a['email'] ?? '').toString().trim().toLowerCase();
+      if (uEmail.isNotEmpty && email.isNotEmpty && email == uEmail) return true;
+    }
+    if (raw['users'] is List) {
+      final hasNameOrEmail = (raw['users'] as List).any((u) {
+        if (u is Map) {
+          final name = (u['name'] ?? u['user_name'] ?? (u['user'] is Map ? u['user']['name'] : null) ?? '').toString().trim().toLowerCase();
+          if (uName.isNotEmpty && name.isNotEmpty && (name.contains(uName) || uName.contains(name))) return true;
+          final email = (u['email'] ?? (u['user'] is Map ? u['user']['email'] : null) ?? '').toString().trim().toLowerCase();
+          if (uEmail.isNotEmpty && email.isNotEmpty && email == uEmail) return true;
+        }
+        return false;
+      });
+      if (hasNameOrEmail) return true;
+    }
+
+    return false;
   }
 }

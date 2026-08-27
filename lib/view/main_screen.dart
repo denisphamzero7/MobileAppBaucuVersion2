@@ -18,29 +18,31 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final NavigationController navigationController = Get.isRegistered<NavigationController>()
+      ? Get.find<NavigationController>()
+      : Get.put(NavigationController());
+
   @override
   Widget build(BuildContext context) {
-    final NavigationController navigationController = Get.put( NavigationController());
-    return GetBuilder<ThemeController>(builder: (themeController)=> Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: AnimatedSwitcher(duration: Duration(milliseconds: 200),
-        child: Obx(
-            ()=> IndexedStack(
-              key: ValueKey(navigationController.currentIndex.value),
-              index: navigationController.currentIndex.value,
-              children: [
-                const HomeScreen(),
-                TaskScreen(type: 'sent'),
-                TaskScreen(type: 'received'),
-                const DocumentScreen(),
-                const TaskDocumentScreen(),
-                const StatisticScreen(),
-                const ProfileScreen(),
-              ],
-            )
+    return GetBuilder<ThemeController>(
+      builder: (themeController) => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Obx(
+          () => IndexedStack(
+            index: navigationController.currentIndex.value,
+            children: const [
+              HomeScreen(),
+              TaskScreen(type: 'sent'),
+              TaskScreen(type: 'received'),
+              DocumentScreen(),
+              TaskDocumentScreen(),
+              StatisticScreen(),
+              ProfileScreen(),
+            ],
+          ),
         ),
+        bottomNavigationBar: const CustomBottomNavbar(),
       ),
-      bottomNavigationBar: CustomBottomNavbar(),
-    ),);
+    );
   }
 }

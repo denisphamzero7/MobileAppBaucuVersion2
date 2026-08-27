@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/task_controller.dart';
 import '../../untils/app_colors.dart';
@@ -18,7 +18,10 @@ class StatisticScreen extends StatefulWidget {
   State<StatisticScreen> createState() => _StatisticScreenState();
 }
 
-class _StatisticScreenState extends State<StatisticScreen> {
+class _StatisticScreenState extends State<StatisticScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final TaskController taskController = Get.isRegistered<TaskController>()
       ? Get.find<TaskController>()
       : Get.put(TaskController());
@@ -39,6 +42,7 @@ class _StatisticScreenState extends State<StatisticScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

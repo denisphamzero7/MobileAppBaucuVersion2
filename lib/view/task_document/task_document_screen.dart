@@ -7,6 +7,7 @@ import '../../model/department_model.dart';
 import '../../service/task_assignment_documents_service.dart';
 import '../../untils/app_colors.dart';
 import '../../core/widgets/app_pagination_widget.dart';
+import '../../core/widgets/app_paged_list_wrapper.dart';
 import '../../core/widgets/export_excel_button.dart';
 import '../../core/widgets/import_excel_button.dart';
 import '../../view/widgets/skeleton_loader.dart';
@@ -33,6 +34,8 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
 
   final RxBool _isLoading = true.obs;
   final RxInt _currentPage = 1.obs;
+  final RxBool _isPageChanging = false.obs; // Cờ hiệu ứng chuyển trang cục bộ
+  final ScrollController _scrollController = ScrollController(); // Tự động cuộn mượt lên đầu
   final RxString _searchText = ''.obs;
   final int _perPage = 10;
 
@@ -52,6 +55,7 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -477,6 +481,7 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
             skeleton: _buildTaskDocumentSkeleton(),
             onRefresh: _onRefresh,
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 20.0),
               child: Column(
@@ -639,93 +644,98 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
                       ),
                     ),
                   ] else ...[
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: pagedDocs.length,
-                      itemBuilder: (ctx, idx) {
-                        final doc = pagedDocs[idx];
-                        return Obx(() {
-                          final isSelected = selectedDocIds.contains(doc.id);
-                          final isMulti = isMultiSelectMode.value;
+                    // Bọc danh sách bằng AppPagedListWrapper để hiển thị Skeleton cục bộ khi chuyển trang
+                    AppPagedListWrapper(
+                      isChangingPage: _isPageChanging.value,
+                      skeleton: AppSkeleton.listCards(count: 5, height: 68),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: pagedDocs.length,
+                        itemBuilder: (ctx, idx) {
+                          final doc = pagedDocs[idx];
+                          return Obx(() {
+                            final isSelected = selectedDocIds.contains(doc.id);
+                            final isMulti = isMultiSelectMode.value;
 
-                          final cardWidget = TaskDocumentCard(
-                            document: doc,
-                            isDark: isDark,
-                            isSelected: isSelected,
-                            isMultiSelectMode: isMulti,
-                            onToggleSelect: () => _toggleMultiSelect(doc.id),
-                            onTap: () {
-                              if (isMulti) {
-                                _toggleMultiSelect(doc.id);
-                              } else {
-                                TaskDocumentDetailsBottomSheet.show(
-                                  context,
-                                  document: doc,
-                                  isDark: isDark,
-                                  onRefreshParent: () => _onRefresh(),
-                                  onEditDocument: (d) => _showCreateEditDocumentModal(context, docToEdit: d),
-                                );
-                              }
-                            },
-                            onLongPress: () {
-                              if (!isMulti) {
-                                isMultiSelectMode.value = true;
-                                _toggleMultiSelect(doc.id);
-                              }
-                            },
-                          );
+                            final cardWidget = TaskDocumentCard(
+                              document: doc,
+                              isDark: isDark,
+                              isSelected: isSelected,
+                              isMultiSelectMode: isMulti,
+                              onToggleSelect: () => _toggleMultiSelect(doc.id),
+                              onTap: () {
+                                if (isMulti) {
+                                  _toggleMultiSelect(doc.id);
+                                } else {
+                                  TaskDocumentDetailsBottomSheet.show(
+                                    context,
+                                    document: doc,
+                                    isDark: isDark,
+                                    onRefreshParent: () => _onRefresh(),
+                                    onEditDocument: (d) => _showCreateEditDocumentModal(context, docToEdit: d),
+                                  );
+                                }
+                              },
+                              onLongPress: () {
+                                if (!isMulti) {
+                                  isMultiSelectMode.value = true;
+                                  _toggleMultiSelect(doc.id);
+                                }
+                              },
+                            );
 
-                          if (isMulti || !canDelete) {
-                            return cardWidget;
-                          }
+                            if (isMulti || !canDelete) {
+                              return cardWidget;
+                            }
 
-                          return Dismissible(
-                            key: ValueKey('task_doc_${doc.id}'),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(14),
+                            return Dismissible(
+                              key: ValueKey('task_doc_${doc.id}'),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                child: const Icon(Icons.delete, color: Colors.white),
                               ),
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              child: const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            confirmDismiss: (direction) async {
-                              return await Get.defaultDialog<bool>(
-                                title: 'Xác nhận xóa',
-                                middleText: 'Bạn có chắc chắn muốn xóa văn bản "${doc.title}"?',
-                                textConfirm: 'Xóa',
-                                textCancel: 'Hủy',
-                                confirmTextColor: Colors.white,
-                                buttonColor: AppColors.dangerText,
-                                onConfirm: () => Get.back(result: true),
-                                onCancel: () => Get.back(result: false),
-                              );
-                            },
-                            onDismissed: (direction) async {
-                              final success = await _docService.deleteDocument(doc.id);
-                              if (success) {
-                                _allDocuments.removeWhere((d) => d.id == doc.id);
-                                Get.snackbar(
-                                  'Thành công',
-                                  'Đã xóa văn bản giao việc thành công',
-                                  snackPosition: SnackPosition.TOP,
-                                  backgroundColor: AppColors.done,
-                                  colorText: Colors.white,
+                              confirmDismiss: (direction) async {
+                                return await Get.defaultDialog<bool>(
+                                  title: 'Xác nhận xóa',
+                                  middleText: 'Bạn có chắc chắn muốn xóa văn bản "${doc.title}"?',
+                                  textConfirm: 'Xóa',
+                                  textCancel: 'Hủy',
+                                  confirmTextColor: Colors.white,
+                                  buttonColor: AppColors.dangerText,
+                                  onConfirm: () => Get.back(result: true),
+                                  onCancel: () => Get.back(result: false),
                                 );
-                                _fetchStats();
-                              } else {
-                                Get.snackbar('Lỗi', 'Không thể xóa văn bản này', backgroundColor: Colors.red, colorText: Colors.white);
-                                _onRefresh();
-                              }
-                            },
-                            child: cardWidget,
-                          );
-                        });
-                      },
+                              },
+                              onDismissed: (direction) async {
+                                final success = await _docService.deleteDocument(doc.id);
+                                if (success) {
+                                  _allDocuments.removeWhere((d) => d.id == doc.id);
+                                  Get.snackbar(
+                                    'Thành công',
+                                    'Đã xóa văn bản giao việc thành công',
+                                    snackPosition: SnackPosition.TOP,
+                                    backgroundColor: AppColors.done,
+                                    colorText: Colors.white,
+                                  );
+                                  _fetchStats();
+                                } else {
+                                  Get.snackbar('Lỗi', 'Không thể xóa văn bản này', backgroundColor: Colors.red, colorText: Colors.white);
+                                  _onRefresh();
+                                }
+                              },
+                              child: cardWidget,
+                            );
+                          });
+                        },
+                      ),
                     ),
                     const SizedBox(height: 12),
 
@@ -734,7 +744,26 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
                       currentPage: _currentPage.value,
                       totalPages: totalPages,
                       totalItems: totalItems,
-                      onPageChanged: (p) => _currentPage.value = p,
+                      isLoading: _isPageChanging.value,
+                      onPageChanged: (p) async {
+                        if (_currentPage.value == p) return;
+                        // 1. Bật cờ hiệu ứng chuyển trang cục bộ
+                        _isPageChanging.value = true;
+                        _currentPage.value = p;
+
+                        // 2. Cuộn nhẹ lên đầu danh sách
+                        if (_scrollController.hasClients) {
+                          _scrollController.animateTo(
+                            0,
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeOut,
+                          );
+                        }
+
+                        // 3. Tắt trạng thái nạp sau khi hoàn tất hiệu ứng êm dịu (200ms)
+                        await Future.delayed(const Duration(milliseconds: 200));
+                        _isPageChanging.value = false;
+                      },
                     ),
                   ],
                 ],

@@ -43,25 +43,25 @@ class AppTextStyle {
 
   // Card / Item List Styles (Đồng bộ thẻ Công việc, Văn bản, Đơn thư)
   static TextStyle cardTitle = GoogleFonts.poppins(
-    fontSize: 13.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w600,
     height: 1.25,
   );
 
   static TextStyle cardSubtitle = GoogleFonts.poppins(
-    fontSize: 12.0,
+    fontSize: 11.0,
     fontWeight: FontWeight.w400,
   );
 
   // Chips & Meta Tags (Ngày tháng, người nhận, tên phòng ban, loại)
   static TextStyle chipText = GoogleFonts.poppins(
-    fontSize: 10.5,
+    fontSize: 9.5,
     fontWeight: FontWeight.w500,
   );
 
   // Badges (Trạng thái: Hoàn thành, Đang xử lý, Quá hạn)
   static TextStyle badgeText = GoogleFonts.poppins(
-    fontSize: 9.5,
+    fontSize: 9.0,
     fontWeight: FontWeight.w600,
   );
 

@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/task_controller.dart';
 import '../../../untils/app_colors.dart';
 import '../../../untils/app_textstyles.dart';
 import '../../../core/widgets/app_pagination_widget.dart';
+import '../../../core/widgets/app_paged_list_wrapper.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../task_document/widgets/task_document_card.dart';
 import '../../task_document/widgets/task_document_details_dialog.dart';
@@ -15,7 +16,9 @@ class StatisticTaskDocumentsWidget extends StatelessWidget {
   final int docsPerPage;
   final bool isDark;
 
-  const StatisticTaskDocumentsWidget({
+  final RxBool _isPageChanging = false.obs;
+
+  StatisticTaskDocumentsWidget({
     super.key,
     required this.taskController,
     required this.documentPage,
@@ -138,35 +141,40 @@ class StatisticTaskDocumentsWidget extends StatelessWidget {
                 ),
               )
             else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: pagedDocs.length,
-                itemBuilder: (context, index) {
-                  final doc = pagedDocs[index];
-                  return TaskDocumentCard(
-                    document: doc,
-                    isDark: isDark,
-                    isSelected: false,
-                    isMultiSelectMode: false,
-                    onTap: () {
-                      TaskDocumentDetailsBottomSheet.show(
-                        context,
-                        document: doc,
-                        isDark: isDark,
-                        onRefreshParent: () => taskController.fetchTaskDocuments(),
-                        onEditDocument: (d) {
-                          TaskDocumentFormModal.show(
-                            context,
-                            docToEdit: d,
-                            onSaved: () => taskController.fetchTaskDocuments(),
-                          );
-                        },
-                      );
-                    },
-                    onLongPress: () {},
-                  );
-                },
+              // Bọc danh sách bằng AppPagedListWrapper để hiển thị Skeleton cục bộ khi đổi trang
+              AppPagedListWrapper(
+                isChangingPage: _isPageChanging.value,
+                skeleton: AppSkeleton.listCards(count: 3, height: 68),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: pagedDocs.length,
+                  itemBuilder: (context, index) {
+                    final doc = pagedDocs[index];
+                    return TaskDocumentCard(
+                      document: doc,
+                      isDark: isDark,
+                      isSelected: false,
+                      isMultiSelectMode: false,
+                      onTap: () {
+                        TaskDocumentDetailsBottomSheet.show(
+                          context,
+                          document: doc,
+                          isDark: isDark,
+                          onRefreshParent: () => taskController.fetchTaskDocuments(),
+                          onEditDocument: (d) {
+                            TaskDocumentFormModal.show(
+                              context,
+                              docToEdit: d,
+                              onSaved: () => taskController.fetchTaskDocuments(),
+                            );
+                          },
+                        );
+                      },
+                      onLongPress: () {},
+                    );
+                  },
+                ),
               ),
 
             // 3. PHÂN TRANG (TÁI SỬ DỤNG APPPAGINATIONWIDGET)
@@ -177,9 +185,13 @@ class StatisticTaskDocumentsWidget extends StatelessWidget {
                 totalPages: totalPages,
                 totalItems: totalItems,
                 itemsPerPage: docsPerPage,
-                isLoading: isLoading,
-                onPageChanged: (newPage) {
+                isLoading: isLoading || _isPageChanging.value,
+                onPageChanged: (newPage) async {
+                  if (documentPage.value == newPage) return;
+                  _isPageChanging.value = true;
                   documentPage.value = newPage;
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  _isPageChanging.value = false;
                 },
               ),
             ],

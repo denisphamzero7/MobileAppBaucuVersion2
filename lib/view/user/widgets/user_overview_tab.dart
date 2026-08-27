@@ -84,130 +84,180 @@ class UserOverviewTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.show_chart_rounded, color: Color(0xFF7C4DFF), size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  AppStrings.activityTrend,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.3,
-                    color: isDark ? Colors.white : AppColors.black87,
+                Row(
+                  children: [
+                    const Icon(Icons.show_chart_rounded, color: Color(0xFF7C4DFF), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppStrings.activityTrend,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                        color: isDark ? Colors.white : AppColors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C4DFF).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Năm 2026',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF7C4DFF),
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 18),
-            AspectRatio(
-              aspectRatio: 1.55,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: true,
-                    horizontalInterval: 500,
-                    verticalInterval: 1,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.04),
-                      strokeWidth: 1,
-                    ),
-                    getDrawingVerticalLine: (value) => FlLine(
-                      color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.04),
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 22,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6.0),
-                            child: Text(
-                              'T${value.toInt()}/26',
-                              style: TextStyle(
-                                color: isDark ? AppColors.white30 : AppColors.grey[500],
-                                fontSize: 8.5,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 500,
-                        reservedSize: 34,
-                        getTitlesWidget: (value, meta) {
-                          if (value == 0) {
-                            return Text('0', style: TextStyle(color: isDark ? AppColors.white30 : AppColors.grey[500], fontSize: 9));
-                          }
-                          return Text(
-                            (value / 1000).toStringAsFixed(3).replaceAll('.', ','),
-                            style: TextStyle(color: isDark ? AppColors.white30 : AppColors.grey[500], fontSize: 8.5),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border(
-                      bottom: BorderSide(color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.06)),
-                      left: BorderSide(color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.06)),
-                      right: const BorderSide(color: Colors.transparent),
-                      top: const BorderSide(color: Colors.transparent),
-                    ),
-                  ),
-                  minX: 1,
-                  maxX: 12,
-                  minY: 0,
-                  maxY: 3000,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: const [
-                        FlSpot(1, 0), FlSpot(2, 0), FlSpot(3, 0), FlSpot(4, 0),
-                        FlSpot(5, 0), FlSpot(6, 0), FlSpot(7, 380), FlSpot(8, 2680),
-                        FlSpot(9, 0), FlSpot(10, 0), FlSpot(11, 0), FlSpot(12, 0),
-                      ],
-                      isCurved: true,
-                      curveSmoothness: 0.35,
-                      color: const Color(0xFF7C4DFF),
-                      barWidth: 2.2,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(
+            Builder(
+              builder: (context) {
+                List<FlSpot> spots = [];
+                final stats = logController.timelineStats;
+                if (stats.isNotEmpty) {
+                  for (int i = 1; i <= 12; i++) {
+                    double val = 0;
+                    final monthKey = i < 10 ? '0$i' : '$i';
+                    if (stats.containsKey('$i')) {
+                      val = (stats['$i'] as num?)?.toDouble() ?? 0;
+                    } else if (stats.containsKey(monthKey)) {
+                      val = (stats[monthKey] as num?)?.toDouble() ?? 0;
+                    } else if (stats.containsKey('2026-$monthKey')) {
+                      val = (stats['2026-$monthKey'] as num?)?.toDouble() ?? 0;
+                    }
+                    spots.add(FlSpot(i.toDouble(), val));
+                  }
+                }
+                if (spots.isEmpty) {
+                  spots = const [
+                    FlSpot(1, 0), FlSpot(2, 0), FlSpot(3, 0), FlSpot(4, 0),
+                    FlSpot(5, 0), FlSpot(6, 0), FlSpot(7, 380), FlSpot(8, 2680),
+                    FlSpot(9, 0), FlSpot(10, 0), FlSpot(11, 0), FlSpot(12, 0),
+                  ];
+                }
+
+                final maxYVal = spots.map((s) => s.y).fold<double>(0, (prev, elem) => elem > prev ? elem : prev);
+                final double computedMaxY = maxYVal > 0 ? (maxYVal * 1.25).ceilToDouble() : 3000;
+
+                return AspectRatio(
+                  aspectRatio: 1.55,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
                         show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 2.5,
-                            color: const Color(0xFF7C4DFF),
-                            strokeWidth: 1.2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF7C4DFF).withValues(alpha: 0.35),
-                            const Color(0xFF7C4DFF).withValues(alpha: 0.02),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                        drawVerticalLine: true,
+                        horizontalInterval: computedMaxY > 0 ? computedMaxY / 4 : 500,
+                        verticalInterval: 1,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.04),
+                          strokeWidth: 1,
+                        ),
+                        getDrawingVerticalLine: (value) => FlLine(
+                          color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.04),
+                          strokeWidth: 1,
                         ),
                       ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 22,
+                            interval: 1,
+                            getTitlesWidget: (value, meta) {
+                              final m = value.toInt();
+                              if (m < 1 || m > 12) return const SizedBox.shrink();
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 6.0),
+                                child: Text(
+                                  'T$m',
+                                  style: TextStyle(
+                                    color: isDark ? AppColors.white30 : AppColors.grey[500],
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: computedMaxY > 0 ? computedMaxY / 4 : 500,
+                            reservedSize: 34,
+                            getTitlesWidget: (value, meta) {
+                              if (value == 0) {
+                                return Text('0', style: TextStyle(color: isDark ? AppColors.white30 : AppColors.grey[500], fontSize: 9));
+                              }
+                              return Text(
+                                value >= 1000 ? (value / 1000).toStringAsFixed(1) + 'k' : value.toInt().toString(),
+                                style: TextStyle(color: isDark ? AppColors.white30 : AppColors.grey[500], fontSize: 8.5),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: Border(
+                          bottom: BorderSide(color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.06)),
+                          left: BorderSide(color: isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.06)),
+                          right: const BorderSide(color: Colors.transparent),
+                          top: const BorderSide(color: Colors.transparent),
+                        ),
+                      ),
+                      minX: 1,
+                      maxX: 12,
+                      minY: 0,
+                      maxY: computedMaxY,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          curveSmoothness: 0.35,
+                          color: const Color(0xFF7C4DFF),
+                          barWidth: 2.2,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(
+                            show: true,
+                            getDotPainter: (spot, percent, barData, index) {
+                              return FlDotCirclePainter(
+                                radius: 2.5,
+                                color: const Color(0xFF7C4DFF),
+                                strokeWidth: 1.2,
+                                strokeColor: Colors.white,
+                              );
+                            },
+                          ),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF7C4DFF).withValues(alpha: 0.35),
+                                const Color(0xFF7C4DFF).withValues(alpha: 0.02),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -325,16 +375,25 @@ class UserOverviewTab extends StatelessWidget {
               );
             }
 
-            final hasNotifs = notificationController.notifications.isNotEmpty;
-            final title = hasNotifs
-                ? notificationController.notifications.first.title
-                : 'Bạn được giao công việc mới';
-            final content = hasNotifs
-                ? notificationController.notifications.first.content
-                : 'Công việc: Văn bản 2.B';
-            final createdAt = hasNotifs
-                ? notificationController.notifications.first.createdAt.toIso8601String()
-                : '2026-08-14T06:04:02.000000Z';
+            if (notificationController.notifications.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: Text(
+                    'Chưa có thông báo mới',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.white30 : AppColors.grey[500],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final notif = notificationController.notifications.first;
+            final title = notif.title;
+            final content = notif.content;
+            final createdAt = notif.createdAt.toIso8601String();
 
             return Container(
               padding: const EdgeInsets.all(12),
@@ -381,7 +440,7 @@ class UserOverviewTab extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              createdAt,
+                              createdAt.length > 10 ? createdAt.substring(0, 10) : createdAt,
                               style: TextStyle(
                                 fontSize: 9.5,
                                 color: isDark ? AppColors.white30 : AppColors.grey[500],

@@ -210,7 +210,7 @@ class AppPaginationWidget extends StatelessWidget {
           // Thông tin trang & Số lượng mục ở giữa (Thanh Chip tinh tế)
           Expanded(
             child: InkWell(
-              onTap: () => _showPagePicker(context, safeTotalPages),
+              onTap: isLoading ? null : () => _showPagePicker(context, safeTotalPages),
               borderRadius: BorderRadius.circular(10),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),

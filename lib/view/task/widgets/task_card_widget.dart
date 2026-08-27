@@ -88,31 +88,39 @@ class TaskCardWidget extends GetView<TaskController> {
             // 2. HÀNG DƯỚI: Tag loại công việc, Tag ngày quá hạn, Tag % tiến độ, Icon biểu đồ sóng bên phải
             Row(
               children: [
-                // Tag loại công việc
-                AppTag.info(
-                  label: typeName,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Tag loại công việc
+                      Flexible(
+                        child: AppTag.info(
+                          label: typeName,
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
 
-                // Tag ngày quá hạn (nếu có)
-                if (isOverdue && deadlineFormatted.isNotEmpty) ...[
-                  AppTag.date(
-                    dateText: deadlineFormatted,
-                    isOverdue: true,
-                    isDark: isDark,
+                      // Tag ngày quá hạn (nếu có)
+                      if (isOverdue && deadlineFormatted.isNotEmpty) ...[
+                        AppTag.date(
+                          dateText: deadlineFormatted,
+                          isOverdue: true,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Tag % tiến độ
+                      AppTag.percent(
+                        percent: task.completionPercent,
+                        isDark: isDark,
+                        showBullet: false,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                ],
-
-                // Tag % tiến độ
-                AppTag.percent(
-                  percent: task.completionPercent,
-                  isDark: isDark,
-                  showBullet: false,
                 ),
-
-                const Spacer(),
+                const SizedBox(width: 8),
 
                 // Icon bên phải: Sóng nhịp (khi có tiến độ > 0%) hoặc Đồng hồ (khi 0%)
                 if (task.completionPercent > 0 || task.processingStatus == 'in_progress')

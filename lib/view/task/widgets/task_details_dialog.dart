@@ -322,18 +322,17 @@ class _TaskDetailsBottomSheetState extends State<TaskDetailsBottomSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
                     titleText,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 17,
+                      fontSize: 16.5,
                       color: isDark ? AppColors.white : AppColors.black87,
+                      height: 1.3,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 InkWell(

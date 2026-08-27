@@ -12,8 +12,9 @@ class TaskService {
   Future<BaseResponse<List<TaskModel>>?> getTasks({
     String? type,
     int? userId,
+    int? documentId,
     int page = 1,
-    int limit = 10,
+    int limit = 50,
   }) async {
     try {
       final Map<String, dynamic> queryParams = {
@@ -22,19 +23,21 @@ class TaskService {
         'sort_by': 'id',
         'sort_order': 'desc',
       };
-      if (type == 'received' && userId != null) {
-        queryParams['assignee_id'] = userId;
-      } else if (type == 'sent' && userId != null) {
+      
+      if (documentId != null && documentId > 0) {
+        queryParams['task_assignment_document_id'] = documentId;
+      }
+      if (type == 'sent' && userId != null && userId > 0) {
         queryParams['assigner_id'] = userId;
-      } else if (type != null && type.isNotEmpty) {
-        queryParams['type'] = type;
+      } else if (type == 'received' && userId != null && userId > 0) {
+        queryParams['assignee_id'] = userId;
       }
 
       final response = await _http.get(
         url: ApiConstants.taskAssignmentItems,
         queryParameters: queryParams,
       );
-      developer.log("Get tasks response: $response", name: "TaskService");
+      developer.log("Get tasks ($type) response: $response", name: "TaskService");
       if (response != null) {
         return BaseResponse.fromJson(
           response,
@@ -271,12 +274,15 @@ class TaskService {
   Future<dynamic> exportTasks({String? type, int? userId, String? keyword, String? status, String? timingStatus}) async {
     try {
       final Map<String, dynamic> queryParams = {};
+      if (type != null && type.isNotEmpty) {
+        queryParams['type'] = type;
+      }
       if (type == 'received' && userId != null) {
         queryParams['assignee_id'] = userId;
+        queryParams['user_id'] = userId;
       } else if (type == 'sent' && userId != null) {
         queryParams['assigner_id'] = userId;
-      } else if (type != null && type.isNotEmpty) {
-        queryParams['type'] = type;
+        queryParams['created_by'] = userId;
       }
       
       if (keyword != null && keyword.isNotEmpty) {

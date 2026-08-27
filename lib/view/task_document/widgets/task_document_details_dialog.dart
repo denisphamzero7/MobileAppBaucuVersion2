@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../model/task_assignment_document_model.dart';
+import '../../../model/task_model.dart';
 import '../../../service/task_assignment_documents_service.dart';
+import '../../../service/task_service.dart';
 import '../../../untils/app_colors.dart';
-import '../../../helper/date_helper.dart';
+import '../../../untils/app_textstyles.dart';
+import '../../task/widgets/task_card_widget.dart';
+import '../../widgets/skeleton_loader.dart';
 
-class TaskDocumentDetailsBottomSheet extends StatelessWidget {
+class TaskDocumentDetailsBottomSheet extends StatefulWidget {
   final TaskAssignmentDocumentModel document;
   final bool isDark;
   final VoidCallback onRefreshParent;
@@ -42,11 +46,52 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
     );
   }
 
+  @override
+  State<TaskDocumentDetailsBottomSheet> createState() => _TaskDocumentDetailsBottomSheetState();
+}
+
+class _TaskDocumentDetailsBottomSheetState extends State<TaskDocumentDetailsBottomSheet> {
+  final TaskService _taskService = TaskService();
+  bool _isLoading = true;
+  List<TaskModel> _tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDocumentTasks();
+  }
+
+  Future<void> _fetchDocumentTasks() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _taskService.getTasks(
+        documentId: widget.document.id,
+        limit: 100,
+      );
+      if (response != null && response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _tasks = response.data;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _tasks = [];
+        _isLoading = false;
+      });
+    }
+  }
+
   void _confirmDelete(BuildContext context) {
     final service = TaskAssignmentDocumentsService();
     Get.defaultDialog(
       title: 'Xác nhận xóa',
-      middleText: 'Bạn có chắc chắn muốn xóa văn bản "${document.title}"?',
+      middleText: 'Bạn có chắc chắn muốn xóa văn bản "${widget.document.title}"?',
       textConfirm: 'Xóa',
       textCancel: 'Hủy',
       confirmTextColor: Colors.white,
@@ -54,9 +99,9 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
       onConfirm: () async {
         Get.back();
         Navigator.pop(context);
-        final success = await service.deleteDocument(document.id);
+        final success = await service.deleteDocument(widget.document.id);
         if (success) {
-          onRefreshParent();
+          widget.onRefreshParent();
           Get.snackbar(
             'Thành công',
             'Đã xóa văn bản giao việc thành công',
@@ -86,7 +131,7 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
               width: 44,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.white24 : AppColors.borderGrey,
+                color: widget.isDark ? AppColors.white24 : AppColors.borderGrey,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -95,18 +140,32 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
 
           // Header
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  document.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.white : AppColors.textHeading,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.document.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: widget.isDark ? AppColors.white : AppColors.textHeading,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'DANH SÁCH CÔNG VIỆC THUỘC VĂN BẢN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
@@ -116,120 +175,64 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.white10 : AppColors.borderLight,
+                    color: widget.isDark ? AppColors.white10 : AppColors.borderLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.close,
                     size: 18,
-                    color: isDark ? AppColors.white70 : AppColors.textMuted,
+                    color: widget.isDark ? AppColors.white70 : AppColors.textMuted,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Details Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? AppColors.white10 : AppColors.borderGrey,
-                width: 1.0,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Trạng thái row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'TRẠNG THÁI VĂN BẢN',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.white70 : AppColors.textMuted,
-                        letterSpacing: 0.3,
+          // Danh sách công việc
+          Expanded(
+            child: _isLoading
+                ? ListView.separated(
+                    itemCount: 3,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) => const SkeletonLoader(
+                      child: SkeletonBox(
+                        width: double.infinity,
+                        height: 68,
+                        radius: 16,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: document.isPublished ? AppColors.badgeGreenBg : AppColors.warningBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        document.isPublished ? 'Đã ban hành' : 'Bản nháp',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: document.isPublished ? AppColors.textGreen : AppColors.warningOrange,
+                  )
+                : _tasks.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.assignment_outlined, size: 42, color: AppColors.grey[400]),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Không có công việc nào thuộc văn bản này',
+                              style: AppTextStyle.cardSubtitle.copyWith(
+                                color: AppColors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
+                      )
+                    : ListView.builder(
+                        itemCount: _tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = _tasks[index];
+                          return TaskCardWidget(
+                            task: task,
+                            isDark: widget.isDark,
+                            primaryColor: AppColors.primary,
+                          );
+                        },
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // 2 Cột: Loại văn bản & Ngày ban hành
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.category_outlined,
-                        label: 'LOẠI VĂN BẢN',
-                        value: document.typeName ?? 'Văn bản',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.calendar_today_outlined,
-                        label: 'NGÀY BAN HÀNH',
-                        value: DateHelper.formatDate(document.documentDate, fallback: '-'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // 2 Cột: Số lượng công việc & Tiến độ
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.layers_outlined,
-                        label: 'SỐ LƯỢNG CÔNG VIỆC',
-                        value: '${document.taskCount} công việc',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildInfoItem(
-                        icon: Icons.pie_chart_outline,
-                        label: 'TIẾN ĐỘ THỰC HIỆN',
-                        value: '${document.completionPercent}%',
-                      ),
-                    ),
-                  ],
-                ),
-                if (document.description != null && document.description!.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  _buildInfoItem(
-                    icon: Icons.subject,
-                    label: 'TRÍCH YẾU / NỘI DUNG',
-                    value: document.description!,
-                  ),
-                ],
-              ],
-            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Bottom buttons
           Row(
@@ -239,14 +242,14 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
                   height: 44,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? AppColors.white10 : AppColors.badgeBlueBg,
+                      backgroundColor: widget.isDark ? AppColors.white10 : AppColors.badgeBlueBg,
                       foregroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
                     onPressed: () {
                       Navigator.pop(context);
-                      onEditDocument(document);
+                      widget.onEditDocument(widget.document);
                     },
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     label: const Text('Sửa văn bản', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
@@ -259,7 +262,7 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
                   height: 44,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? AppColors.dangerBg.withValues(alpha: 0.2) : AppColors.dangerBg,
+                      backgroundColor: widget.isDark ? AppColors.dangerBg.withValues(alpha: 0.2) : AppColors.dangerBg,
                       foregroundColor: AppColors.dangerText,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
@@ -274,44 +277,6 @@ class TaskDocumentDetailsBottomSheet extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 13, color: isDark ? AppColors.white70 : AppColors.textMuted),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.white70 : AppColors.textMuted,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isDark ? AppColors.white : AppColors.textMain,
-          ),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 }

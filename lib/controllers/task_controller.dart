@@ -12,6 +12,7 @@ import '../service/task_service.dart';
 import '../service/user_service.dart';
 import '../service/petition_service.dart';
 import 'package:intl/intl.dart';
+import 'package:get_storage/get_storage.dart';
 import 'auth_controller.dart';
 
 class TaskController extends GetxController {
@@ -32,9 +33,30 @@ class TaskController extends GetxController {
 
   /// Helper lấy danh sách RxList tương ứng với từng Tab
   RxList<TaskModel> getTasksList(String? type) {
-    if (type == 'sent') return sentTasksList;
-    if (type == 'received') return receivedTasksList;
+    if (type == 'sent') {
+      return sentTasksList;
+    }
+    if (type == 'received') {
+      return receivedTasksList;
+    }
     return tasksList;
+  }
+
+  /// Tự động đồng bộ và phân bổ dữ liệu cho 2 tab "Đang giao" và "Được giao" từ danh sách tổng
+  void syncTabListsFromMaster() {
+    if (tasksList.isEmpty) return;
+
+    final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+    final user = authCtrl?.currentUser.value;
+
+    // 1. Phân loại chuẩn xác "Công việc đang giao" (Tôi là người giao / tạo)
+    final sent = tasksList.where((t) => t.isAssignedByMe(user)).toList();
+
+    // 2. Phân loại chuẩn xác "Công việc được giao" (Tôi là người nhận / thực hiện)
+    final received = tasksList.where((t) => t.isAssignedToMe(user)).toList();
+
+    sentTasksList.assignAll(sent);
+    receivedTasksList.assignAll(received);
   }
 
   /// ============================================================================
@@ -107,6 +129,7 @@ class TaskController extends GetxController {
     super.onInit();
     fetchDepartments();
     fetchStats();
+    fetchTasks(isRefresh: true);
   }
 
   /// Tải mới toàn bộ dữ liệu (công việc chung, đang giao, được giao, thống kê)
@@ -165,6 +188,11 @@ class TaskController extends GetxController {
     final targetList = getTasksList(type);
     final key = type ?? 'all';
     
+    // 🛑 Chống gọi trùng lặp nếu tab này đang tải dữ liệu
+    if (isLoadingMap[key] == true && !isManualPull) {
+      return;
+    }
+
     if (isManualPull) {
       isManualRefreshing.value = true;
     }
@@ -179,7 +207,15 @@ class TaskController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final userId = Get.find<AuthController>().currentUser.value?.id;
+      final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+      var userId = authCtrl?.currentUser.value?.id;
+      if (userId == null || userId == 0) {
+        final savedId = GetStorage().read('userId');
+        if (savedId != null) {
+          userId = int.tryParse(savedId.toString());
+        }
+      }
+
       final response = await _taskService.getTasks(
         type: type, 
         userId: userId,
@@ -187,11 +223,17 @@ class TaskController extends GetxController {
         limit: limit,
       );
       if (response != null && response.statusCode == 200) {
+        final List<TaskModel> rawData = response.data;
         if (isRefresh) {
-          targetList.assignAll(response.data);
+          targetList.assignAll(rawData);
+
+          // Nếu fetch danh sách tổng (Trang chủ), tự động đồng bộ phân loại cho cả 2 tab
+          if (type == null) {
+            syncTabListsFromMaster();
+          }
         } else {
           final existingIds = targetList.map((t) => t.id).toSet();
-          final newTasks = response.data.where((t) => !existingIds.contains(t.id)).toList();
+          final newTasks = rawData.where((t) => !existingIds.contains(t.id)).toList();
           targetList.addAll(newTasks);
         }
 
@@ -200,8 +242,6 @@ class TaskController extends GetxController {
         } else {
           hasMoreTasks.value = true;
         }
-
-        log("✅ Tải danh sách công việc (${type ?? 'tất cả'}) trang ${currentPage.value} thành công (nhận ${response.data.length} mục). Tổng hiện tại: ${targetList.length}");
       } else {
         if (isRefresh) {
           targetList.clear();
@@ -240,8 +280,8 @@ class TaskController extends GetxController {
     try {
       TaskModel? detailedTask;
       final detailRes = await _taskService.getTaskDetails(id);
-      if (detailRes != null && detailRes.statusCode == 200 && detailRes.data != null) {
-        detailedTask = detailRes.data!;
+      if (detailRes != null && detailRes.statusCode == 200) {
+        detailedTask = detailRes.data;
       }
 
       // Lấy danh sách timeline (báo cáo tiến độ & trao đổi) từ endpoint /timeline
@@ -381,10 +421,11 @@ class TaskController extends GetxController {
   final RxBool isDocumentsLoading = false.obs;
 
   Future<void> fetchTaskDocuments() async {
+    if (isDocumentsLoading.value) return;
     isDocumentsLoading.value = true;
     try {
       final res = await _taskService.getTaskAssignmentDocuments();
-      if (res != null && res.data != null) {
+      if (res != null) {
         taskDocuments.assignAll(res.data);
         log("✅ Tải danh sách văn bản giao việc thành công: ${taskDocuments.length} văn bản");
       }
@@ -396,6 +437,7 @@ class TaskController extends GetxController {
   }
 
   Future<void> fetchStats() async {
+    if (isStatsLoading.value) return;
     isStatsLoading.value = true;
     try {
       final response = await _taskService.getTaskStats(
