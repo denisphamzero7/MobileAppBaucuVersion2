@@ -56,14 +56,22 @@ Dự án áp dụng mô hình phân lớp rõ ràng (**Layered Architecture**), 
 
 ```
 lib/
-├── core/                        # Chứa hằng số API, enum và widget dùng chung toàn app
+├── core/                        # Chứa hạ tầng dùng chung, base controller, utils và widgets
 │   ├── api_constants.dart       # Base URL và tất cả endpoint API
+│   ├── base/                    # Các lớp trừu tượng cơ sở kế thừa
+│   │   └── base_list_controller.dart # Base Controller cho module danh sách
 │   ├── enums/                   # BẮT BUỘC: Quản lý trạng thái bằng Enum tập trung
 │   │   ├── task_enums.dart
 │   │   ├── petition_enums.dart
 │   │   ├── task_document_enums.dart
 │   │   └── log_activity_enums.dart
-│   └── widgets/
+│   ├── utils/                   # Tiện ích hàm dùng chung toàn hệ thống
+│   │   ├── app_dialog_helper.dart # Dialog xác nhận, loading, alert
+│   │   ├── app_validator.dart     # Kiểm tra validate email, phone, cccd
+│   │   └── app_formatter.dart     # Format tiền tệ, số, %
+│   └── widgets/                 # Widget dùng chung toàn hệ thống
+│       ├── app_stat_card.dart           # Thẻ thống kê chuẩn dùng chung
+│       ├── app_empty_widget.dart        # Trạng thái rỗng chuẩn dùng chung
 │       ├── app_pagination_widget.dart   # Thanh phân trang chuẩn chung
 │       ├── app_paged_list_wrapper.dart  # Bọc danh sách chuyển trang êm
 │       ├── maintenance_screen.dart      # Màn hình bảo trì hệ thống
