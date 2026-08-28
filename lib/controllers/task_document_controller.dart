@@ -28,6 +28,8 @@ class TaskDocumentController extends GetxController {
 
   // Loading & Multi-select
   final RxBool isLoading = true.obs;
+  final RxBool isInitialLoaded = false.obs;
+  final RxBool isManualRefreshing = false.obs;
   final RxBool isMultiSelectMode = false.obs;
   final RxSet<int> selectedDocIds = <int>{}.obs;
 
@@ -42,21 +44,25 @@ class TaskDocumentController extends GetxController {
   // ==========================================
   Future<void> loadInitialData() async {
     isLoading.value = true;
-    await Future.wait([
-      fetchDepartments(),
-      fetchStats(),
-      fetchDocuments(),
-    ]);
-    isLoading.value = false;
+    try {
+      await Future.wait([
+        fetchDepartments(),
+        fetchStats(),
+        fetchDocuments(),
+      ]);
+    } finally {
+      isLoading.value = false;
+      isInitialLoaded.value = true;
+    }
   }
 
   Future<void> onRefresh() async {
-    isLoading.value = true;
+    isManualRefreshing.value = true;
     await Future.wait([
       fetchStats(),
       fetchDocuments(),
     ]);
-    isLoading.value = false;
+    isManualRefreshing.value = false;
   }
 
   Future<void> fetchDepartments() async {

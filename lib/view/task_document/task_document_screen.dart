@@ -209,7 +209,7 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
           final pagedDocs = filteredDocs.skip(startIndex).take(TaskDocumentController.perPage).toList();
 
           return SmartSkeletonWrapper(
-            showSkeleton: controller.isLoading.value && controller.allDocuments.isEmpty,
+            showSkeleton: controller.isLoading.value && (controller.allDocuments.isEmpty || controller.isManualRefreshing.value),
             skeleton: AppSkeleton.fullPageLayout(
               statusGridCount: 3,
               statusGridCols: 3,
