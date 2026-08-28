@@ -47,6 +47,7 @@ class PetitionFormModal {
 
     int? selectedDeptId = petitionToEdit?.departmentId;
     String selectedStatus = petitionToEdit?.processingStatus ?? 'new';
+    DateTime submissionDate = DateHelper.parseDateTime(petitionToEdit?.submissionDate) ?? DateTime.now();
     DateTime? deadlineDate;
 
     if (petitionToEdit?.deadlineDate != null && petitionToEdit!.deadlineDate.isNotEmpty) {
@@ -240,6 +241,52 @@ class PetitionFormModal {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
+                                      _buildInputLabel('Ngày gửi đơn *', isDark),
+                                      InkWell(
+                                        onTap: () async {
+                                          final picked = await showDatePicker(
+                                            context: context,
+                                            initialDate: submissionDate,
+                                            firstDate: DateTime(2020),
+                                            lastDate: DateTime(2035),
+                                          );
+                                          if (picked != null) {
+                                            setModalState(() {
+                                              submissionDate = picked;
+                                            });
+                                          }
+                                        },
+                                        child: Container(
+                                          height: 48,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? AppColors.white10 : AppColors.lightBg,
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                '${submissionDate.day.toString().padLeft(2, '0')}/${submissionDate.month.toString().padLeft(2, '0')}/${submissionDate.year}',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: isDark ? AppColors.white : AppColors.black87,
+                                                ),
+                                              ),
+                                              const Icon(Icons.calendar_month, size: 16, color: AppColors.primary),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
                                       _buildInputLabel('Hạn xử lý', isDark),
                                       InkWell(
                                         onTap: () async {
@@ -324,6 +371,7 @@ class PetitionFormModal {
                             'sender_name': senderNameCtrl.text.trim(),
                             'content': contentCtrl.text.trim(),
                             'processing_status': selectedStatus,
+                            'submission_date': DateHelper.formatForApi(submissionDate, includeTime: false),
                           };
 
                           if (senderPhoneCtrl.text.trim().isNotEmpty) {

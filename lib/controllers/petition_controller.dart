@@ -185,21 +185,47 @@ class PetitionController extends GetxController {
   }
 
   Future<bool> createPetition(Map<String, dynamic> data) async {
-    final res = await _petitionService.createPetition(data);
-    if (res != null) {
-      onRefresh();
-      return true;
+    try {
+      final res = await _petitionService.createPetition(data);
+      if (res != null) {
+        onRefresh();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      final msg = e.toString().replaceAll('Exception: ', '');
+      Get.snackbar(
+        'Lỗi tạo đơn thư',
+        msg,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+      return false;
     }
-    return false;
   }
 
   Future<bool> updatePetition(int id, Map<String, dynamic> data) async {
-    final res = await _petitionService.updatePetition(id, data);
-    if (res != null) {
-      onRefresh();
-      return true;
+    try {
+      final res = await _petitionService.updatePetition(id, data);
+      if (res != null) {
+        onRefresh();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      final msg = e.toString().replaceAll('Exception: ', '');
+      Get.snackbar(
+        'Lỗi cập nhật',
+        msg,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+      return false;
     }
-    return false;
   }
 
   void exportExcel() {
