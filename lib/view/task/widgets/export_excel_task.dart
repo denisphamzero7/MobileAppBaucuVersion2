@@ -20,8 +20,12 @@ class ExportExcelTask extends GetView<TaskController> {
 
   @override
   Widget build(BuildContext context) {
+    final authCtrl = Get.find<AuthController>();
+    final canExport = authCtrl.can('read', 'TaskAssignmentItems');
+    if (!canExport) return const SizedBox.shrink();
+
     return Obx(() {
-      final userId = Get.find<AuthController>().currentUser.value?.id;
+      final userId = authCtrl.currentUser.value?.id;
       final queryParams = <String, dynamic>{};
       
       if (type == 'received' && userId != null) {

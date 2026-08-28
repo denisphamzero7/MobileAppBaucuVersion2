@@ -484,36 +484,38 @@ class _TaskScreenState extends State<TaskScreen> with AutomaticKeepAliveClientMi
                           ],
                         );
                       }),
-                      const SizedBox(width: 8),
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.cardDark : const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark ? AppColors.white10 : const Color(0xFFA7F3D0),
+                      if (Get.find<AuthController>().can('read', 'TaskAssignmentItems')) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.cardDark : const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark ? AppColors.white10 : const Color(0xFFA7F3D0),
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF059669)),
+                            tooltip: 'Xuất Excel',
+                            onPressed: () {
+                              final authCtrl = Get.find<AuthController>();
+                              final userId = authCtrl.currentUser.value?.id;
+                              final queryParams = <String, dynamic>{};
+                              if (widget.type == 'received' && userId != null) {
+                                queryParams['assignee_id'] = userId;
+                              } else if (widget.type == 'sent' && userId != null) {
+                                queryParams['assigner_id'] = userId;
+                              }
+                              final fileNamePrefix = widget.type == 'received'
+                                  ? 'CongViecDuocGiao'
+                                  : (widget.type == 'sent' ? 'CongViecDangGiao' : 'DanhSachCongViec');
+                              controller.exportExcel(queryParams: queryParams, fileNamePrefix: fileNamePrefix);
+                            },
                           ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF059669)),
-                          tooltip: 'Xuất Excel',
-                          onPressed: () {
-                            final authCtrl = Get.find<AuthController>();
-                            final userId = authCtrl.currentUser.value?.id;
-                            final queryParams = <String, dynamic>{};
-                            if (widget.type == 'received' && userId != null) {
-                              queryParams['assignee_id'] = userId;
-                            } else if (widget.type == 'sent' && userId != null) {
-                              queryParams['assigner_id'] = userId;
-                            }
-                            final fileNamePrefix = widget.type == 'received'
-                                ? 'CongViecDuocGiao'
-                                : (widget.type == 'sent' ? 'CongViecDangGiao' : 'DanhSachCongViec');
-                            controller.exportExcel(queryParams: queryParams, fileNamePrefix: fileNamePrefix);
-                          },
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 20),

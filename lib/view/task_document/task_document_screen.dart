@@ -169,58 +169,86 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
     }
   }
 
+  void toggleMultiSelectMode() {
+    isMultiSelectMode.toggle();
+    if (!isMultiSelectMode.value) {
+      selectedDocIds.clear();
+    }
+  }
+
   void _openQuickActions(BuildContext context) {
     final Map<String, dynamic> queryParams = {};
     if (_selectedStatus.value != 'all') queryParams['status'] = _selectedStatus.value;
     if (_selectedDepartmentId.value != null) queryParams['department_id'] = _selectedDepartmentId.value;
 
-    final List<QuickActionItem> items = [
-      QuickActionItem(
-        title: 'Tạo văn bản mới',
-        subtitle: 'Thêm & phân công',
-        icon: Icons.note_add_rounded,
-        color: AppColors.primary,
-        onTap: () => _showCreateEditDocumentModal(context),
-      ),
-      QuickActionItem(
-        title: 'Nhập Excel',
-        subtitle: 'Tải danh sách văn bản',
-        icon: Icons.upload_file_rounded,
-        color: Colors.green,
-        onTap: () {
-          ImportExcelButton.pickAndUpload(
-            uploadUrl: 'task-assignment-documents/import',
-            onSuccess: () => _onRefresh(),
-          );
-        },
-      ),
-      QuickActionItem(
-        title: 'Xuất Excel',
-        subtitle: 'Tải danh sách ra máy',
-        icon: Icons.download_rounded,
-        color: Colors.orange,
-        onTap: () {
-          ExportExcelButton.downloadAndSave(
-            url: 'task-assignment-documents/export',
-            queryParams: queryParams,
-            fileNamePrefix: 'VanBanGiaoViec',
-          );
-        },
-      ),
-      QuickActionItem(
-        title: isMultiSelectMode.value ? 'Hủy chọn nhiều' : 'Xóa đã chọn',
-        subtitle: 'Xóa nhiều văn bản cùng lúc',
-        icon: isMultiSelectMode.value ? Icons.close_rounded : Icons.checklist_rtl_rounded,
-        color: Colors.purple,
-        badge: selectedDocIds.isNotEmpty ? '${selectedDocIds.length}' : null,
-        onTap: () {
-          isMultiSelectMode.toggle();
-          if (!isMultiSelectMode.value) {
-            selectedDocIds.clear();
-          }
-        },
-      ),
-    ];
+    final authCtrl = Get.find<AuthController>();
+    final canCreate = authCtrl.can('create', 'TaskAssignmentDocuments');
+    final canDelete = authCtrl.can('destroy', 'TaskAssignmentDocuments');
+    final canExport = authCtrl.can('read', 'TaskAssignmentDocuments');
+
+    final List<QuickActionItem> items = [];
+
+    if (canCreate) {
+      items.add(
+        QuickActionItem(
+          title: 'Tạo văn bản mới',
+          subtitle: 'Thêm & phân công',
+          icon: Icons.note_add_rounded,
+          color: AppColors.primary,
+          onTap: () => _showCreateEditDocumentModal(context),
+        ),
+      );
+      items.add(
+        QuickActionItem(
+          title: 'Nhập Excel',
+          subtitle: 'Tải danh sách văn bản',
+          icon: Icons.upload_file_rounded,
+          color: Colors.green,
+          onTap: () {
+            ImportExcelButton.pickAndUpload(
+              uploadUrl: 'task-assignment-documents/import',
+              onSuccess: () => _onRefresh(),
+            );
+          },
+        ),
+      );
+    }
+
+    if (canExport) {
+      items.add(
+        QuickActionItem(
+          title: 'Xuất Excel',
+          subtitle: 'Tải danh sách ra máy',
+          icon: Icons.download_rounded,
+          color: Colors.orange,
+          onTap: () {
+            ExportExcelButton.downloadAndSave(
+              url: 'task-assignment-documents/export',
+              queryParams: queryParams,
+              fileNamePrefix: 'VanBanGiaoViec',
+            );
+          },
+        ),
+      );
+    }
+
+    if (canDelete) {
+      items.add(
+        QuickActionItem(
+          title: isMultiSelectMode.value ? 'Hủy chọn nhiều' : 'Xóa đã chọn',
+          subtitle: 'Xóa nhiều văn bản cùng lúc',
+          icon: isMultiSelectMode.value ? Icons.close_rounded : Icons.checklist_rtl_rounded,
+          color: Colors.purple,
+          badge: selectedDocIds.isNotEmpty ? '${selectedDocIds.length}' : null,
+          onTap: () => toggleMultiSelectMode(),
+        ),
+      );
+    }
+
+    if (items.isEmpty) {
+      Get.snackbar('Thông báo', 'Bạn không có quyền thực hiện tác vụ này.');
+      return;
+    }
 
     QuickActionBottomSheet.show(
       context,
@@ -547,34 +575,36 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
                           ),
                         );
                       }),
-                      const SizedBox(width: 8),
+                      if (Get.find<AuthController>().can('read', 'TaskAssignmentDocuments')) ...[
+                        const SizedBox(width: 8),
 
-                      // Excel button (matching 1-1 with TaskScreen green box)
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.cardDark : AppColors.badgeGreenBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark ? AppColors.white10 : AppColors.borderGreen,
+                        // Excel button (matching 1-1 with TaskScreen green box)
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.cardDark : AppColors.badgeGreenBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark ? AppColors.white10 : AppColors.borderGreen,
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.description_outlined, size: 18, color: AppColors.textGreen),
+                            tooltip: 'Xuất Excel',
+                            onPressed: () {
+                              final Map<String, dynamic> queryParams = {};
+                              if (_selectedStatus.value != 'all') queryParams['status'] = _selectedStatus.value;
+                              if (_selectedDepartmentId.value != null) queryParams['department_id'] = _selectedDepartmentId.value;
+                              ExportExcelButton.downloadAndSave(
+                                url: 'task-assignment-documents/export',
+                                queryParams: queryParams,
+                                fileNamePrefix: 'VanBanGiaoViec',
+                              );
+                            },
                           ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.description_outlined, size: 18, color: AppColors.textGreen),
-                          tooltip: 'Xuất Excel',
-                          onPressed: () {
-                            final Map<String, dynamic> queryParams = {};
-                            if (_selectedStatus.value != 'all') queryParams['status'] = _selectedStatus.value;
-                            if (_selectedDepartmentId.value != null) queryParams['department_id'] = _selectedDepartmentId.value;
-                            ExportExcelButton.downloadAndSave(
-                              url: 'task-assignment-documents/export',
-                              queryParams: queryParams,
-                              fileNamePrefix: 'VanBanGiaoViec',
-                            );
-                          },
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 14),
