@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/task_document_controller.dart';
-import '../../../untils/app_colors.dart';
+import '../../../core/enums/task_document_enums.dart';
 import '../../task/widgets/stat_card_widget.dart';
 
 class TaskDocumentStatsGridWidget extends StatelessWidget {
@@ -14,68 +14,49 @@ class TaskDocumentStatsGridWidget extends StatelessWidget {
     required this.isDark,
   });
 
+  int _getCountForStatus(TaskDocumentStatus status) {
+    final stats = controller.stats.value;
+    switch (status) {
+      case TaskDocumentStatus.all:
+        return stats.total;
+      case TaskDocumentStatus.published:
+        return stats.published;
+      case TaskDocumentStatus.draft:
+        return stats.draft;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final stats = controller.stats.value;
       return Row(
-        children: [
-          // Card 1: Tổng số
-          Expanded(
-            child: StatCardWidget(
-              icon: Icons.description_outlined,
-              label: 'Tổng số',
-              count: stats.total,
-              color: AppColors.primary,
-              isSelected: controller.selectedStatus.value == 'all',
-              onTap: () {
-                controller.selectedStatus.value = 'all';
-                controller.currentPage.value = 1;
-              },
-              isDark: isDark,
+        children: TaskDocumentStatus.values.map((status) {
+          final isSelected = controller.selectedStatus.value == status.key;
+          final count = _getCountForStatus(status);
+
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: StatCardWidget(
+                icon: status.icon,
+                label: status.label,
+                count: count,
+                color: status.color,
+                isSelected: isSelected,
+                onTap: () {
+                  if (status == TaskDocumentStatus.all) {
+                    controller.selectedStatus.value = 'all';
+                  } else {
+                    controller.selectedStatus.value =
+                        controller.selectedStatus.value == status.key ? 'all' : status.key;
+                  }
+                  controller.currentPage.value = 1;
+                },
+                isDark: isDark,
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          // Card 2: Đã ban hành
-          Expanded(
-            child: StatCardWidget(
-              icon: Icons.check_circle_outline,
-              label: 'Đã ban hành',
-              count: stats.published,
-              color: AppColors.done,
-              isSelected: controller.selectedStatus.value == 'published',
-              onTap: () {
-                if (controller.selectedStatus.value == 'published') {
-                  controller.selectedStatus.value = 'all';
-                } else {
-                  controller.selectedStatus.value = 'published';
-                }
-                controller.currentPage.value = 1;
-              },
-              isDark: isDark,
-            ),
-          ),
-          const SizedBox(width: 6),
-          // Card 3: Bản nháp
-          Expanded(
-            child: StatCardWidget(
-              icon: Icons.access_time_outlined,
-              label: 'Bản nháp',
-              count: stats.draft,
-              color: AppColors.paused,
-              isSelected: controller.selectedStatus.value == 'draft',
-              onTap: () {
-                if (controller.selectedStatus.value == 'draft') {
-                  controller.selectedStatus.value = 'all';
-                } else {
-                  controller.selectedStatus.value = 'draft';
-                }
-                controller.currentPage.value = 1;
-              },
-              isDark: isDark,
-            ),
-          ),
-        ],
+          );
+        }).toList(),
       );
     });
   }
