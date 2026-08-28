@@ -236,7 +236,7 @@ class PetitionFormModal {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,20 +258,23 @@ class PetitionFormModal {
                                         },
                                         child: Container(
                                           height: 48,
-                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
                                           decoration: BoxDecoration(
                                             color: isDark ? AppColors.white10 : AppColors.lightBg,
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
                                           ),
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Text(
-                                                '${submissionDate.day.toString().padLeft(2, '0')}/${submissionDate.month.toString().padLeft(2, '0')}/${submissionDate.year}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: isDark ? AppColors.white : AppColors.black87,
+                                              Expanded(
+                                                child: Text(
+                                                  '${submissionDate.day.toString().padLeft(2, '0')}/${submissionDate.month.toString().padLeft(2, '0')}/${submissionDate.year}',
+                                                  style: TextStyle(
+                                                    fontSize: 11.5,
+                                                    color: isDark ? AppColors.white : AppColors.black87,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
                                               const Icon(Icons.calendar_month, size: 16, color: AppColors.primary),
@@ -282,7 +285,7 @@ class PetitionFormModal {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,22 +307,25 @@ class PetitionFormModal {
                                         },
                                         child: Container(
                                           height: 48,
-                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
                                           decoration: BoxDecoration(
                                             color: isDark ? AppColors.white10 : AppColors.lightBg,
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
                                           ),
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Text(
-                                                deadlineDate != null
-                                                    ? '${deadlineDate!.day.toString().padLeft(2, '0')}/${deadlineDate!.month.toString().padLeft(2, '0')}/${deadlineDate!.year}'
-                                                    : 'Chọn hạn',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: deadlineDate != null ? (isDark ? AppColors.white : AppColors.black87) : AppColors.grey,
+                                              Expanded(
+                                                child: Text(
+                                                  deadlineDate != null
+                                                      ? '${deadlineDate!.day.toString().padLeft(2, '0')}/${deadlineDate!.month.toString().padLeft(2, '0')}/${deadlineDate!.year}'
+                                                      : 'Chọn hạn',
+                                                  style: TextStyle(
+                                                    fontSize: 11.5,
+                                                    color: deadlineDate != null ? (isDark ? AppColors.white : AppColors.black87) : AppColors.grey,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
                                               const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
