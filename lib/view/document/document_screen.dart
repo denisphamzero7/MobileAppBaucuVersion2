@@ -921,6 +921,45 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           ],
                         );
                       }),
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.cardDark: const Color(0xFFECFDF5),
+
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark ? AppColors.white10: const Color(0xFFECFDF5),
+                          )
+                        ),
+                        // nội dung phía trong sau khi tạo không gian cái box đó
+                        child: IconButton(
+                          icon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF059669)),
+                          tooltip: 'Xuất Excel',
+                          onPressed: () {
+                            final authCtrl = Get.find<AuthController>();
+                            final canExport = authCtrl.can('read', 'TaskAssignmentPetitions');
+                            if (!canExport) {
+                              Get.snackbar('Thông báo', 'Bạn không có quyền xuất dữ liệu đơn thư.');
+                              return;
+                            }
+
+                            final queryParams = <String, dynamic>{};
+                            if (searchText.value.isNotEmpty) queryParams['search'] = searchText.value;
+                            if (selectedStatusFilter.value != 'all') queryParams['processing_status'] = selectedStatusFilter.value;
+                            if (selectedDepartment.value != null) queryParams['department_id'] = selectedDepartment.value!.id;
+
+                            ExportExcelButton.downloadAndSave(
+                              url: 'task-assignment-petitions/export',
+                              queryParams: queryParams,
+                              fileNamePrefix: 'DonThuKienNghi',
+                            );
+                          },
+                        ),
+                      )
+
+
                     ],
                   ),
 
