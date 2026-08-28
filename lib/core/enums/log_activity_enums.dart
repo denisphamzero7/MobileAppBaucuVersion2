@@ -59,27 +59,22 @@ enum LogActivityMethod {
 /// 2. TAB PHÂN LOẠI NHẬT KÝ
 enum LogActivityTab {
   overview(
-    index: 0,
     label: 'Tổng quan',
     icon: Icons.dashboard_outlined,
   ),
   personalInfo(
-    index: 1,
     label: 'Thông tin cá nhân',
     icon: Icons.person_outline,
   ),
   securitySettings(
-    index: 2,
     label: 'Cài đặt bảo mật',
     icon: Icons.security_outlined,
   );
 
-  final int index;
   final String label;
   final IconData icon;
 
   const LogActivityTab({
-    required this.index,
     required this.label,
     required this.icon,
   });
