@@ -15,6 +15,7 @@ import '../../controllers/auth_controller.dart';
 import '../widgets/skeleton_loader.dart';
 import 'widgets/stat_card_widget.dart';
 import 'widgets/task_card_widget.dart';
+import 'widgets/task_empty.dart';
 import '../widgets/smart_skeleton_wrapper.dart';
 import '../../model/advanced_filter_data.dart';
 import '../../core/widgets/app_advanced_filter_bottom_sheet.dart';
@@ -716,21 +717,7 @@ class _TaskScreenState extends State<TaskScreen> with AutomaticKeepAliveClientMi
 
                   // D. TASKS LIST
                   if (filteredTasks.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0),
-                        child: Column(
-                          children: [
-                            Icon(Icons.assignment_turned_in_outlined, size: 48, color: AppColors.grey[400]),
-                            const SizedBox(height: 8),
-                            Text(
-                              AppStrings.noTasksFound,
-                              style: TextStyle(fontSize: 13, color: AppColors.grey[500]),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
+                    const TaskEmpty()
                   else
                     Column(
                       children: [
