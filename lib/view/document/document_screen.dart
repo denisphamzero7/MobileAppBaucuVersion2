@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/petition_controller.dart';
 import '../../untils/app_colors.dart';
 import '../../helper/date_helper.dart';
 import '../../service/petition_service.dart';
 import '../../core/widgets/import_excel_button.dart';
-import '../../core/widgets/export_excel_button.dart';
 import '../../core/widgets/app_pagination_widget.dart';
 import '../../core/widgets/app_paged_list_wrapper.dart';
 import '../../view/widgets/quick_action_bottom_sheet.dart';
 import '../../view/widgets/skeleton_loader.dart';
 import '../../view/widgets/smart_skeleton_wrapper.dart';
-import '../../view/task/widgets/stat_card_widget.dart';
 import 'widgets/petition_details_dialog.dart';
 import 'widgets/petition_card_widget.dart';
-import '../../model/advanced_filter_data.dart';
-import '../../core/widgets/app_advanced_filter_bottom_sheet.dart';
+import 'widgets/petition_form_modal.dart';
+import 'widgets/petition_stats_grid_widget.dart';
+import 'widgets/petition_search_filter_bar.dart';
 
 class DocumentScreen extends StatefulWidget {
   const DocumentScreen({super.key});
@@ -26,41 +26,12 @@ class DocumentScreen extends StatefulWidget {
 }
 
 class _DocumentScreenState extends State<DocumentScreen> {
-  final RxString selectedStatusFilter = 'all'.obs;
-  final Rx<AdvancedFilterData> advancedFilter = AdvancedFilterData.initial.obs;
-  final RxString searchText = ''.obs;
+  final PetitionController controller = Get.isRegistered<PetitionController>()
+      ? Get.find<PetitionController>()
+      : Get.put(PetitionController());
+
   final TextEditingController searchController = TextEditingController();
-  final RxInt currentPage = 1.obs;
-  final RxBool isPageChanging = false.obs; // Cờ hiệu ứng chuyển trang cục bộ
-  final ScrollController _scrollController = ScrollController(); // Tự động cuộn mượt lên đầu
-  static const int itemsPerPage = 10;
-  
-  final PetitionService _petitionService = PetitionService();
-  final RxList<DepartmentModel> departments = <DepartmentModel>[].obs;
-  final Rxn<DepartmentModel> selectedDepartment = Rxn<DepartmentModel>();
-
-  final RxList<PetitionItemModel> petitionsList = <PetitionItemModel>[].obs;
-  final Rx<PetitionStatsModel> stats = PetitionStatsModel().obs;
-  final RxBool isLoading = true.obs;
-  final RxBool isInitialLoaded = false.obs;
-
-  // Multi-select & Bulk Delete
-  final RxBool isMultiSelectMode = false.obs;
-  final RxSet<int> selectedPetitionIds = <int>{}.obs;
-  final RxBool isManualRefreshing = false.obs;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (petitionsList.isEmpty) {
-        _fetchInitialData();
-      } else {
-        isLoading.value = false;
-        isInitialLoaded.value = true;
-      }
-    });
-  }
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
@@ -69,75 +40,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
     super.dispose();
   }
 
-  Future<void> _onRefresh() async {
-    isManualRefreshing.value = true;
-    currentPage.value = 1;
-    await _fetchInitialData();
-    isManualRefreshing.value = false;
-  }
-
-  Future<void> _fetchInitialData() async {
-    isLoading.value = true;
-    try {
-      await Future.wait([
-        _fetchPetitions(),
-        _fetchStats(),
-        _fetchDepartments(),
-      ]);
-    } finally {
-      isLoading.value = false;
-      isInitialLoaded.value = true;
-    }
-  }
-
-  Future<void> _fetchPetitions() async {
-    final response = await _petitionService.getPetitions(
-      search: searchText.value.isNotEmpty ? searchText.value : null,
-      processingStatus: selectedStatusFilter.value != 'all' ? selectedStatusFilter.value : null,
-      departmentId: selectedDepartment.value?.id,
-    );
-    if (response != null && response.statusCode == 200) {
-      petitionsList.assignAll(response.data);
-    } else {
-      petitionsList.clear();
-    }
-  }
-
-  Future<void> _fetchStats() async {
-    final res = await _petitionService.getPetitionStats();
-    if (res != null) {
-      stats.value = res;
-    }
-  }
-
-  Future<void> _fetchDepartments() async {
-    final response = await _petitionService.getAvailableDepartments();
-    if (response != null && response.statusCode == 200) {
-      departments.assignAll(response.data);
-    }
-  }
-
-  void toggleMultiSelectMode() {
-    isMultiSelectMode.value = !isMultiSelectMode.value;
-    if (!isMultiSelectMode.value) {
-      selectedPetitionIds.clear();
-    }
-  }
-
-  void togglePetitionSelection(int id) {
-    if (selectedPetitionIds.contains(id)) {
-      selectedPetitionIds.remove(id);
-    } else {
-      selectedPetitionIds.add(id);
-    }
-  }
-
   void _openQuickActions(BuildContext context) {
-    final queryParams = <String, dynamic>{};
-    if (searchText.value.isNotEmpty) queryParams['search'] = searchText.value;
-    if (selectedStatusFilter.value != 'all') queryParams['processing_status'] = selectedStatusFilter.value;
-    if (selectedDepartment.value != null) queryParams['department_id'] = selectedDepartment.value!.id;
-
     final authCtrl = Get.find<AuthController>();
     final canCreate = authCtrl.can('create', 'TaskAssignmentPetitions');
     final canDelete = authCtrl.can('destroy', 'TaskAssignmentPetitions');
@@ -152,7 +55,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
           subtitle: 'Tiếp nhận kiến nghị mới',
           icon: Icons.note_add_rounded,
           color: AppColors.primary,
-          onTap: () => _showCreateEditPetitionModal(context),
+          onTap: () => PetitionFormModal.show(
+            context,
+            departments: controller.departments,
+            onSaved: () => controller.onRefresh(),
+          ),
         ),
       );
       items.add(
@@ -164,7 +71,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
           onTap: () {
             ImportExcelButton.pickAndUpload(
               uploadUrl: 'task-assignment-petitions/import',
-              onSuccess: () => _onRefresh(),
+              onSuccess: () => controller.onRefresh(),
             );
           },
         ),
@@ -178,13 +85,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
           subtitle: 'Tải báo cáo tệp',
           icon: Icons.download_rounded,
           color: Colors.orange,
-          onTap: () {
-            ExportExcelButton.downloadAndSave(
-              url: 'task-assignment-petitions/export',
-              queryParams: queryParams,
-              fileNamePrefix: 'DonThuKienNghi',
-            );
-          },
+          onTap: () => controller.exportExcel(),
         ),
       );
     }
@@ -192,12 +93,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
     if (canDelete) {
       items.add(
         QuickActionItem(
-          title: isMultiSelectMode.value ? 'Hủy chọn' : 'Chọn nhiều',
+          title: controller.isMultiSelectMode.value ? 'Hủy chọn' : 'Chọn nhiều',
           subtitle: 'Xóa hàng loạt',
-          icon: isMultiSelectMode.value ? Icons.close_rounded : Icons.checklist_rtl_rounded,
+          icon: controller.isMultiSelectMode.value ? Icons.close_rounded : Icons.checklist_rtl_rounded,
           color: Colors.purple,
-          badge: selectedPetitionIds.isNotEmpty ? '${selectedPetitionIds.length}' : null,
-          onTap: () => toggleMultiSelectMode(),
+          badge: controller.selectedPetitionIds.isNotEmpty ? '${controller.selectedPetitionIds.length}' : null,
+          onTap: () => controller.toggleMultiSelectMode(),
         ),
       );
     }
@@ -215,451 +116,18 @@ class _DocumentScreenState extends State<DocumentScreen> {
     );
   }
 
-  Future<void> _deleteSinglePetition(int id) async {
-    final success = await _petitionService.deletePetition(id);
-    if (success) {
-      petitionsList.removeWhere((p) => p.id == id);
-      Get.snackbar('Thành công', 'Đã xóa đơn thư', backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.TOP);
-      _fetchStats();
-    } else {
-      Get.snackbar('Lỗi', 'Không thể xóa đơn thư này', backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
-      _onRefresh();
-    }
-  }
-
-  Future<void> _bulkDeleteSelected() async {
-    if (selectedPetitionIds.isEmpty) return;
-    final idsToDelete = selectedPetitionIds.toList();
-    final success = await _petitionService.bulkDeletePetitions(idsToDelete);
-    if (success) {
-      petitionsList.removeWhere((p) => idsToDelete.contains(p.id));
-      Get.snackbar('Thành công', 'Đã xóa ${idsToDelete.length} đơn thư được chọn', backgroundColor: Colors.green, colorText: Colors.white, snackPosition: SnackPosition.TOP);
-      selectedPetitionIds.clear();
-      isMultiSelectMode.value = false;
-      _fetchStats();
-    } else {
-      Get.snackbar('Lỗi', 'Có lỗi xảy ra khi xóa hàng loạt', backgroundColor: Colors.red, colorText: Colors.white, snackPosition: SnackPosition.TOP);
-      _onRefresh();
-    }
-  }
-
-  void _showCreateEditPetitionModal(BuildContext context, {PetitionItemModel? petitionToEdit}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isEdit = petitionToEdit != null;
-    final authCtrl = Get.find<AuthController>();
-    final canCreate = authCtrl.can('create', 'TaskAssignmentPetitions');
-    final canUpdate = authCtrl.can('update', 'TaskAssignmentPetitions');
-
-    if (isEdit && !canUpdate) {
-      Get.snackbar('Từ chối truy cập', 'Bạn không có quyền cập nhật đơn thư này.',
-          backgroundColor: Colors.red.shade100);
-      return;
-    }
-    if (!isEdit && !canCreate) {
-      Get.snackbar('Từ chối truy cập', 'Bạn không có quyền tạo đơn thư mới.',
-          backgroundColor: Colors.red.shade100);
-      return;
-    }
-
-    final titleCtrl = TextEditingController(text: petitionToEdit?.title ?? '');
-    final senderNameCtrl = TextEditingController(text: petitionToEdit?.senderName ?? '');
-    final senderPhoneCtrl = TextEditingController(text: petitionToEdit?.senderPhone ?? '');
-    final senderEmailCtrl = TextEditingController(text: petitionToEdit?.senderEmail ?? '');
-    final senderCccdCtrl = TextEditingController(text: petitionToEdit?.senderCccd ?? '');
-    final senderAddressCtrl = TextEditingController(text: petitionToEdit?.senderAddress ?? '');
-    final contentCtrl = TextEditingController(text: petitionToEdit?.content ?? '');
-
-    int? selectedDeptId = petitionToEdit?.departmentId;
-    String selectedStatus = petitionToEdit?.processingStatus ?? 'new';
-    DateTime? deadlineDate;
-
-    if (petitionToEdit?.deadlineDate != null && petitionToEdit!.deadlineDate.isNotEmpty) {
-      try {
-        deadlineDate = DateTime.tryParse(petitionToEdit.deadlineDate);
-      } catch (_) {}
-    }
-
-    final statuses = [
-      {'key': 'new', 'label': 'Mới tiếp nhận'},
-      {'key': 'processing', 'label': 'Đang xử lý'},
-      {'key': 'completed', 'label': 'Đã hoàn thành'},
-      {'key': 'paused', 'label': 'Tạm dừng'},
-      {'key': 'cancelled', 'label': 'Đã hủy'},
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Drag Handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.white24 : AppColors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          isEdit ? 'Cập nhật Đơn thư' : 'Tạo Đơn thư mới',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.white : AppColors.black87,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 1),
-                    const SizedBox(height: 14),
-
-                    // Form Fields
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInputLabel('Tiêu đề đơn thư *', isDark),
-                            _buildTextField(titleCtrl, 'Nhập tiêu đề đơn thư...', isDark),
-                            const SizedBox(height: 12),
-
-                            _buildInputLabel('Họ và tên người nộp *', isDark),
-                            _buildTextField(senderNameCtrl, 'Nhập họ tên công dân...', isDark),
-                            const SizedBox(height: 12),
-
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildInputLabel('Số điện thoại', isDark),
-                                      _buildTextField(senderPhoneCtrl, 'SĐT liên hệ...', isDark, keyboardType: TextInputType.phone),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildInputLabel('Số CCCD/CMND', isDark),
-                                      _buildTextField(senderCccdCtrl, 'Số CCCD...', isDark),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            _buildInputLabel('Email người nộp', isDark),
-                            _buildTextField(senderEmailCtrl, 'Địa chỉ email...', isDark, keyboardType: TextInputType.emailAddress),
-                            const SizedBox(height: 12),
-
-                            _buildInputLabel('Địa chỉ liên hệ', isDark),
-                            _buildTextField(senderAddressCtrl, 'Nhập địa chỉ cư trú...', isDark),
-                            const SizedBox(height: 12),
-
-                            _buildInputLabel('Phòng ban xử lý', isDark),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.white10 : AppColors.lightBg,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<int?>(
-                                  isExpanded: true,
-                                  value: selectedDeptId,
-                                  dropdownColor: isDark ? AppColors.cardDark : AppColors.white,
-                                  hint: const Text('Chọn phòng ban xử lý', style: TextStyle(fontSize: 13)),
-                                  items: [
-                                    const DropdownMenuItem<int?>(
-                                      value: null,
-                                      child: Text('Chưa phân công', style: TextStyle(fontSize: 13)),
-                                    ),
-                                    ...departments.map((d) => DropdownMenuItem<int?>(
-                                      value: d.id,
-                                      child: Text(d.name, style: const TextStyle(fontSize: 13)),
-                                    )),
-                                  ],
-                                  onChanged: (val) {
-                                    setModalState(() {
-                                      selectedDeptId = val;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildInputLabel('Trạng thái xử lý', isDark),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? AppColors.white10 : AppColors.lightBg,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            isExpanded: true,
-                                            value: selectedStatus,
-                                            dropdownColor: isDark ? AppColors.cardDark : AppColors.white,
-                                            items: statuses.map((s) => DropdownMenuItem<String>(
-                                              value: s['key']!,
-                                              child: Text(s['label']!, style: const TextStyle(fontSize: 12)),
-                                            )).toList(),
-                                            onChanged: (val) {
-                                              if (val != null) {
-                                                setModalState(() {
-                                                  selectedStatus = val;
-                                                });
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildInputLabel('Hạn xử lý', isDark),
-                                      InkWell(
-                                        onTap: () async {
-                                          final picked = await showDatePicker(
-                                            context: context,
-                                            initialDate: deadlineDate ?? DateTime.now().add(const Duration(days: 7)),
-                                            firstDate: DateTime(2020),
-                                            lastDate: DateTime(2035),
-                                          );
-                                          if (picked != null) {
-                                            setModalState(() {
-                                              deadlineDate = picked;
-                                            });
-                                          }
-                                        },
-                                        child: Container(
-                                          height: 48,
-                                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                                          decoration: BoxDecoration(
-                                            color: isDark ? AppColors.white10 : AppColors.lightBg,
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                deadlineDate != null
-                                                    ? '${deadlineDate!.day.toString().padLeft(2, '0')}/${deadlineDate!.month.toString().padLeft(2, '0')}/${deadlineDate!.year}'
-                                                    : 'Chọn hạn',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: deadlineDate != null ? (isDark ? AppColors.white : AppColors.black87) : AppColors.grey,
-                                                ),
-                                              ),
-                                              const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            _buildInputLabel('Nội dung phản ánh / kiến nghị *', isDark),
-                            _buildTextField(contentCtrl, 'Nhập nội dung chi tiết đơn thư...', isDark, maxLines: 4),
-                            const SizedBox(height: 16),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () async {
-                          if (titleCtrl.text.trim().isEmpty) {
-                            Get.snackbar('Lỗi', 'Vui lòng nhập tiêu đề đơn thư');
-                            return;
-                          }
-                          if (senderNameCtrl.text.trim().isEmpty) {
-                            Get.snackbar('Lỗi', 'Vui lòng nhập họ tên người gửi');
-                            return;
-                          }
-                          if (contentCtrl.text.trim().isEmpty) {
-                            Get.snackbar('Lỗi', 'Vui lòng nhập nội dung đơn thư');
-                            return;
-                          }
-
-                          final payload = <String, dynamic>{
-                            'title': titleCtrl.text.trim(),
-                            'sender_name': senderNameCtrl.text.trim(),
-                            'content': contentCtrl.text.trim(),
-                            'processing_status': selectedStatus,
-                          };
-
-                          if (senderPhoneCtrl.text.trim().isNotEmpty) {
-                            payload['sender_phone'] = senderPhoneCtrl.text.trim();
-                          }
-                          if (senderEmailCtrl.text.trim().isNotEmpty) {
-                            payload['sender_email'] = senderEmailCtrl.text.trim();
-                          }
-                          if (senderCccdCtrl.text.trim().isNotEmpty) {
-                            payload['sender_cccd'] = senderCccdCtrl.text.trim();
-                          }
-                          if (senderAddressCtrl.text.trim().isNotEmpty) {
-                            payload['sender_address'] = senderAddressCtrl.text.trim();
-                          }
-                          if (selectedDeptId != null) {
-                            payload['department_id'] = selectedDeptId;
-                          }
-                          if (deadlineDate != null) {
-                            payload['deadline_date'] = DateHelper.formatForApi(deadlineDate, includeTime: false);
-                          }
-
-                          Navigator.pop(ctx);
-
-                          try {
-                            if (isEdit) {
-                              final res = await _petitionService.updatePetition(petitionToEdit.id, payload);
-                              if (res != null) {
-                                Get.snackbar('Thành công', 'Đã cập nhật đơn thư', backgroundColor: Colors.green, colorText: Colors.white);
-                                _onRefresh();
-                              } else {
-                                Get.snackbar('Lỗi', 'Cập nhật đơn thư thất bại', backgroundColor: Colors.red, colorText: Colors.white);
-                              }
-                            } else {
-                              final res = await _petitionService.createPetition(payload);
-                              if (res != null) {
-                                Get.snackbar('Thành công', 'Đã tạo đơn thư mới thành công', backgroundColor: Colors.green, colorText: Colors.white);
-                                _onRefresh();
-                              } else {
-                                Get.snackbar('Lỗi', 'Tạo đơn thư thất bại', backgroundColor: Colors.red, colorText: Colors.white);
-                              }
-                            }
-                          } catch (e) {
-                            final errorMsg = e.toString().replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
-                            Get.snackbar(
-                              'Lỗi',
-                              'Thao tác thất bại: $errorMsg',
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 4),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: Text(
-                          isEdit ? 'Lưu thay đổi' : 'Tạo đơn thư',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildInputLabel(String label, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: isDark ? AppColors.white70 : AppColors.grey[700],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController ctrl, String hint, bool isDark, {int maxLines = 1, TextInputType? keyboardType}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.white10 : AppColors.lightBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: isDark ? AppColors.white10 : AppColors.black12),
-      ),
-      child: TextField(
-        controller: ctrl,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        style: TextStyle(fontSize: 13, color: isDark ? AppColors.white : AppColors.black87),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 12, color: AppColors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        ),
-      ),
-    );
-  }
-
   void _showPetitionDetails(BuildContext context, PetitionItemModel petition, bool isDark) {
     PetitionDetailsBottomSheet.show(
       context,
       petition: petition,
       isDark: isDark,
-      onRefreshParent: () => _onRefresh(),
-      onEditPetition: (p) => _showCreateEditPetitionModal(context, petitionToEdit: p),
+      onRefreshParent: () => controller.onRefresh(),
+      onEditPetition: (p) => PetitionFormModal.show(
+        context,
+        petitionToEdit: p,
+        departments: controller.departments,
+        onSaved: () => controller.onRefresh(),
+      ),
     );
   }
 
@@ -676,9 +144,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
         leadingWidth: 40,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-          onPressed: () {
-            Get.find<NavigationController>().changeIndex(0);
-          },
+          onPressed: () => Get.find<NavigationController>().changeIndex(0),
         ),
         title: const Text(
           'Đơn thư & Kiến nghị',
@@ -687,11 +153,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
         centerTitle: false,
         actions: [
           Obx(() {
-            if (isMultiSelectMode.value) {
+            if (controller.isMultiSelectMode.value) {
               return IconButton(
                 icon: const Icon(Icons.close, size: 22),
                 tooltip: 'Thoát chọn nhiều',
-                onPressed: () => toggleMultiSelectMode(),
+                onPressed: () => controller.toggleMultiSelectMode(),
               );
             }
             return QuickActionButton(
@@ -705,45 +171,37 @@ class _DocumentScreenState extends State<DocumentScreen> {
         foregroundColor: isDark ? AppColors.white : AppColors.black87,
       ),
       floatingActionButton: Obx(() {
-        if (isMultiSelectMode.value && selectedPetitionIds.isNotEmpty && canDelete) {
+        if (controller.isMultiSelectMode.value && controller.selectedPetitionIds.isNotEmpty && canDelete) {
           return FloatingActionButton.extended(
             onPressed: () {
               Get.defaultDialog(
                 title: 'Xóa đơn thư',
-                middleText: 'Bạn có chắc chắn muốn xóa ${selectedPetitionIds.length} đơn thư này?',
+                middleText: 'Bạn có chắc chắn muốn xóa ${controller.selectedPetitionIds.length} đơn thư này?',
                 textConfirm: 'Xóa',
                 textCancel: 'Hủy',
                 confirmTextColor: Colors.white,
                 buttonColor: Colors.red,
                 onConfirm: () {
                   Get.back();
-                  _bulkDeleteSelected();
+                  controller.bulkDeleteSelected();
                 },
               );
             },
             backgroundColor: Colors.red,
             icon: const Icon(Icons.delete, color: Colors.white),
-            label: Text('Xóa (${selectedPetitionIds.length})', style: const TextStyle(color: Colors.white)),
+            label: Text('Xóa (${controller.selectedPetitionIds.length})', style: const TextStyle(color: Colors.white)),
           );
         }
         return const SizedBox.shrink();
       }),
       body: SafeArea(
         child: Obx(() {
-          final showSkeleton = isLoading.value && (petitionsList.isEmpty || isManualRefreshing.value);
+          final showSkeleton = controller.isLoading.value && (controller.petitionsList.isEmpty || controller.isManualRefreshing.value);
 
-          final st = stats.value;
-          final dynamicTotal = st.total > 0 ? st.total : petitionsList.length;
-          final dynamicNew = st.todo > 0 ? st.todo : petitionsList.where((p) => p.processingStatus == 'new').length;
-          final dynamicProcessing = st.inProgress > 0 ? st.inProgress : petitionsList.where((p) => p.processingStatus == 'processing').length;
-          final dynamicCompleted = st.done > 0 ? st.done : petitionsList.where((p) => p.processingStatus == 'completed').length;
-          final dynamicPaused = st.paused > 0 ? st.paused : petitionsList.where((p) => p.processingStatus == 'paused').length;
-          final dynamicCancelled = st.cancelled > 0 ? st.cancelled : petitionsList.where((p) => p.processingStatus == 'cancelled').length;
+          // --- LỌC NÂNG CAO CHO ĐƠN THƯ ---
+          var filteredPetitions = List<PetitionItemModel>.from(controller.petitionsList);
 
-          // --- ÁP DỤNG BỘ LỌC NÂNG CAO CHO ĐƠN THƯ ---
-          var filteredPetitions = List<PetitionItemModel>.from(petitionsList);
-
-          final af = advancedFilter.value;
+          final af = controller.advancedFilter.value;
           if (af.departmentId != null) {
             filteredPetitions = filteredPetitions.where((p) => p.departmentId == af.departmentId).toList();
           }
@@ -774,12 +232,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
           }
 
           final int totalFilteredItems = filteredPetitions.length;
-          final int totalPages = (totalFilteredItems / itemsPerPage).ceil().clamp(1, 9999);
-          if (currentPage.value > totalPages) {
-            currentPage.value = totalPages;
+          final int totalPages = (totalFilteredItems / PetitionController.itemsPerPage).ceil().clamp(1, 9999);
+          if (controller.currentPage.value > totalPages) {
+            controller.currentPage.value = totalPages;
           }
-          final int startIndex = (currentPage.value - 1) * itemsPerPage;
-          final pagedPetitions = filteredPetitions.skip(startIndex).take(itemsPerPage).toList();
+          final int startIndex = (controller.currentPage.value - 1) * PetitionController.itemsPerPage;
+          final pagedPetitions = filteredPetitions.skip(startIndex).take(PetitionController.itemsPerPage).toList();
 
           return SmartSkeletonWrapper(
             showSkeleton: showSkeleton,
@@ -791,7 +249,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
               cardCount: 5,
               cardHeight: 68,
             ),
-            onRefresh: _onRefresh,
+            onRefresh: () => controller.onRefresh(),
             child: SingleChildScrollView(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
@@ -799,295 +257,23 @@ class _DocumentScreenState extends State<DocumentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // A. SEARCH BAR & ADVANCED FILTER BUTTON
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.cardDark : AppColors.lightBg,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: (val) {
-                              searchText.value = val.trim();
-                              currentPage.value = 1;
-                              _fetchPetitions();
-                            },
-                            style: const TextStyle(fontSize: 13),
-                            decoration: InputDecoration(
-                              hintText: 'Tìm kiếm đơn thư, kiến nghị',
-                              hintStyle: const TextStyle(fontSize: 13, color: AppColors.grey),
-                              prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grey),
-                              suffixIcon: Obx(() => searchText.value.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear, size: 16),
-                                      onPressed: () {
-                                        searchController.clear();
-                                        searchText.value = '';
-                                        currentPage.value = 1;
-                                        _fetchPetitions();
-                                      },
-                                    )
-                                  : const SizedBox.shrink()),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // NÚT BỘ LỌC NÂNG CAO ĐƠN THƯ
-                      Obx(() {
-                        final isFilterActive = advancedFilter.value.isActive;
-                        final activeCount = advancedFilter.value.activeCount;
-
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              height: 40,
-                              width: 40,
-                              decoration: BoxDecoration(
-                                color: isFilterActive
-                                    ? AppColors.primary.withValues(alpha: isDark ? 0.25 : 0.12)
-                                    : (isDark ? AppColors.cardDark : AppColors.white),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isFilterActive
-                                      ? AppColors.primary
-                                      : (isDark ? AppColors.white10 : AppColors.black.withValues(alpha: 0.05)),
-                                  width: isFilterActive ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.filter_alt_outlined,
-                                  size: 18,
-                                  color: isFilterActive ? AppColors.primary : AppColors.grey,
-                                ),
-                                tooltip: 'Bộ lọc nâng cao',
-                                onPressed: () {
-                                  AppAdvancedFilterBottomSheet.show(
-                                    context,
-                                    initialData: advancedFilter.value,
-                                    departments: departments,
-                                    showPriority: false, // Đơn thư không có mức ưu tiên
-                                    onApply: (data) {
-                                      advancedFilter.value = data;
-                                      if (data.departmentId != null) {
-                                        final found = departments.where((d) => d.id == data.departmentId);
-                                        selectedDepartment.value = found.isNotEmpty ? found.first : null;
-                                      } else {
-                                        selectedDepartment.value = null;
-                                      }
-                                      currentPage.value = 1;
-                                    },
-                                    onReset: () {
-                                      advancedFilter.value = AdvancedFilterData.initial;
-                                      selectedDepartment.value = null;
-                                      currentPage.value = 1;
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                            if (isFilterActive && activeCount > 0)
-                              Positioned(
-                                top: -4,
-                                right: -4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                                  child: Center(
-                                    child: Text(
-                                      '$activeCount',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        height: 1,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      }),
-                      if (Get.find<AuthController>().can('read', 'TaskAssignmentPetitions')) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          height: 40,
-                          width: 40,
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.cardDark : const Color(0xFFECFDF5),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDark ? AppColors.white10 : const Color(0xFFECFDF5),
-                            ),
-                          ),
-                          // nội dung phía trong sau khi tạo không gian cái box đó
-                          child: IconButton(
-                            icon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF059669)),
-                            tooltip: 'Xuất Excel',
-                            onPressed: () {
-                              final queryParams = <String, dynamic>{};
-                              if (searchText.value.isNotEmpty) queryParams['search'] = searchText.value;
-                              if (selectedStatusFilter.value != 'all') queryParams['processing_status'] = selectedStatusFilter.value;
-                              if (selectedDepartment.value != null) queryParams['department_id'] = selectedDepartment.value!.id;
-
-                              ExportExcelButton.downloadAndSave(
-                                url: 'task-assignment-petitions/export',
-                                queryParams: queryParams,
-                                fileNamePrefix: 'DonThuKienNghi',
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-
-
-                    ],
-                  ),
-
-                  if (advancedFilter.value.departmentName != null || selectedDepartment.value != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Phòng ban: ${advancedFilter.value.departmentName ?? selectedDepartment.value?.name}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(width: 4),
-                          InkWell(
-                            onTap: () {
-                              selectedDepartment.value = null;
-                              advancedFilter.value = advancedFilter.value.copyWith(clearDepartment: true);
-                              currentPage.value = 1;
-                              _fetchPetitions();
-                            },
-                            child: const Icon(Icons.close, size: 14, color: AppColors.primary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  // B. TRẠNG THÁI XỬ LÝ GRID
-                  const Text(
-                    'TRẠNG THÁI XỬ LÝ',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.grey, letterSpacing: 0.5),
-                  ),
-                  const SizedBox(height: 10),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
-                    childAspectRatio: 2.1,
-                    children: [
-                      StatCardWidget(
-                        label: 'Tổng',
-                        count: dynamicTotal,
-                        icon: Icons.filter_list,
-                        color: AppColors.primary,
-                        isSelected: selectedStatusFilter.value == 'all',
-                        onTap: () {
-                          selectedStatusFilter.value = 'all';
-                          currentPage.value = 1;
-                          _fetchPetitions();
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: 'Mới tiếp nhận',
-                        count: dynamicNew,
-                        icon: Icons.access_time,
-                        color: AppColors.todo,
-                        isSelected: selectedStatusFilter.value == 'new',
-                        onTap: () {
-                          selectedStatusFilter.value = 'new';
-                          currentPage.value = 1;
-                          _fetchPetitions();
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: 'Đang xử lý',
-                        count: dynamicProcessing,
-                        icon: Icons.rotate_right,
-                        color: AppColors.inProgress,
-                        isSelected: selectedStatusFilter.value == 'processing',
-                        onTap: () {
-                          selectedStatusFilter.value = 'processing';
-                          currentPage.value = 1;
-                          _fetchPetitions();
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: 'Đã hoàn thành',
-                        count: dynamicCompleted,
-                        icon: Icons.done_all,
-                        color: AppColors.done,
-                        isSelected: selectedStatusFilter.value == 'completed',
-                        onTap: () {
-                          selectedStatusFilter.value = 'completed';
-                          currentPage.value = 1;
-                          _fetchPetitions();
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: 'Tạm dừng',
-                        count: dynamicPaused,
-                        icon: Icons.pause_circle_outline,
-                        color: AppColors.paused,
-                        isSelected: selectedStatusFilter.value == 'paused',
-                        onTap: () {
-                          selectedStatusFilter.value = 'paused';
-                          currentPage.value = 1;
-                          _fetchPetitions();
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: 'Đã hủy',
-                        count: dynamicCancelled,
-                        icon: Icons.cancel_outlined,
-                        color: AppColors.overdue,
-                        isSelected: selectedStatusFilter.value == 'cancelled',
-                        onTap: () {
-                          selectedStatusFilter.value = 'cancelled';
-                          currentPage.value = 1;
-                          _fetchPetitions();
-                        },
-                        isDark: isDark,
-                      ),
-                    ],
+                  // A. THANH TÌM KIẾM & BỘ LỌC
+                  PetitionSearchFilterBar(
+                    controller: controller,
+                    searchController: searchController,
+                    isDark: isDark,
                   ),
                   const SizedBox(height: 20),
 
-                  // C. LIST OF PETITIONS
-                  if (isLoading.value)
+                  // B. LƯỚI THỐNG KÊ TRẠNG THÁI
+                  PetitionStatsGridWidget(
+                    controller: controller,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // C. DANH SÁCH ĐƠN THƯ & PHÂN TRANG
+                  if (controller.isLoading.value)
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -1103,7 +289,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         ),
                       ),
                     )
-                  else if (petitionsList.isEmpty)
+                  else if (controller.petitionsList.isEmpty)
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 40.0),
@@ -1122,9 +308,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
                   else
                     Column(
                       children: [
-                        // Bọc danh sách bằng AppPagedListWrapper để hiển thị Skeleton cục bộ khi chuyển trang
                         AppPagedListWrapper(
-                          isChangingPage: isPageChanging.value,
+                          isChangingPage: controller.isPageChanging.value,
                           skeleton: AppSkeleton.listCards(count: 5, height: 68),
                           child: ListView.builder(
                             shrinkWrap: true,
@@ -1139,30 +324,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         if (totalFilteredItems > 0) ...[
                           const SizedBox(height: 16),
                           AppPaginationWidget(
-                            currentPage: currentPage.value,
+                            currentPage: controller.currentPage.value,
                             totalPages: totalPages,
                             totalItems: totalFilteredItems,
-                            itemsPerPage: itemsPerPage,
-                            isLoading: isLoading.value || isPageChanging.value,
-                            onPageChanged: (newPage) async {
-                              if (currentPage.value == newPage) return;
-                              // 1. Bật cờ chuyển trang cục bộ
-                              isPageChanging.value = true;
-                              currentPage.value = newPage;
-
-                              // 2. Cuộn nhẹ lên đầu danh sách
-                              if (_scrollController.hasClients) {
-                                _scrollController.animateTo(
-                                  0,
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeOut,
-                                );
-                              }
-
-                              // 3. Tắt trạng thái nạp sau hiệu ứng chuyển cảnh (200ms)
-                              await Future.delayed(const Duration(milliseconds: 200));
-                              isPageChanging.value = false;
-                            },
+                            itemsPerPage: PetitionController.itemsPerPage,
+                            isLoading: controller.isLoading.value || controller.isPageChanging.value,
+                            onPageChanged: (newPage) => controller.changePage(newPage, _scrollController),
                           ),
                         ],
                       ],
@@ -1179,20 +346,25 @@ class _DocumentScreenState extends State<DocumentScreen> {
 
   Widget _buildPetitionCard(BuildContext context, PetitionItemModel petition, bool isDark, bool canDelete, bool canUpdate) {
     return Obx(() {
-      final isSelected = selectedPetitionIds.contains(petition.id);
+      final isSelected = controller.selectedPetitionIds.contains(petition.id);
 
       final cardWidget = PetitionCardWidget(
         petition: petition,
         isDark: isDark,
         isSelected: isSelected,
-        isMultiSelectMode: isMultiSelectMode.value,
+        isMultiSelectMode: controller.isMultiSelectMode.value,
         canUpdate: canUpdate,
         onTap: () => _showPetitionDetails(context, petition, isDark),
-        onEdit: canUpdate ? () => _showCreateEditPetitionModal(context, petitionToEdit: petition) : null,
-        onToggleSelect: () => togglePetitionSelection(petition.id),
+        onEdit: canUpdate ? () => PetitionFormModal.show(
+          context,
+          petitionToEdit: petition,
+          departments: controller.departments,
+          onSaved: () => controller.onRefresh(),
+        ) : null,
+        onToggleSelect: () => controller.togglePetitionSelection(petition.id),
       );
 
-      if (isMultiSelectMode.value && canDelete) {
+      if (controller.isMultiSelectMode.value && canDelete) {
         return cardWidget;
       } else if (canDelete) {
         return Dismissible(
@@ -1221,7 +393,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
             );
           },
           onDismissed: (direction) {
-            _deleteSinglePetition(petition.id);
+            controller.deleteSinglePetition(petition.id);
           },
           child: cardWidget,
         );
