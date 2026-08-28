@@ -58,10 +58,8 @@ class TaskDocumentController extends GetxController {
 
   Future<void> onRefresh() async {
     isManualRefreshing.value = true;
-    await Future.wait([
-      fetchStats(),
-      fetchDocuments(),
-    ]);
+    currentPage.value = 1;
+    await loadInitialData();
     isManualRefreshing.value = false;
   }
 
