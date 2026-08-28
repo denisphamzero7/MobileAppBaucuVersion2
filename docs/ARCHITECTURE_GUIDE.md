@@ -56,10 +56,13 @@ Dự án áp dụng mô hình phân lớp rõ ràng (**Layered Architecture**), 
 
 ```
 lib/
-├── core/                        # Chứa hạ tầng dùng chung, base controller, utils và widgets
+├── core/                        # Chứa hạ tầng dùng chung, base controller, models, utils và widgets
 │   ├── api_constants.dart       # Base URL và tất cả endpoint API
 │   ├── base/                    # Các lớp trừu tượng cơ sở kế thừa
 │   │   └── base_list_controller.dart # Base Controller cho module danh sách
+│   ├── models/                  # 🌟 CORE MODELS: Data Models dùng chung toàn app
+│   │   ├── base_response.dart   # Generic API Response wrapper
+│   │   └── pagination_meta.dart # Cấu trúc dữ liệu phân trang
 │   ├── enums/                   # BẮT BUỘC: Quản lý trạng thái bằng Enum tập trung
 │   │   ├── task_enums.dart
 │   │   ├── petition_enums.dart
