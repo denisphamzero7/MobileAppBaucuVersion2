@@ -56,10 +56,17 @@ Dự án áp dụng mô hình phân lớp rõ ràng (**Layered Architecture**), 
 
 ```
 lib/
-├── core/                        # Chứa hằng số API, widget dùng chung toàn app
+├── core/                        # Chứa hằng số API, enum và widget dùng chung toàn app
 │   ├── api_constants.dart       # Base URL và tất cả endpoint API
+│   ├── enums/                   # BẮT BUỘC: Quản lý trạng thái bằng Enum tập trung
+│   │   ├── task_enums.dart
+│   │   ├── petition_enums.dart
+│   │   ├── task_document_enums.dart
+│   │   └── log_activity_enums.dart
 │   └── widgets/
 │       ├── app_pagination_widget.dart   # Thanh phân trang chuẩn chung
+│       ├── app_paged_list_wrapper.dart  # Bọc danh sách chuyển trang êm
+│       ├── maintenance_screen.dart      # Màn hình bảo trì hệ thống
 │       ├── import_excel_button.dart     # Nút nhập Excel
 │       └── export_excel_button.dart     # Nút xuất Excel
 ├── model/                       # Định nghĩa dữ liệu (Data Models)
