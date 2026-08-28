@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:dio/io.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../core/api_constants.dart'; // Để in log đẹp hơn print
+import '../core/widgets/maintenance_screen.dart';
 
 class DioHelper {
   // 1. Singleton: Đảm bảo chỉ có 1 instance duy nhất trong app
@@ -91,6 +92,21 @@ class DioHelper {
           // Xử lý đặc biệt: Nếu lỗi 401 (Unauthorized) -> Token hết hạn hoặc sai
           if (e.response?.statusCode == 401) {
             _handleUnauthorized();
+          }
+
+          // Xử lý lỗi 503 (Service Unavailable) -> Hệ thống đang bảo trì
+          if (e.response?.statusCode == 503) {
+            final data = e.response?.data;
+            String? msg;
+            String? expected;
+            if (data is Map<String, dynamic>) {
+              msg = data['message'] as String? ?? data['maintenance_message'] as String?;
+              expected = data['expected_end_time'] as String? ?? data['expected_finish'] as String?;
+            }
+            MaintenanceScreen.open(
+              message: msg,
+              expectedEndTime: expected,
+            );
           }
 
           return handler.next(e);
