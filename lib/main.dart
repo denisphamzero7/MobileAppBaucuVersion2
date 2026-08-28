@@ -25,9 +25,12 @@ import 'package:app_baucu_version1/controllers/weather_controller.dart';
 import 'package:app_baucu_version1/controllers/notification_controller.dart';
 import 'package:app_baucu_version1/controllers/log_activity_controller.dart';
 import 'package:app_baucu_version1/controllers/task_controller.dart';
+
+import 'core/widgets/maintenance_screen.dart';
 // Hoặc nếu để ngay ngoài lib thì: import 'onesignal.dart';
 
 void main() async {
+
   // A. Cấu hình Proxy chuyển tiếp cho tên miền local để tương thích với điện thoại thật qua USB
   HttpOverrides.global = MyHttpOverrides();
   
@@ -74,6 +77,13 @@ class MyApp extends StatelessWidget {
 
       // Màn hình đầu tiên
       home: SplashScreen(),
+      // home: const MaintenanceScreen(
+      //   title: 'Hệ thống đang nâng cấp',
+      //   message: 'Chúng tôi đang tiến hành bảo trì cơ sở dữ liệu định kỳ.',
+      //   expectedEndTime: '03:00 - 29/08/2026',
+      //   supportContact: 'hotline@danatec.vn - 1900 6868',
+      // ),
+
 
       // E. CẤU HÌNH ROUTES (QUAN TRỌNG)
       // AuthController dùng Get.toNamed('/home') nên phải khai báo ở đây
