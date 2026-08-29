@@ -1,4 +1,6 @@
 export 'task_assignment_document_model.dart';
+import 'package:flutter/material.dart';
+import '../core/enums/task_enums.dart';
 import 'user_model.dart';
 
 class TaskItemType {
@@ -229,6 +231,22 @@ class TaskModel {
     this.discussions,
     this.rawJson,
   });
+
+  // --- GETTERS ENUM CHUẨN HÓA ---
+  TaskProcessingStatus get processingStatusEnum => TaskProcessingStatus.fromKey(processingStatus);
+  TaskTimingStatus get timingStatusEnum => TaskTimingStatus.fromKey(timingStatus);
+  TaskPriorityLevel get priorityEnum => TaskPriorityLevel.fromKey(priority);
+
+  String get processingStatusLabel => processingStatusEnum.label;
+  Color get processingStatusColor => processingStatusEnum.color;
+  IconData get processingStatusIcon => processingStatusEnum.icon;
+
+  String get timingStatusLabel => timingStatusEnum.label;
+  Color get timingStatusColor => timingStatusEnum.color;
+  IconData get timingStatusIcon => timingStatusEnum.icon;
+
+  String get priorityLabel => priorityEnum.label;
+  Color get priorityColor => priorityEnum.color;
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
     List<int> assignees = [];
