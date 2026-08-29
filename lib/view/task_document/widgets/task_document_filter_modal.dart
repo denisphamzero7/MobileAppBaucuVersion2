@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../controllers/task_document_controller.dart';
+import '../../../core/enums/task_document_enums.dart';
 import '../../../untils/app_colors.dart';
 
 class TaskDocumentFilterModal {
@@ -56,11 +57,14 @@ class TaskDocumentFilterModal {
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
-                    children: [
-                      _buildFilterChip('Tất cả', 'all', tempStatus, (v) => setModalState(() => tempStatus = v)),
-                      _buildFilterChip('Đã ban hành', 'published', tempStatus, (v) => setModalState(() => tempStatus = v)),
-                      _buildFilterChip('Bản nháp', 'draft', tempStatus, (v) => setModalState(() => tempStatus = v)),
-                    ],
+                    children: TaskDocumentStatus.values.map((status) {
+                      return _buildFilterChip(
+                        status.label,
+                        status.key,
+                        tempStatus,
+                        (v) => setModalState(() => tempStatus = v),
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 16),
                   if (controller.departments.isNotEmpty) ...[
