@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../../model/task_model.dart';
 import '../../../../untils/app_colors.dart';
 import '../../../../helper/date_helper.dart';
@@ -18,6 +17,7 @@ class TaskDocumentTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final docTitle = task.documentName ?? 'Văn bản giao việc';
+    final List<TaskAttachment> attachments = task.attachmentList ?? [];
 
     return Container(
       width: double.infinity,
@@ -32,6 +32,7 @@ class TaskDocumentTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. TIÊU ĐỀ VĂN BẢN
           Row(
             children: [
               const Icon(Icons.folder_outlined, size: 18, color: AppColors.primary),
@@ -49,6 +50,8 @@ class TaskDocumentTab extends StatelessWidget {
             ],
           ),
           const Divider(height: 20),
+
+          // 2. MÃ VĂN BẢN
           _buildInfoItem(
             icon: Icons.confirmation_number_outlined,
             label: 'MÃ / SỐ VĂN BẢN',
@@ -56,48 +59,98 @@ class TaskDocumentTab extends StatelessWidget {
             isDark: isDark,
           ),
           const SizedBox(height: 12),
+
+          // 3. NGÀY BAN HÀNH
           _buildInfoItem(
             icon: Icons.calendar_today_outlined,
             label: 'NGÀY BAN HÀNH',
             value: DateHelper.formatDate(task.createdAt, fallback: '-'),
             isDark: isDark,
           ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : AppColors.badgeBlueBg.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.picture_as_pdf, color: AppColors.red, size: 20),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    '1.pdf',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
-                  ),
+          const SizedBox(height: 16),
+
+          // 4. TIÊU ĐỀ TỆP ĐÍNH KÈM
+          Row(
+            children: [
+              Icon(Icons.attach_file, size: 14, color: AppColors.grey[500]),
+              const SizedBox(width: 4),
+              Text(
+                'TỆP ĐÍNH KÈM (${attachments.length})',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.grey[500],
+                  letterSpacing: 0.4,
                 ),
-                InkWell(
-                  onTap: () {
-                    final fileUrl = task.attachmentList?.isNotEmpty == true
-                        ? (task.attachmentList!.first.url ?? task.attachmentList!.first.path ?? '')
-                        : '';
-                    final url = fileUrl.isNotEmpty ? fileUrl : 'task-assignment-documents/${task.taskAssignmentDocumentId}/download';
-                    AppFileDownloader.downloadAndOpen(
-                      fileUrl: url,
-                      customFileName: docTitle.endsWith('.pdf') ? docTitle : '$docTitle.pdf',
-                    );
-                  },
-                  child: const Text(
-                    'Mở / Tải về',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          const SizedBox(height: 8),
+
+          // 5. DANH SÁCH TỆP HOẶC TRẠNG THÁI CHƯA CÓ TỆP
+          if (attachments.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Text(
+                'Chưa có tệp đính kèm',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.white70 : AppColors.grey[500],
+                ),
+              ),
+            )
+          else
+            ...attachments.map((file) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : AppColors.badgeBlueBg.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? AppColors.white10 : AppColors.primary.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.picture_as_pdf, color: AppColors.red, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          file.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          final fileUrl = file.url ?? file.path ?? '';
+                          final url = fileUrl.isNotEmpty
+                              ? fileUrl
+                              : (task.taskAssignmentDocumentId != null
+                                  ? 'task-assignment-documents/${task.taskAssignmentDocumentId}/download'
+                                  : '');
+                          AppFileDownloader.downloadAndOpen(
+                            fileUrl: url,
+                            customFileName: file.name,
+                          );
+                        },
+                        child: const Text(
+                          'Mở / Tải về',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
         ],
       ),
     );
