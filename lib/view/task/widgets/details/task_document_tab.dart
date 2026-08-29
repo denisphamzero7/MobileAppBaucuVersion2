@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../model/task_model.dart';
 import '../../../../untils/app_colors.dart';
 import '../../../../helper/date_helper.dart';
+import '../../../../core/utils/app_file_downloader.dart';
 
 class TaskDocumentTab extends StatelessWidget {
   final TaskModel task;
@@ -80,7 +81,14 @@ class TaskDocumentTab extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () {
-                    Get.snackbar('Tải tệp', 'Đang mở tệp văn bản');
+                    final fileUrl = task.attachmentList?.isNotEmpty == true
+                        ? (task.attachmentList!.first.url ?? task.attachmentList!.first.path ?? '')
+                        : '';
+                    final url = fileUrl.isNotEmpty ? fileUrl : 'task-assignment-documents/${task.taskAssignmentDocumentId}/download';
+                    AppFileDownloader.downloadAndOpen(
+                      fileUrl: url,
+                      customFileName: docTitle.endsWith('.pdf') ? docTitle : '$docTitle.pdf',
+                    );
                   },
                   child: const Text(
                     'Mở / Tải về',

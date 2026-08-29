@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../model/task_model.dart';
 import '../../../../untils/app_colors.dart';
 import '../../../../helper/date_helper.dart';
+import '../../../../core/utils/app_file_downloader.dart';
 
 class TaskInfoTab extends StatefulWidget {
   final TaskModel task;
@@ -362,7 +363,11 @@ class _TaskInfoTabState extends State<TaskInfoTab> {
                       ),
                       InkWell(
                         onTap: () {
-                          Get.snackbar('Thông báo', 'Đang tải tệp ${file.name}');
+                          final fileUrl = file.url ?? file.path ?? '';
+                          AppFileDownloader.downloadAndOpen(
+                            fileUrl: fileUrl,
+                            customFileName: file.name,
+                          );
                         },
                         child: const Text(
                           'Mở / Tải về',

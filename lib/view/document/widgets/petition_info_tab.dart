@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../service/petition_service.dart';
 import '../../../untils/app_colors.dart';
 import '../../../helper/date_helper.dart';
+import '../../../core/utils/app_file_downloader.dart';
 
 class PetitionInfoTab extends StatelessWidget {
   final PetitionItemModel petition;
@@ -234,7 +235,13 @@ class PetitionInfoTab extends StatelessWidget {
                     ),
                     InkWell(
                       onTap: () {
-                        Get.snackbar('Thông báo', 'Đang tải tệp $fileName');
+                        final String fileUrl = file is Map
+                            ? (file['url'] ?? file['download_url'] ?? file['file_url'] ?? file['path'] ?? '').toString()
+                            : file.toString();
+                        AppFileDownloader.downloadAndOpen(
+                          fileUrl: fileUrl,
+                          customFileName: fileName,
+                        );
                       },
                       child: const Text(
                         'Mở / Tải về',
