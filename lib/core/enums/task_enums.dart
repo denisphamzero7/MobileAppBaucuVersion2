@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../untils/app_colors.dart';
 
-/// 1. TRẠNG THÁI XỬ LÝ CÔNG VIỆC
+/// ============================================================================
+/// 1. TRẠNG THÁI XỬ LÝ CÔNG VIỆC (PROCESSING STATUS)
+/// ============================================================================
 enum TaskProcessingStatus {
   all(
     key: 'all',
@@ -59,14 +61,25 @@ enum TaskProcessingStatus {
   });
 
   static TaskProcessingStatus fromKey(String? key) {
+    if (key == null) return TaskProcessingStatus.all;
+    final k = key.toLowerCase().trim();
+    if (k == 'todo' || k == 'new' || k == 'chua_thuc_hien') return TaskProcessingStatus.todo;
+    if (k == 'in_progress' || k == 'processing' || k == 'dang_thuc_hien') return TaskProcessingStatus.inProgress;
+    if (k == 'pending_approval' || k == 'pending' || k == 'cho_duyet') return TaskProcessingStatus.pendingApproval;
+    if (k == 'done' || k == 'completed' || k == 'hoan_thanh') return TaskProcessingStatus.done;
+    if (k == 'paused' || k == 'tam_dung') return TaskProcessingStatus.paused;
+    if (k == 'cancelled' || k == 'canceled' || k == 'da_huy') return TaskProcessingStatus.cancelled;
+
     return TaskProcessingStatus.values.firstWhere(
-      (e) => e.key == key,
+      (e) => e.key == k,
       orElse: () => TaskProcessingStatus.all,
     );
   }
 }
 
-/// 2. TRẠNG THÁI TIẾN ĐỘ THỜI HẠN CÔNG VIỆC
+/// ============================================================================
+/// 2. TRẠNG THÁI TIẾN ĐỘ THỜI HẠN CÔNG VIỆC (TIMING STATUS)
+/// ============================================================================
 enum TaskTimingStatus {
   all(
     key: 'all',
@@ -93,19 +106,19 @@ enum TaskTimingStatus {
     color: AppColors.overdue,
   ),
   completedEarly(
-    key: 'completed_early',
+    key: 'early',
     label: 'Sớm hạn',
     icon: Icons.verified_outlined,
     color: AppColors.early,
   ),
   completedOnTime(
-    key: 'completed_on_time',
+    key: 'on_time',
     label: 'Đúng hạn',
     icon: Icons.check_circle_outline,
     color: AppColors.onTime,
   ),
   completedLate(
-    key: 'completed_late',
+    key: 'late',
     label: 'Trễ hạn',
     icon: Icons.history_toggle_off,
     color: AppColors.late,
@@ -124,14 +137,37 @@ enum TaskTimingStatus {
   });
 
   static TaskTimingStatus fromKey(String? key) {
+    if (key == null) return TaskTimingStatus.all;
+    final k = key.toLowerCase().trim();
+    if (k == 'early' || k == 'completed_early' || k == 'som_han' || k == 'sớm hạn') {
+      return TaskTimingStatus.completedEarly;
+    }
+    if (k == 'on_time' || k == 'completed_on_time' || k == 'dung_han' || k == 'đúng hạn') {
+      return TaskTimingStatus.completedOnTime;
+    }
+    if (k == 'late' || k == 'completed_late' || k == 'tre_han' || k == 'trễ hạn') {
+      return TaskTimingStatus.completedLate;
+    }
+    if (k == 'overdue' || k == 'qua_han' || k == 'quá hạn') {
+      return TaskTimingStatus.overdue;
+    }
+    if (k == 'due_soon' || k == 'sap_den_han' || k == 'sắp đến hạn') {
+      return TaskTimingStatus.dueSoon;
+    }
+    if (k == 'upcoming' || k == 'chua_den_han' || k == 'chưa đến hạn') {
+      return TaskTimingStatus.upcoming;
+    }
+
     return TaskTimingStatus.values.firstWhere(
-      (e) => e.key == key,
+      (e) => e.key == k,
       orElse: () => TaskTimingStatus.all,
     );
   }
 }
 
-/// 3. MỨC ĐỘ ƯU TIÊN CÔNG VIỆC
+/// ============================================================================
+/// 3. MỨC ĐỘ ƯU TIÊN CÔNG VIỆC (PRIORITY LEVEL)
+/// ============================================================================
 enum TaskPriorityLevel {
   urgent(
     key: 'urgent',
@@ -165,8 +201,23 @@ enum TaskPriorityLevel {
   });
 
   static TaskPriorityLevel fromKey(String? key) {
+    if (key == null) return TaskPriorityLevel.medium;
+    final k = key.toLowerCase().trim();
+    if (k == 'urgent' || k == 'critical' || k == 'khan_cap' || k == 'khẩn cấp' || k == 'very_high') {
+      return TaskPriorityLevel.urgent;
+    }
+    if (k == 'high' || k == 'cao') {
+      return TaskPriorityLevel.high;
+    }
+    if (k == 'medium' || k == 'normal' || k == 'trung_binh' || k == 'trung bình') {
+      return TaskPriorityLevel.medium;
+    }
+    if (k == 'low' || k == 'thap' || k == 'thấp') {
+      return TaskPriorityLevel.low;
+    }
+
     return TaskPriorityLevel.values.firstWhere(
-      (e) => e.key == key,
+      (e) => e.key == k,
       orElse: () => TaskPriorityLevel.medium,
     );
   }

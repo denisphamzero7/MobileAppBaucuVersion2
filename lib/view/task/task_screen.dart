@@ -6,6 +6,7 @@ import 'package:app_baucu_version1/controllers/navigation.dart';
 import 'package:app_baucu_version1/model/task_model.dart';
 import 'package:app_baucu_version1/untils/app_colors.dart';
 import 'package:app_baucu_version1/untils/app_strings.dart';
+import '../../core/enums/task_enums.dart';
 import 'create_task_screen.dart';
 import '../../core/widgets/app_pagination_widget.dart';
 import '../../core/widgets/app_paged_list_wrapper.dart';
@@ -534,92 +535,45 @@ class _TaskScreenState extends State<TaskScreen> with AutomaticKeepAliveClientMi
                     crossAxisSpacing: 6,
                     mainAxisSpacing: 6,
                     childAspectRatio: 1.32,
-                    children: [
-                      StatCardWidget(
-                        label: AppStrings.statusAll,
-                        count: totalCount,
-                        icon: Icons.filter_list,
-                        color: AppColors.primary,
-                        isSelected: selectedStatusFilter.value == 'all',
+                    children: TaskProcessingStatus.values.map((status) {
+                      int count = 0;
+                      switch (status) {
+                        case TaskProcessingStatus.all:
+                          count = totalCount;
+                          break;
+                        case TaskProcessingStatus.todo:
+                          count = todoCount;
+                          break;
+                        case TaskProcessingStatus.inProgress:
+                          count = inProgressCount;
+                          break;
+                        case TaskProcessingStatus.pendingApproval:
+                          count = pendingApprovalCount;
+                          break;
+                        case TaskProcessingStatus.done:
+                          count = doneCount;
+                          break;
+                        case TaskProcessingStatus.paused:
+                          count = pausedCount;
+                          break;
+                        case TaskProcessingStatus.cancelled:
+                          count = cancelledCount;
+                          break;
+                      }
+                      final isSelected = selectedStatusFilter.value == status.key;
+                      return StatCardWidget(
+                        label: status.label,
+                        count: count,
+                        icon: status.icon,
+                        color: status.color,
+                        isSelected: isSelected,
                         onTap: () {
-                          selectedStatusFilter.value = 'all';
+                          selectedStatusFilter.value = isSelected && status != TaskProcessingStatus.all ? 'all' : status.key;
                           selectedTimingFilter.value = 'all';
                         },
                         isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.statusTodo,
-                        count: todoCount,
-                        icon: Icons.access_time,
-                        color: AppColors.todo,
-                        isSelected: selectedStatusFilter.value == 'todo',
-                        onTap: () {
-                          selectedStatusFilter.value = 'todo';
-                          selectedTimingFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.statusInProgress,
-                        count: inProgressCount,
-                        icon: Icons.rotate_right,
-                        color: AppColors.inProgress,
-                        isSelected: selectedStatusFilter.value == 'in_progress',
-                        onTap: () {
-                          selectedStatusFilter.value = 'in_progress';
-                          selectedTimingFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.statusPendingApproval,
-                        count: pendingApprovalCount,
-                        icon: Icons.error_outline,
-                        color: AppColors.pendingApproval,
-                        isSelected: selectedStatusFilter.value == 'pending_approval',
-                        onTap: () {
-                          selectedStatusFilter.value = 'pending_approval';
-                          selectedTimingFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.statusDone,
-                        count: doneCount,
-                        icon: Icons.check_circle_outline,
-                        color: AppColors.done,
-                        isSelected: selectedStatusFilter.value == 'done',
-                        onTap: () {
-                          selectedStatusFilter.value = 'done';
-                          selectedTimingFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.statusPaused,
-                        count: pausedCount,
-                        icon: Icons.pause_circle_outline,
-                        color: AppColors.paused,
-                        isSelected: selectedStatusFilter.value == 'paused',
-                        onTap: () {
-                          selectedStatusFilter.value = 'paused';
-                          selectedTimingFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.statusCancelled,
-                        count: cancelledCount,
-                        icon: Icons.cancel_outlined,
-                        color: AppColors.cancelled,
-                        isSelected: selectedStatusFilter.value == 'cancelled',
-                        onTap: () {
-                          selectedStatusFilter.value = 'cancelled';
-                          selectedTimingFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 20),
 
@@ -637,79 +591,50 @@ class _TaskScreenState extends State<TaskScreen> with AutomaticKeepAliveClientMi
                     mainAxisSpacing: 6,
                     childAspectRatio: 1.92,
                     children: [
-                      StatCardWidget(
-                        label: AppStrings.timingUpcoming,
-                        count: upcomingCount,
-                        icon: Icons.access_time,
-                        color: AppColors.upcoming,
-                        isSelected: selectedTimingFilter.value == 'upcoming',
+                      TaskTimingStatus.upcoming,
+                      TaskTimingStatus.completedEarly,
+                      TaskTimingStatus.completedOnTime,
+                      TaskTimingStatus.completedLate,
+                      TaskTimingStatus.overdue,
+                      TaskTimingStatus.cancelled,
+                    ].map((status) {
+                      int count = 0;
+                      switch (status) {
+                        case TaskTimingStatus.upcoming:
+                          count = upcomingCount;
+                          break;
+                        case TaskTimingStatus.completedEarly:
+                          count = earlyCount;
+                          break;
+                        case TaskTimingStatus.completedOnTime:
+                          count = onTimeCount;
+                          break;
+                        case TaskTimingStatus.completedLate:
+                          count = lateCount;
+                          break;
+                        case TaskTimingStatus.overdue:
+                          count = overdueCount;
+                          break;
+                        case TaskTimingStatus.cancelled:
+                          count = cancelledTimingCount;
+                          break;
+                        default:
+                          count = 0;
+                      }
+                      final isSelected = selectedTimingFilter.value == status.key;
+                      return StatCardWidget(
+                        label: status.label,
+                        count: count,
+                        icon: status.icon,
+                        color: status.color,
+                        isSelected: isSelected,
                         onTap: () {
-                          selectedTimingFilter.value = 'upcoming';
+                          selectedTimingFilter.value = isSelected ? 'all' : status.key;
                           selectedStatusFilter.value = 'all';
                         },
                         isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.timingEarly,
-                        count: earlyCount,
-                        icon: Icons.star_outline,
-                        color: AppColors.early,
-                        isSelected: selectedTimingFilter.value == 'early',
-                        onTap: () {
-                          selectedTimingFilter.value = 'early';
-                          selectedStatusFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.timingOnTime,
-                        count: onTimeCount,
-                        icon: Icons.done_all,
-                        color: AppColors.onTime,
-                        isSelected: selectedTimingFilter.value == 'on_time',
-                        onTap: () {
-                          selectedTimingFilter.value = 'on_time';
-                          selectedStatusFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.timingLate,
-                        count: lateCount,
-                        icon: Icons.access_time,
-                        color: AppColors.late,
-                        isSelected: selectedTimingFilter.value == 'late',
-                        onTap: () {
-                          selectedTimingFilter.value = 'late';
-                          selectedStatusFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.timingOverdue,
-                        count: overdueCount,
-                        icon: Icons.warning_amber_outlined,
-                        color: AppColors.overdue,
-                        isSelected: selectedTimingFilter.value == 'overdue',
-                        onTap: () {
-                          selectedTimingFilter.value = 'overdue';
-                          selectedStatusFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                      StatCardWidget(
-                        label: AppStrings.timingCancelled,
-                        count: cancelledTimingCount,
-                        icon: Icons.cancel_outlined,
-                        color: AppColors.timingCancelled,
-                        isSelected: selectedTimingFilter.value == 'cancelled',
-                        onTap: () {
-                          selectedTimingFilter.value = 'cancelled';
-                          selectedStatusFilter.value = 'all';
-                        },
-                        isDark: isDark,
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 20),
                   const Divider(height: 1, color: AppColors.black12),

@@ -22,58 +22,9 @@ class TaskInfoTab extends StatefulWidget {
 class _TaskInfoTabState extends State<TaskInfoTab> {
   bool _isDescriptionExpanded = false;
 
-  String _getStatusLabel(String status) {
-    switch (status.toLowerCase()) {
-      case 'todo':
-        return 'Chưa thực hiện';
-      case 'pending_approval':
-      case 'pending':
-        return 'Chờ duyệt';
-      case 'in_progress':
-      case 'processing':
-        return 'Đang thực hiện';
-      case 'completed':
-      case 'done':
-        return 'Hoàn thành';
-      case 'paused':
-        return 'Tạm dừng';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
-    }
-  }
-
-  String _getPriorityLabel(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'urgent':
-        return 'Khẩn cấp';
-      case 'high':
-        return 'Cao';
-      case 'medium':
-        return 'Trung bình';
-      case 'low':
-      default:
-        return 'Thấp';
-    }
-  }
-
-  String _getTimingStatusLabel(TaskModel task) {
-    if (task.isOverdue || task.timingStatus == 'overdue') {
-      return 'Quá hạn';
-    }
-    switch (task.timingStatus.toLowerCase()) {
-      case 'late':
-        return 'Trễ hạn';
-      case 'early':
-        return 'Sớm hạn';
-      case 'on_time':
-        return 'Đúng hạn';
-      case 'upcoming':
-      default:
-        return 'Chưa đến hạn';
-    }
-  }
+  String _getStatusLabel(String status) => TaskProcessingStatus.fromKey(status).label;
+  String _getPriorityLabel(String priority) => TaskPriorityLevel.fromKey(priority).label;
+  String _getTimingStatusLabel(TaskModel task) => task.timingStatusLabel;
 
   @override
   Widget build(BuildContext context) {
