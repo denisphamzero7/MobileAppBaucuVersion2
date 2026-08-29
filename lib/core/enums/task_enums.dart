@@ -122,6 +122,12 @@ enum TaskTimingStatus {
     label: 'Trễ hạn',
     icon: Icons.history_toggle_off,
     color: AppColors.late,
+  ),
+  cancelled(
+    key: 'cancelled',
+    label: 'Đã hủy',
+    icon: Icons.cancel_outlined,
+    color: AppColors.timingCancelled,
   );
 
   final String key;
@@ -156,6 +162,9 @@ enum TaskTimingStatus {
     }
     if (k == 'upcoming' || k == 'chua_den_han' || k == 'chưa đến hạn') {
       return TaskTimingStatus.upcoming;
+    }
+    if (k == 'cancelled' || k == 'canceled' || k == 'da_huy') {
+      return TaskTimingStatus.cancelled;
     }
 
     return TaskTimingStatus.values.firstWhere(
