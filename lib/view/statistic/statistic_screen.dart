@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../controllers/navigation.dart';
 import '../../controllers/task_controller.dart';
 import '../../untils/app_colors.dart';
 import '../../untils/app_strings.dart';
@@ -49,6 +50,11 @@ class _StatisticScreenState extends State<StatisticScreen> with AutomaticKeepAli
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       appBar: AppBar(
+        leadingWidth: 40,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 16),
+          onPressed: () => Get.find<NavigationController>().changeIndex(0),
+        ),
         title: Text(
           AppStrings.statisticScreenTitle,
           style: TextStyle(
@@ -57,6 +63,7 @@ class _StatisticScreenState extends State<StatisticScreen> with AutomaticKeepAli
             color: isDark ? AppColors.white : AppColors.black87,
           ),
         ),
+        centerTitle: false,
         elevation: 0,
         backgroundColor: isDark ? AppColors.darkBg : AppColors.white,
         foregroundColor: isDark ? AppColors.white : AppColors.black87,
