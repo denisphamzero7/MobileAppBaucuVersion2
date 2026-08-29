@@ -216,7 +216,7 @@ class UserOverviewTab extends StatelessWidget {
                                 child: Text(
                                   'T$m',
                                   style: TextStyle(
-                                    color: isDark ? AppColors.white70 : AppColors.grey700,
+                                    color: isDark ? AppColors.white70 : Colors.grey.shade700,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -232,11 +232,11 @@ class UserOverviewTab extends StatelessWidget {
                             reservedSize: 36,
                             getTitlesWidget: (value, meta) {
                               if (value == 0) {
-                                return Text('0', style: TextStyle(color: isDark ? AppColors.white70 : AppColors.grey700, fontSize: 10, fontWeight: FontWeight.w600));
+                                return Text('0', style: TextStyle(color: isDark ? AppColors.white70 : Colors.grey.shade700, fontSize: 10, fontWeight: FontWeight.w600));
                               }
                               return Text(
                                 value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toInt().toString(),
-                                style: TextStyle(color: isDark ? AppColors.white70 : AppColors.grey700, fontSize: 10, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: isDark ? AppColors.white70 : Colors.grey.shade700, fontSize: 10, fontWeight: FontWeight.w600),
                               );
                             },
                           ),
