@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../service/petition_service.dart';
+import '../../../core/enums/petition_enums.dart';
 import '../../../untils/app_colors.dart';
 import '../../../helper/date_helper.dart';
 import '../../../core/utils/app_file_downloader.dart';
@@ -16,23 +17,7 @@ class PetitionInfoTab extends StatelessWidget {
   });
 
   String _getStatusLabel(String status) {
-    switch (status.toLowerCase()) {
-      case 'new':
-      case 'todo':
-        return 'Mới tiếp nhận';
-      case 'processing':
-      case 'in_progress':
-        return 'Đang xử lý';
-      case 'completed':
-      case 'done':
-        return 'Đã hoàn thành';
-      case 'paused':
-        return 'Tạm dừng';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
-    }
+    return PetitionProcessingStatus.fromKey(status).label;
   }
 
   @override

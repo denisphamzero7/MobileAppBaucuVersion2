@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../service/petition_service.dart';
+import '../../../core/enums/petition_enums.dart';
 import '../../../untils/app_colors.dart';
 import '../../../helper/date_helper.dart';
 
@@ -14,57 +15,17 @@ class PetitionResultTab extends StatelessWidget {
   });
 
   String _getStatusLabel(String status) {
-    switch (status.toLowerCase()) {
-      case 'new':
-      case 'todo':
-        return 'Mới tiếp nhận';
-      case 'processing':
-      case 'in_progress':
-        return 'Đang xử lý';
-      case 'completed':
-      case 'done':
-        return 'Đã hoàn thành';
-      case 'paused':
-        return 'Tạm dừng';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
-    }
+    return PetitionProcessingStatus.fromKey(status).label;
   }
 
   Color _getStatusBgColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'done':
-        return AppColors.badgeGreenBg;
-      case 'processing':
-      case 'in_progress':
-        return AppColors.badgeBlueBg;
-      case 'paused':
-        return AppColors.bgYellowLight;
-      case 'cancelled':
-        return AppColors.badgeRedBg;
-      default:
-        return isDark ? AppColors.white10 : AppColors.borderLight;
-    }
+    final s = PetitionProcessingStatus.fromKey(status);
+    return s.color.withValues(alpha: 0.12);
   }
 
   Color _getStatusTextColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'done':
-        return AppColors.textGreen;
-      case 'processing':
-      case 'in_progress':
-        return AppColors.primary;
-      case 'paused':
-        return AppColors.warningOrange;
-      case 'cancelled':
-        return AppColors.dangerText;
-      default:
-        return isDark ? AppColors.white70 : AppColors.textGrayDark;
-    }
+    final s = PetitionProcessingStatus.fromKey(status);
+    return s.color;
   }
 
   @override
