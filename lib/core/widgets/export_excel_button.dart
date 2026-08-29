@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:developer' as dev;
 import '../../helper/date_helper.dart';
 import '../../helper/dio_helper.dart';
@@ -114,33 +115,61 @@ class ExportExcelButton extends StatefulWidget {
       if (response.statusCode == 200) {
         // Tự động mở tệp Excel ngay sau khi tải xong
         final openResult = await OpenFile.open(savePath);
-        dev.log("📂 [EXCEL EXPORT] Mở file: ${openResult.message}", name: "ExportExcel");
+        dev.log("📂 [EXCEL EXPORT] Mở file: ${openResult.message} (${openResult.type})", name: "ExportExcel");
 
         final fileName = savePath.split('/').last;
-        Get.snackbar(
-          "Xuất Excel thành công",
-          "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFF2E7D32),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 6),
-          margin: const EdgeInsets.all(12),
-          borderRadius: 12,
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-          mainButton: TextButton(
-            onPressed: () async {
-              await OpenFile.open(savePath);
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+
+        if (openResult.type == ResultType.noAppToOpen) {
+          Get.snackbar(
+            "Xuất Excel thành công",
+            "Đã lưu tệp: $fileName\nMáy chưa có ứng dụng đọc Excel. Bấm 'CHIA SẺ' để mở qua Zalo, Drive hoặc cài Excel/WPS.",
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFF1E3A8A),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 8),
+            margin: const EdgeInsets.all(12),
+            borderRadius: 12,
+            icon: const Icon(Icons.share, color: Colors.white),
+            mainButton: TextButton(
+              onPressed: () async {
+                await Share.shareXFiles([XFile(savePath)], text: 'Báo cáo Excel: $fileName');
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text(
+                "CHIA SẺ",
+                style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+              ),
             ),
-            child: const Text(
-              "MỞ TỆP",
-              style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+          );
+        } else {
+          Get.snackbar(
+            "Xuất Excel thành công",
+            "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại.",
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFF2E7D32),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 6),
+            margin: const EdgeInsets.all(12),
+            borderRadius: 12,
+            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+            mainButton: TextButton(
+              onPressed: () async {
+                await OpenFile.open(savePath);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text(
+                "MỞ TỆP",
+                style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-        );
+          );
+        }
       } else {
         Get.snackbar(
           "Lỗi",
@@ -212,29 +241,52 @@ class _ExportExcelButtonState extends State<ExportExcelButton> {
       );
 
       if (response.statusCode == 200) {
-        // Tự động mở file Excel ngay
-        await OpenFile.open(savePath);
-
+        final openResult = await OpenFile.open(savePath);
         final fileName = savePath.split('/').last;
-        Get.snackbar(
-          "Xuất Excel thành công", 
-          "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFF2E7D32),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 6),
-          margin: const EdgeInsets.all(12),
-          borderRadius: 12,
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-          mainButton: TextButton(
-            onPressed: () => OpenFile.open(savePath),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+
+        if (openResult.type == ResultType.noAppToOpen) {
+          Get.snackbar(
+            "Xuất Excel thành công", 
+            "Đã lưu tệp: $fileName\nMáy chưa có ứng dụng đọc Excel. Bấm 'CHIA SẺ' để mở qua Zalo, Drive hoặc cài Excel/WPS.",
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFF1E3A8A),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 8),
+            margin: const EdgeInsets.all(12),
+            borderRadius: 12,
+            icon: const Icon(Icons.share, color: Colors.white),
+            mainButton: TextButton(
+              onPressed: () async {
+                await Share.shareXFiles([XFile(savePath)], text: 'Báo cáo Excel: $fileName');
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text("CHIA SẺ", style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold)),
             ),
-            child: const Text("MỞ TỆP", style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
-          ),
-        );
+          );
+        } else {
+          Get.snackbar(
+            "Xuất Excel thành công", 
+            "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại.",
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFF2E7D32),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 6),
+            margin: const EdgeInsets.all(12),
+            borderRadius: 12,
+            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+            mainButton: TextButton(
+              onPressed: () => OpenFile.open(savePath),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text("MỞ TỆP", style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+            ),
+          );
+        }
       } else {
         Get.snackbar("Lỗi", "Không thể xuất dữ liệu. HTTP ${response.statusCode}", backgroundColor: Colors.redAccent, colorText: Colors.white);
       }

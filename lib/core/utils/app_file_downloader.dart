@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:dio/dio.dart';
 import '../../core/api_constants.dart';
 import '../../helper/dio_helper.dart';
@@ -15,7 +16,8 @@ import '../../untils/app_colors.dart';
 class AppFileDownloader {
   AppFileDownloader._();
 
-  /// Tải tệp từ URL về thiết bị và tự động mở bằng ứng dụng đọc tệp mặc định
+  /// Tải tệp từ URL về thiết bị, tự động mở bằng ứng dụng tương ứng
+  /// hoặc kích hoạt Chia sẻ nếu thiết bị chưa cài ứng dụng đọc tệp
   static Future<void> downloadAndOpen({
     required String fileUrl,
     String? customFileName,
@@ -145,31 +147,59 @@ class AppFileDownloader {
         final openResult = await OpenFile.open(savePath);
         dev.log("📂 [OPEN FILE] Kết quả: ${openResult.message} (${openResult.type})", name: "AppFileDownloader");
 
-        // 7. Hiển thị Snackbar thông báo thành công kèm nút "MỞ TỆP"
-        Get.snackbar(
-          "Tải tệp thành công",
-          "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại bất cứ lúc nào.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFF2E7D32),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 6),
-          margin: const EdgeInsets.all(12),
-          borderRadius: 12,
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-          mainButton: TextButton(
-            onPressed: () async {
-              await OpenFile.open(savePath);
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        if (openResult.type == ResultType.noAppToOpen) {
+          // TH1: Máy chưa cài app đọc file -> Bật Share Sheet của máy hoặc gợi ý chia sẻ
+          Get.snackbar(
+            "Tải tệp thành công",
+            "Đã lưu tệp: $fileName\nMáy chưa có app đọc tệp này. Bấm 'CHIA SẺ' để mở qua Zalo, Drive hoặc cài ứng dụng đọc PDF.",
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFF1E3A8A), // Blue
+            colorText: Colors.white,
+            duration: const Duration(seconds: 8),
+            margin: const EdgeInsets.all(12),
+            borderRadius: 12,
+            icon: const Icon(Icons.share, color: Colors.white),
+            mainButton: TextButton(
+              onPressed: () async {
+                await Share.shareXFiles([XFile(savePath)], text: 'Tệp đính kèm: $fileName');
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text(
+                "CHIA SẺ",
+                style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+              ),
             ),
-            child: const Text(
-              "MỞ TỆP",
-              style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+          );
+        } else {
+          // TH2: Mở thành công bằng ứng dụng trên máy
+          Get.snackbar(
+            "Tải tệp thành công",
+            "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại bất cứ lúc nào.",
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: const Color(0xFF2E7D32), // Green
+            colorText: Colors.white,
+            duration: const Duration(seconds: 6),
+            margin: const EdgeInsets.all(12),
+            borderRadius: 12,
+            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+            mainButton: TextButton(
+              onPressed: () async {
+                await OpenFile.open(savePath);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text(
+                "MỞ TỆP",
+                style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-        );
+          );
+        }
       } else {
         Get.snackbar(
           "Lỗi tải tệp",
