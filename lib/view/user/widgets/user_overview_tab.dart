@@ -6,6 +6,7 @@ import '../../../controllers/log_activity_controller.dart';
 import '../../../controllers/notification_controller.dart';
 import '../../../untils/app_colors.dart';
 import '../../../untils/app_strings.dart';
+import '../../../core/utils/app_formatter.dart';
 import '../../widgets/skeleton_loader.dart';
 
 class UserOverviewTab extends StatelessWidget {
@@ -166,6 +167,38 @@ class UserOverviewTab extends StatelessWidget {
                           strokeWidth: 1,
                         ),
                       ),
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipColor: (touchedSpot) => isDark ? const Color(0xFF1E1B4B) : const Color(0xFF312E81),
+                          tooltipRoundedRadius: 10,
+                          tooltipPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          tooltipMargin: 8,
+                          getTooltipItems: (touchedSpots) {
+                            return touchedSpots.map((spot) {
+                              final month = spot.x.toInt();
+                              final count = spot.y.toInt();
+                              return LineTooltipItem(
+                                'Tháng $month\n',
+                                const TextStyle(
+                                  color: Color(0xFFC7D2FE),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '${AppFormatter.number(count)} lượt',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList();
+                          },
+                        ),
+                      ),
                       titlesData: FlTitlesData(
                         show: true,
                         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -173,7 +206,7 @@ class UserOverviewTab extends StatelessWidget {
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 22,
+                            reservedSize: 24,
                             interval: 1,
                             getTitlesWidget: (value, meta) {
                               final m = value.toInt();
@@ -183,9 +216,9 @@ class UserOverviewTab extends StatelessWidget {
                                 child: Text(
                                   'T$m',
                                   style: TextStyle(
-                                    color: isDark ? AppColors.white30 : AppColors.grey[500],
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AppColors.white70 : AppColors.grey700,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               );
@@ -196,14 +229,14 @@ class UserOverviewTab extends StatelessWidget {
                           sideTitles: SideTitles(
                             showTitles: true,
                             interval: computedMaxY > 0 ? computedMaxY / 4 : 500,
-                            reservedSize: 34,
+                            reservedSize: 36,
                             getTitlesWidget: (value, meta) {
                               if (value == 0) {
-                                return Text('0', style: TextStyle(color: isDark ? AppColors.white30 : AppColors.grey[500], fontSize: 9));
+                                return Text('0', style: TextStyle(color: isDark ? AppColors.white70 : AppColors.grey700, fontSize: 10, fontWeight: FontWeight.w600));
                               }
                               return Text(
-                                value >= 1000 ? (value / 1000).toStringAsFixed(1) + 'k' : value.toInt().toString(),
-                                style: TextStyle(color: isDark ? AppColors.white30 : AppColors.grey[500], fontSize: 8.5),
+                                value >= 1000 ? '${(value / 1000).toStringAsFixed(1)}k' : value.toInt().toString(),
+                                style: TextStyle(color: isDark ? AppColors.white70 : AppColors.grey700, fontSize: 10, fontWeight: FontWeight.w600),
                               );
                             },
                           ),
