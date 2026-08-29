@@ -112,17 +112,24 @@ class ExportExcelButton extends StatefulWidget {
       dev.log("✅ [EXCEL EXPORT] Thành công (Status ${response.statusCode}): $savePath", name: "ExportExcel");
 
       if (response.statusCode == 200) {
+        // Tự động mở tệp Excel ngay sau khi tải xong
+        final openResult = await OpenFile.open(savePath);
+        dev.log("📂 [EXCEL EXPORT] Mở file: ${openResult.message}", name: "ExportExcel");
+
+        final fileName = savePath.split('/').last;
         Get.snackbar(
           "Xuất Excel thành công",
-          "Tệp đã được lưu vào thiết bị.\nBấm 'MỞ TỆP' để xem ngay.",
+          "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại.",
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFF2E7D32),
           colorText: Colors.white,
           duration: const Duration(seconds: 6),
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
           mainButton: TextButton(
             onPressed: () async {
-              final result = await OpenFile.open(savePath);
-              dev.log("📂 Mở file Excel: ${result.message}", name: "ExportExcel");
+              await OpenFile.open(savePath);
             },
             style: TextButton.styleFrom(
               backgroundColor: Colors.white,
@@ -205,13 +212,20 @@ class _ExportExcelButtonState extends State<ExportExcelButton> {
       );
 
       if (response.statusCode == 200) {
+        // Tự động mở file Excel ngay
+        await OpenFile.open(savePath);
+
+        final fileName = savePath.split('/').last;
         Get.snackbar(
-          "Thành công", 
-          "Đã xuất file thành công.\nLưu tại: $savePath",
+          "Xuất Excel thành công", 
+          "Đã lưu tệp: $fileName\nBấm 'MỞ TỆP' để xem lại.",
           snackPosition: SnackPosition.TOP,
           backgroundColor: const Color(0xFF2E7D32),
           colorText: Colors.white,
           duration: const Duration(seconds: 6),
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
           mainButton: TextButton(
             onPressed: () => OpenFile.open(savePath),
             style: TextButton.styleFrom(
