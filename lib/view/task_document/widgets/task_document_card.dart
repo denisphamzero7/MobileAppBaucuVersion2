@@ -27,8 +27,7 @@ class TaskDocumentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPublished = document.isPublished;
-    final dotColor = isPublished ? AppColors.done : AppColors.paused;
+    final dotColor = document.statusColor;
 
     final cardContent = Container(
       margin: isMultiSelectMode ? EdgeInsets.zero : const EdgeInsets.only(bottom: 10),

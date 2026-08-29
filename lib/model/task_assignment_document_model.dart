@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../core/enums/task_document_enums.dart';
+
 class TaskAssignmentDocumentModel {
   final int id;
   final String title;
@@ -28,6 +31,15 @@ class TaskAssignmentDocumentModel {
     this.departmentName,
     this.attachments,
   });
+
+  TaskDocumentStatus get documentStatus {
+    if (isPublished) return TaskDocumentStatus.published;
+    return TaskDocumentStatus.draft;
+  }
+
+  String get statusLabel => documentStatus.label;
+  Color get statusColor => documentStatus.color;
+  IconData get statusIcon => documentStatus.icon;
 
   bool get isPublished {
     final s = status.toLowerCase().trim();
