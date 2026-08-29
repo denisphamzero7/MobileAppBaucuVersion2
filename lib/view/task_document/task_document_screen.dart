@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../controllers/task_document_controller.dart';
 import '../../model/task_assignment_document_model.dart';
 import '../../untils/app_colors.dart';
+import '../../untils/app_strings.dart';
 import '../../core/widgets/app_pagination_widget.dart';
 import '../../core/widgets/app_paged_list_wrapper.dart';
 import '../../core/widgets/import_excel_button.dart';
@@ -145,7 +146,7 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
           onPressed: () => Get.find<NavigationController>().changeIndex(0),
         ),
         title: const Text(
-          'Văn bản giao việc',
+          AppStrings.taskDocumentScreenTitle,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: false,
@@ -255,7 +256,7 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Không có văn bản giao việc nào',
+                            AppStrings.noTaskDocumentsFound,
                             style: TextStyle(
                               color: isDark ? AppColors.white70 : AppColors.grey[600],
                               fontSize: 14,

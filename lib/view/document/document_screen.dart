@@ -4,6 +4,7 @@ import '../../controllers/navigation.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/petition_controller.dart';
 import '../../untils/app_colors.dart';
+import '../../untils/app_strings.dart';
 import '../../helper/date_helper.dart';
 import '../../service/petition_service.dart';
 import '../../core/widgets/import_excel_button.dart';
@@ -147,7 +148,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
           onPressed: () => Get.find<NavigationController>().changeIndex(0),
         ),
         title: const Text(
-          'Đơn thư & Kiến nghị',
+          AppStrings.petitionScreenTitle,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: false,

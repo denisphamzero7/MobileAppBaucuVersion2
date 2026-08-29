@@ -1,5 +1,7 @@
-/// [AppStrings] - Quản lý tập trung toàn bộ chuỗi văn bản (Strings) trong ứng dụng
-/// Khi cần thay đổi câu chữ, nhãn nút bấm, tiêu đề... chỉ cần sửa tại file này.
+/// ============================================================================
+/// 📌 [AppStrings] - QUẢN LÝ TẬP TRUNG TOÀN BỘ CHUỖI VĂN BẢN (STRINGS) HỆ THỐNG
+/// ============================================================================
+/// Tất cả nhãn hiển thị, tiêu đề màn hình, thông báo, nút bấm... được quản lý tại đây.
 class AppStrings {
   // Private constructor để tránh khởi tạo instance
   AppStrings._();
@@ -28,7 +30,17 @@ class AppStrings {
   static const String refresh = 'Làm mới';
   static const String search = 'Tìm kiếm';
   static const String filter = 'Bộ lọc';
+  static const String resetFilter = 'Đặt lại';
+  static const String applyFilter = 'Áp dụng';
   static const String all = 'Tất cả';
+  static const String share = 'Chia sẻ';
+  static const String openFile = 'Mở tệp';
+  static const String download = 'Tải về';
+  static const String exportExcel = 'Xuất Excel';
+  static const String importExcel = 'Nhập Excel';
+  static const String emptyData = 'Không có dữ liệu';
+  static const String noAttachment = 'Chưa có tệp đính kèm';
+  static const String attachmentTitle = 'TỆP ĐÍNH KÈM';
 
   // ===========================================================================
   // 2. MÀN HÌNH TRANG CÁ NHÂN / NGƯỜI DÙNG (PROFILE & USER SCREEN)
@@ -73,7 +85,7 @@ class AppStrings {
   static const String loggingOut = 'Đang thực hiện đăng xuất...';
 
   // ===========================================================================
-  // 3. QUẢN LÝ CÔNG VIỆC (TASK ASSIGNMENT)
+  // 3. QUẢN LÝ CÔNG VIỆC (TASK MANAGEMENT)
   // ===========================================================================
   static const String taskSent = 'Công việc đang giao';
   static const String taskReceived = 'Công việc được giao';
@@ -118,6 +130,12 @@ class AppStrings {
   static const String timingLateUpper = 'TRỄ HẠN';
   static const String timingOverdueUpper = 'QUÁ HẠN';
 
+  // Tabs chi tiết công việc
+  static const String taskTabInfo = 'Thông tin';
+  static const String taskTabReport = 'Báo cáo';
+  static const String taskTabDiscussion = 'Trao đổi';
+  static const String taskTabDocument = 'Văn bản';
+
   // Quick Action Menu & Nút bấm
   static const String createTaskAction = 'Tạo việc mới';
   static const String createTaskSubtitle = 'Thêm & phân công';
@@ -134,13 +152,54 @@ class AppStrings {
   // ===========================================================================
   // 4. QUẢN LÝ ĐƠN THƯ & KIẾN NGHỊ (PETITIONS & DOCUMENTS)
   // ===========================================================================
+  static const String petitionScreenTitle = 'Quản lý đơn thư';
   static const String petitionList = 'Danh sách đơn thư';
   static const String petitionDetails = 'Chi tiết đơn thư';
   static const String searchPetitionHint = 'Tìm kiếm đơn thư, người gửi...';
   static const String noPetitionsFound = 'Không có đơn thư nào';
+  static const String petitionTabInfo = 'Thông tin đơn';
+  static const String petitionTabResult = 'Kết quả xử lý';
+  static const String petitionSender = 'Người gửi / Nguồn đơn';
+  static const String petitionPhone = 'Số điện thoại';
+  static const String petitionAddress = 'Địa chỉ';
+  static const String petitionReceivedDate = 'Ngày tiếp nhận';
+  static const String petitionContent = 'Nội dung đơn thư';
+  static const String petitionProcessingResult = 'Kết quả giải quyết';
 
   // ===========================================================================
-  // 5. THANH PHÂN TRANG (PAGINATION)
+  // 5. QUẢN LÝ VĂN BẢN GIAO VIỆC (TASK ASSIGNMENT DOCUMENTS)
+  // ===========================================================================
+  static const String taskDocumentScreenTitle = 'Văn bản giao việc';
+  static const String searchTaskDocumentHint = 'Tìm kiếm văn bản theo số hiệu, trích yếu...';
+  static const String noTaskDocumentsFound = 'Không tìm thấy văn bản giao việc nào';
+  static const String taskDocumentFilterTitle = 'Bộ lọc văn bản';
+  static const String taskDocumentStatusTitle = 'Trạng thái văn bản';
+  static const String taskDocumentDepartmentTitle = 'Phòng ban';
+  static const String allDepartments = 'Tất cả phòng ban';
+  static const String documentCode = 'Số / Mã hiệu văn bản';
+  static const String documentDate = 'Ngày ban hành';
+  static const String documentAssignedTasks = 'Công việc thuộc văn bản';
+  static const String documentStatusPublished = 'Đã ban hành';
+  static const String documentStatusDraft = 'Bản nháp';
+
+  // ===========================================================================
+  // 6. BÁO CÁO THỐNG KÊ (STATISTICS & REPORTS)
+  // ===========================================================================
+  static const String statisticScreenTitle = 'Thống kê công việc';
+  static const String statisticOverview = 'Tổng quan số liệu';
+  static const String statisticDistribution = 'Phân bố công việc';
+  static const String statisticByStatus = 'Theo trạng thái';
+  static const String statisticByTiming = 'Theo tiến độ';
+  static const String statisticByDepartment = 'Theo phòng ban';
+  static const String statisticCompletionRate = 'Tỷ lệ hoàn thành';
+  static const String statisticPeriodFilter = 'Thời gian thống kê';
+  static const String filterThisWeek = 'Tuần này';
+  static const String filterThisMonth = 'Tháng này';
+  static const String filterThisQuarter = 'Quý này';
+  static const String filterThisYear = 'Năm nay';
+
+  // ===========================================================================
+  // 7. THANH PHÂN TRANG (PAGINATION)
   // ===========================================================================
   static const String prevPage = 'Trước';
   static const String nextPage = 'Sau';

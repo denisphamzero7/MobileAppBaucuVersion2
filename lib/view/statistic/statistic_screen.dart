@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/task_controller.dart';
 import '../../untils/app_colors.dart';
+import '../../untils/app_strings.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/smart_skeleton_wrapper.dart';
 import 'widgets/statistic_top_filters_widget.dart';
@@ -49,7 +50,7 @@ class _StatisticScreenState extends State<StatisticScreen> with AutomaticKeepAli
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       appBar: AppBar(
         title: Text(
-          'Thống kê công việc',
+          AppStrings.statisticScreenTitle,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
