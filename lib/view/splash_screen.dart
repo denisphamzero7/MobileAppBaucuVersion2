@@ -95,7 +95,7 @@ class SplashScreen extends StatelessWidget {
                     child: const Column(
                       children: [
                         Text(
-                          "FASHION",
+                          "BẦU CỬ",
                           style: TextStyle(
                               color: AppColors.white,
                               fontSize: 32,
@@ -104,7 +104,7 @@ class SplashScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          "STORE",
+                          "ĐÀ NẴNG",
                           style: TextStyle(
                               color: AppColors.white,
                               fontSize: 32,
@@ -134,7 +134,7 @@ class SplashScreen extends StatelessWidget {
                   );
                 },
                 child: Text(
-                  'Style Meets Simplicity',
+                  'Chào mừng đến thành phố đáng sống',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.white.withOpacity(0.9),

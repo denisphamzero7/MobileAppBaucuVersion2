@@ -52,29 +52,77 @@ import 'package:flutter/material.dart';
 import '../../untils/app_colors.dart';
 
 enum SampleModuleStatus {
-  all(key: 'all', label: 'Tất cả', icon: Icons.filter_list, color: AppColors.primary),
-  active(key: 'active', label: 'Đang hoạt động', icon: Icons.check_circle_outline, color: AppColors.done),
-  pending(key: 'pending', label: 'Chờ duyệt', icon: Icons.access_time, color: AppColors.paused),
-  inactive(key: 'inactive', label: 'Ngừng hoạt động', icon: Icons.cancel_outlined, color: AppColors.cancelled);
+  all(
+    key: 'all',
+    label: 'Tất cả',
+    icon: Icons.filter_list,
+    color: AppColors.primary,
+    aliases: ['tat_ca', 'tatca'],
+  ),
+  active(
+    key: 'active',
+    label: 'Đang hoạt động',
+    icon: Icons.check_circle_outline,
+    color: AppColors.done,
+    aliases: ['1', 'running', 'dang_hoat_dong'],
+  ),
+  pending(
+    key: 'pending',
+    label: 'Chờ duyệt',
+    icon: Icons.access_time,
+    color: AppColors.paused,
+    aliases: ['cho_duyet', 'waiting', 'review'],
+  ),
+  inactive(
+    key: 'inactive',
+    label: 'Ngừng hoạt động',
+    icon: Icons.cancel_outlined,
+    color: AppColors.cancelled,
+    aliases: ['0', 'stopped', 'ngung_hoat_dong'],
+  );
 
   final String key;
   final String label;
   final IconData icon;
   final Color color;
+  final List<String> aliases;
 
   const SampleModuleStatus({
     required this.key,
     required this.label,
     required this.icon,
     required this.color,
+    this.aliases = const [],
   });
 
-  static SampleModuleStatus fromKey(String? key) {
-    return SampleModuleStatus.values.firstWhere(
-      (e) => e.key == key,
-      orElse: () => SampleModuleStatus.all,
-    );
+  static final Map<String, SampleModuleStatus> _lookupMap = () {
+    final map = <String, SampleModuleStatus>{};
+    for (final s in SampleModuleStatus.values) {
+      map[s.key.toLowerCase()] = s;
+      for (final alias in s.aliases) {
+        map[alias.toLowerCase()] = s;
+      }
+    }
+    return map;
+  }();
+
+  /// Parse cho Entity (fallback an toàn là 'active')
+  static SampleModuleStatus fromKey(
+    String? key, {
+    SampleModuleStatus fallback = SampleModuleStatus.active,
+  }) {
+    if (key == null || key.trim().isEmpty) return fallback;
+    return _lookupMap[key.toLowerCase().trim()] ?? fallback;
   }
+
+  /// Parse cho Bộ lọc UI (fallback là 'all')
+  static SampleModuleStatus fromFilterKey(String? key) {
+    return fromKey(key, fallback: SampleModuleStatus.all);
+  }
+
+  static List<SampleModuleStatus> get filterOptions => SampleModuleStatus.values;
+  static List<SampleModuleStatus> get formOptions =>
+      SampleModuleStatus.values.where((e) => e != SampleModuleStatus.all).toList();
 }
 ```
 

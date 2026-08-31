@@ -32,38 +32,26 @@ class TaskAssignmentDocumentModel {
     this.attachments,
   });
 
-  TaskDocumentStatus get documentStatus {
-    if (isPublished) return TaskDocumentStatus.published;
-    return TaskDocumentStatus.draft;
-  }
+  TaskDocumentStatus get documentStatus =>
+      TaskDocumentStatus.fromKey(status, fallback: TaskDocumentStatus.published);
 
   String get statusLabel => documentStatus.label;
   Color get statusColor => documentStatus.color;
   IconData get statusIcon => documentStatus.icon;
 
-  bool get isPublished {
-    final s = status.toLowerCase().trim();
-    return s == 'published' ||
-        s == 'issued' ||
-        s == 'active' ||
-        s == '1' ||
-        s == 'done' ||
-        s.contains('ban_hanh') ||
-        s.contains('ban hành');
-  }
-  bool get isDraft => !isPublished;
+  bool get isPublished => documentStatus.isPublished;
+  bool get isDraft => documentStatus.isDraft;
   String get name => title;
 
   factory TaskAssignmentDocumentModel.fromJson(Map<String, dynamic> json) {
     final titleStr = json['title'] ?? json['name'] ?? json['subject'] ?? json['document_number'] ?? 'Văn bản #${json['id']}';
     
-    // Status resolution
-    String rawStatus = (json['status'] ?? json['processing_status'] ?? json['state'] ?? 'published').toString().toLowerCase();
-    if (rawStatus == '1' || rawStatus == 'issued' || rawStatus == 'active' || rawStatus == 'done') {
-      rawStatus = 'published';
-    } else if (rawStatus == '0' || rawStatus == 'draft' || rawStatus == 'pending') {
-      rawStatus = 'draft';
-    }
+    // Status resolution via Enum
+    final resolvedEnum = TaskDocumentStatus.fromKey(
+      json['status']?.toString() ?? json['processing_status']?.toString() ?? json['state']?.toString(),
+      fallback: TaskDocumentStatus.published,
+    );
+    final rawStatus = resolvedEnum.key;
 
     // Task count resolution
     int tCount = 0;

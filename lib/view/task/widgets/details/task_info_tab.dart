@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../../model/task_model.dart';
 import '../../../../core/enums/task_enums.dart';
+import '../../../../core/enums/file_enums.dart';
 import '../../../../untils/app_colors.dart';
 import '../../../../helper/date_helper.dart';
 import '../../../../core/utils/app_file_downloader.dart';
@@ -287,52 +287,55 @@ class _TaskInfoTabState extends State<TaskInfoTab> {
               ),
             )
           else
-            ...attachments.map((file) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : AppColors.badgeBlueBg.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isDark ? AppColors.white10 : AppColors.primary.withValues(alpha: 0.1),
+            ...attachments.map((file) {
+              final fileType = FileAttachmentType.fromFileName(file.name);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : fileType.color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? AppColors.white10 : fileType.color.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(fileType.icon, size: 20, color: fileType.color),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        file.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.white : AppColors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.link, size: 18, color: AppColors.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          file.name,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                    InkWell(
+                      onTap: () {
+                        final fileUrl = file.url ?? file.path ?? '';
+                        AppFileDownloader.downloadAndOpen(
+                          fileUrl: fileUrl,
+                          customFileName: file.name,
+                        );
+                      },
+                      child: Text(
+                        'Mở / Tải về',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: fileType.color,
                         ),
                       ),
-                      InkWell(
-                        onTap: () {
-                          final fileUrl = file.url ?? file.path ?? '';
-                          AppFileDownloader.downloadAndOpen(
-                            fileUrl: fileUrl,
-                            customFileName: file.name,
-                          );
-                        },
-                        child: const Text(
-                          'Mở / Tải về',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              );
+            }),
 
           // 8. DANH SÁCH BÁO CÁO TIẾN ĐỘ (GIỐNG WEB)
           () {

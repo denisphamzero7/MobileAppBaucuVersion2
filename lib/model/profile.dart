@@ -1,3 +1,5 @@
+import '../core/enums/user_enums.dart';
+
 class ProfileData {
   final String id;
   final String name;
@@ -14,6 +16,8 @@ class ProfileData {
     this.role,
     required this.permissions,
   });
+
+  UserRole get userRole => UserRole.fromKey(role?.name);
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
     var userJson = json['user'] as Map<String, dynamic>? ?? {};
@@ -37,4 +41,6 @@ class Role {
   Role({
     required this.name,
   });
+
+  UserRole get roleEnum => UserRole.fromKey(name);
 }

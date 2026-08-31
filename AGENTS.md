@@ -30,35 +30,79 @@ Mỗi Enum đại diện cho trạng thái cần chứa đầy đủ các thuộ
 - `label`: Tên nhãn hiển thị tiếng Việt (`String`)
 - `icon`: Biểu tượng hiển thị (`IconData`)
 - `color`: Màu sắc đại diện (`Color`)
-- Hàm helper `fromKey(String? key)` để parse an toàn từ API response.
+- `aliases`: Danh sách từ đồng nghĩa / giá trị API tương đương (`List<String>`)
+- Hàm helper `fromKey(String? key, {fallback})` để parse an toàn từ API response với tra cứu $O(1)$.
+- Hàm helper `fromFilterKey(String? key)` để parse cho bộ lọc (fallback về `all`).
 
 ```dart
 import 'package:flutter/material.dart';
 import '../../untils/app_colors.dart';
 
 enum MyNewModuleStatus {
-  all(key: 'all', label: 'Tất cả', icon: Icons.filter_list, color: AppColors.primary),
-  active(key: 'active', label: 'Đang hoạt động', icon: Icons.check_circle_outline, color: AppColors.done),
-  inactive(key: 'inactive', label: 'Ngừng hoạt động', icon: Icons.pause_circle_outline, color: AppColors.paused);
+  all(
+    key: 'all',
+    label: 'Tất cả',
+    icon: Icons.filter_list,
+    color: AppColors.primary,
+    aliases: ['tat_ca', 'tatca'],
+  ),
+  active(
+    key: 'active',
+    label: 'Đang hoạt động',
+    icon: Icons.check_circle_outline,
+    color: AppColors.done,
+    aliases: ['1', 'running', 'dang_hoat_dong'],
+  ),
+  inactive(
+    key: 'inactive',
+    label: 'Ngừng hoạt động',
+    icon: Icons.pause_circle_outline,
+    color: AppColors.paused,
+    aliases: ['0', 'stopped', 'ngung_hoat_dong'],
+  );
 
   final String key;
   final String label;
   final IconData icon;
   final Color color;
+  final List<String> aliases;
 
   const MyNewModuleStatus({
     required this.key,
     required this.label,
     required this.icon,
     required this.color,
+    this.aliases = const [],
   });
 
-  static MyNewModuleStatus fromKey(String? key) {
-    return MyNewModuleStatus.values.firstWhere(
-      (e) => e.key == key,
-      orElse: () => MyNewModuleStatus.all,
-    );
+  static final Map<String, MyNewModuleStatus> _lookupMap = () {
+    final map = <String, MyNewModuleStatus>{};
+    for (final s in MyNewModuleStatus.values) {
+      map[s.key.toLowerCase()] = s;
+      for (final alias in s.aliases) {
+        map[alias.toLowerCase()] = s;
+      }
+    }
+    return map;
+  }();
+
+  /// Parse cho Entity (mặc định fallback về trạng thái an toàn: active/todo)
+  static MyNewModuleStatus fromKey(
+    String? key, {
+    MyNewModuleStatus fallback = MyNewModuleStatus.active,
+  }) {
+    if (key == null || key.trim().isEmpty) return fallback;
+    return _lookupMap[key.toLowerCase().trim()] ?? fallback;
   }
+
+  /// Parse cho Filter (mặc định fallback về 'all')
+  static MyNewModuleStatus fromFilterKey(String? key) {
+    return fromKey(key, fallback: MyNewModuleStatus.all);
+  }
+
+  static List<MyNewModuleStatus> get filterOptions => MyNewModuleStatus.values;
+  static List<MyNewModuleStatus> get formOptions =>
+      MyNewModuleStatus.values.where((e) => e != MyNewModuleStatus.all).toList();
 }
 ```
 

@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../core/enums/notification_enums.dart';
+
 class NotificationModel {
   final String id;
   final String userId;
@@ -16,6 +19,11 @@ class NotificationModel {
     required this.isRead,
     required this.createdAt,
   });
+
+  NotificationType get typeEnum => NotificationType.fromKey(type);
+  String get typeLabel => typeEnum.label;
+  IconData get typeIcon => typeEnum.icon;
+  Color get typeColor => typeEnum.color;
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     // Thích ứng linh hoạt giữa NestJS (camelCase) và Laravel (snake_case)

@@ -144,17 +144,17 @@ class StatusInfoCard extends StatelessWidget {
                         children: [
                           Expanded(
                             flex: 2,
-                            child: _buildGridItem('Tổng số', total.toString(), AppColors.todo, AppColors.bgPurpleLight, isDark),
+                            child: _buildGridItem('Tất cả', total.toString(), AppColors.todo, AppColors.bgPurpleLight, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             flex: 1,
-                            child: _buildGridItem('Chưa làm', todo.toString(), AppColors.textGrayDark, AppColors.lightBg, isDark),
+                            child: _buildGridItem('Chưa thực hiện', todo.toString(), AppColors.textGrayDark, AppColors.lightBg, isDark),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             flex: 1,
-                            child: _buildGridItem('Đang làm', inProgress.toString(), AppColors.inProgress, AppColors.bgBlueLight, isDark),
+                            child: _buildGridItem('Đang thực hiện', inProgress.toString(), AppColors.inProgress, AppColors.bgBlueLight, isDark),
                           ),
                         ],
                       ),

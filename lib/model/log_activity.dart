@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../core/enums/log_activity_enums.dart';
+
 class LogActivity {
   final int id;
   final String description;
@@ -12,6 +15,11 @@ class LogActivity {
     required this.ipAddress,
     required this.createdAt,
   });
+
+  LogActivityMethod get methodEnum => LogActivityMethod.fromKey(method);
+  Color get methodColor => methodEnum.color;
+  IconData get methodIcon => methodEnum.icon;
+  String get methodLabel => methodEnum.label;
 
   factory LogActivity.fromJson(Map<String, dynamic> json) => LogActivity(
     id: json["id"] as int? ?? 0,

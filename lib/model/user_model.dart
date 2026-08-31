@@ -1,3 +1,5 @@
+import '../core/enums/user_enums.dart';
+
 class User {
   final int id;
   final String name;
@@ -22,6 +24,8 @@ class User {
     this.assignmentRole,
     this.rawJson,
   });
+
+  UserRole get roleEnum => UserRole.fromKey(departmentRole ?? assignmentRole);
 
   factory User.fromJson(Map<String, dynamic> json) {
     int? deptId = json["department_id"] as int?;

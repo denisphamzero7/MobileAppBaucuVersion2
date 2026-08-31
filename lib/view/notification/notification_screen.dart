@@ -1,4 +1,5 @@
 import '../../untils/app_colors.dart';
+import '../../core/enums/notification_enums.dart';
 import 'package:app_baucu_version1/controllers/notification_controller.dart';
 import 'package:app_baucu_version1/model/notification.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
@@ -192,38 +193,15 @@ class NotificationScreen extends GetView<NotificationController> {
 
   // --- HELPER: ICON THEO LOẠI THÔNG BÁO ---
   Widget _buildTypeIcon(String type) {
-    IconData icon;
-    Color color;
-
-    switch (type) {
-      case 'VOTE_SUCCESS':
-        icon = Icons.check_circle_outline;
-        color = AppColors.green;
-        break;
-      case 'VOTE_WARNING':
-        icon = Icons.warning_amber_rounded;
-        color = AppColors.orange;
-        break;
-      case 'SYSTEM':
-        icon = Icons.info_outline;
-        color = AppColors.blue;
-        break;
-      case 'UPDATE_VOTER':
-        icon = Icons.person_search_outlined;
-        color = AppColors.purple;
-        break;
-      default:
-        icon = Icons.notifications_none;
-        color = AppColors.grey;
-    }
+    final notifType = NotificationType.fromKey(type);
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: notifType.color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: color, size: 24),
+      child: Icon(notifType.icon, color: notifType.color, size: 24),
     );
   }
 

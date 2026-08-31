@@ -1,4 +1,5 @@
 import '../../untils/app_colors.dart';
+import '../../core/enums/common_enums.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/navigation.dart';
@@ -50,44 +51,14 @@ class _CustomBottomNavbarState extends State<CustomBottomNavbar> {
           selectedLabelStyle: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
           unselectedLabelStyle: const TextStyle(fontSize: 9, fontWeight: FontWeight.w500),
 
-          // Danh sách các tab
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Trang chủ',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.send_outlined),
-              activeIcon: Icon(Icons.send),
-              label: 'Đang giao',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.mail_outline),
-              activeIcon: Icon(Icons.mail),
-              label: 'Được giao',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.description_outlined),
-              activeIcon: Icon(Icons.description),
-              label: 'Đơn thư',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.insert_drive_file_outlined),
-              activeIcon: Icon(Icons.insert_drive_file),
-              label: 'Văn bản',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.pie_chart_outline),
-              activeIcon: Icon(Icons.pie_chart),
-              label: 'Thống kê',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Người dùng',
-            ),
-          ],
+          // Danh sách các tab tự động sinh từ Enum
+          items: AppNavigationTab.values.map((tab) {
+            return BottomNavigationBarItem(
+              icon: Icon(tab.icon),
+              activeIcon: Icon(tab.activeIcon),
+              label: tab.label,
+            );
+          }).toList(),
         ),
       ),
     );
