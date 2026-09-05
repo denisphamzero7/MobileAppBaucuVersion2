@@ -1,4 +1,5 @@
 import '../../untils/app_colors.dart';
+import '../../core/utils/app_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
@@ -77,10 +78,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   label: 'Full Name',
                   prefixIcon: Icons.person_outline,
                   controller: _nameController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter your name';
-                    return null;
-                  },
+                  validator: (value) => AppValidator.requiredField(
+                    value,
+                    customMessage: 'Please enter your name',
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -90,11 +91,11 @@ class _SignupScreenState extends State<SignupScreen> {
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   controller: _emailController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter your email';
-                    if (!value.contains('@')) return 'Invalid email format';
-                    return null;
-                  },
+                  validator: (value) => AppValidator.email(
+                    value,
+                    emptyMessage: 'Please enter your email',
+                    customMessage: 'Invalid email format',
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -104,10 +105,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   prefixIcon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   controller: _phoneController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter phone number';
-                    return null;
-                  },
+                  validator: (value) => AppValidator.requiredField(
+                    value,
+                    customMessage: 'Please enter phone number',
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -117,29 +118,29 @@ class _SignupScreenState extends State<SignupScreen> {
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                   controller: _passwordController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter password';
-                    if (value.length < 6) return 'Password must be at least 6 chars';
-                    return null;
-                  },
+                  validator: (value) => AppValidator.minLength(
+                    value,
+                    6,
+                    fieldName: 'Password',
+                    emptyMessage: 'Please enter password',
+                    customMessage: 'Password must be at least 6 chars',
+                  ),
                 ),
 
                 const SizedBox(height: 16),
 
-                // --- 5. CONFIRM PASSWORD (MỚI THÊM) ---
+                // --- 5. CONFIRM PASSWORD ---
                 CustomTextfield(
                   label: 'Confirm Password',
-                  prefixIcon: Icons.lock_clock_outlined, // Icon khác một chút cho đẹp
+                  prefixIcon: Icons.lock_clock_outlined,
                   isPassword: true,
                   controller: _confirmPasswordController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please confirm your password';
-                    // LOGIC KIỂM TRA TRÙNG KHỚP
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
+                  validator: (value) => AppValidator.match(
+                    value,
+                    _passwordController.text,
+                    emptyMessage: 'Please confirm your password',
+                    errorMessage: 'Passwords do not match',
+                  ),
                 ),
 
                 const SizedBox(height: 32),

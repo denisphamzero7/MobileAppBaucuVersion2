@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../untils/app_colors.dart';
 
+/// ============================================================================
+/// 💬 [AppDialogHelper] - TIỆN ÍCH DIALOG & POPUP TOÀN ỨNG DỤNG
+/// ============================================================================
 class AppDialogHelper {
   AppDialogHelper._();
 
@@ -11,6 +14,9 @@ class AppDialogHelper {
     required String message,
     String confirmText = 'Xóa',
     String cancelText = 'Hủy',
+    Color buttonColor = Colors.red,
+    Color confirmTextColor = Colors.white,
+    Color? cancelTextColor,
   }) async {
     final result = await Get.defaultDialog<bool>(
       title: title,
@@ -19,9 +25,9 @@ class AppDialogHelper {
       middleTextStyle: const TextStyle(fontSize: 13.5),
       textConfirm: confirmText,
       textCancel: cancelText,
-      confirmTextColor: Colors.white,
-      buttonColor: AppColors.dangerText,
-      cancelTextColor: AppColors.textMain,
+      confirmTextColor: confirmTextColor,
+      buttonColor: buttonColor,
+      cancelTextColor: cancelTextColor ?? AppColors.textMain,
       onConfirm: () => Get.back(result: true),
       onCancel: () => Get.back(result: false),
     );
@@ -35,6 +41,8 @@ class AppDialogHelper {
     String confirmText = 'Đồng ý',
     String cancelText = 'Hủy',
     Color confirmColor = AppColors.primary,
+    Color confirmTextColor = Colors.white,
+    Color? cancelTextColor,
   }) async {
     final result = await Get.defaultDialog<bool>(
       title: title,
@@ -43,9 +51,9 @@ class AppDialogHelper {
       middleTextStyle: const TextStyle(fontSize: 13.5),
       textConfirm: confirmText,
       textCancel: cancelText,
-      confirmTextColor: Colors.white,
+      confirmTextColor: confirmTextColor,
       buttonColor: confirmColor,
-      cancelTextColor: AppColors.textMain,
+      cancelTextColor: cancelTextColor ?? AppColors.textMain,
       onConfirm: () => Get.back(result: true),
       onCancel: () => Get.back(result: false),
     );
@@ -56,8 +64,8 @@ class AppDialogHelper {
   static void showLoading({String message = 'Đang xử lý...'}) {
     if (Get.isDialogOpen ?? false) return;
     Get.dialog(
-      WillPopScope(
-        onWillPop: () async => false,
+      PopScope(
+        canPop: false,
         child: Center(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -78,7 +86,12 @@ class AppDialogHelper {
                 const SizedBox(height: 14),
                 Text(
                   message,
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.black87),
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black87,
+                    decoration: TextDecoration.none,
+                  ),
                 ),
               ],
             ),

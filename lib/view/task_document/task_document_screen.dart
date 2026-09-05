@@ -9,6 +9,7 @@ import '../../untils/app_strings.dart';
 import '../../core/widgets/app_pagination_widget.dart';
 import '../../core/widgets/app_paged_list_wrapper.dart';
 import '../../core/widgets/import_excel_button.dart';
+import '../../core/utils/app_dialog_helper.dart';
 import '../../view/widgets/skeleton_loader.dart';
 import '../../view/widgets/smart_skeleton_wrapper.dart';
 import '../../view/widgets/quick_action_bottom_sheet.dart';
@@ -318,15 +319,12 @@ class _TaskDocumentScreenState extends State<TaskDocumentScreen> {
                                 child: const Icon(Icons.delete, color: Colors.white),
                               ),
                               confirmDismiss: (direction) async {
-                                return await Get.defaultDialog<bool>(
+                                return await AppDialogHelper.confirmDelete(
                                   title: 'Xác nhận xóa',
-                                  middleText: 'Bạn có chắc chắn muốn xóa văn bản "${doc.title}"?',
-                                  textConfirm: 'Xóa',
-                                  textCancel: 'Hủy',
-                                  confirmTextColor: Colors.white,
+                                  message: 'Bạn có chắc chắn muốn xóa văn bản "${doc.title}"?',
+                                  confirmText: 'Xóa',
+                                  cancelText: 'Hủy',
                                   buttonColor: AppColors.dangerText,
-                                  onConfirm: () => Get.back(result: true),
-                                  onCancel: () => Get.back(result: false),
                                 );
                               },
                               onDismissed: (direction) {

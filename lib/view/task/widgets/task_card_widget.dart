@@ -9,6 +9,7 @@ import '../../../untils/app_textstyles.dart';
 import '../../../helper/date_helper.dart';
 import '../../../core/widgets/app_tag.dart';
 import '../../../core/widgets/app_priority_indicator.dart';
+import '../../../core/utils/app_dialog_helper.dart';
 import 'task_details_dialog.dart';
 
 class TaskCardWidget extends GetView<TaskController> {
@@ -185,15 +186,12 @@ class TaskCardWidget extends GetView<TaskController> {
             child: const Icon(Icons.delete, color: Colors.white),
           ),
           confirmDismiss: (direction) async {
-            return await Get.defaultDialog<bool>(
+            return await AppDialogHelper.confirmDelete(
               title: AppStrings.deleteTask,
-              middleText: AppStrings.confirmDeleteTask,
-              textConfirm: AppStrings.delete,
-              textCancel: AppStrings.cancel,
-              confirmTextColor: Colors.white,
+              message: AppStrings.confirmDeleteTask,
+              confirmText: AppStrings.delete,
+              cancelText: AppStrings.cancel,
               buttonColor: Colors.red,
-              onConfirm: () => Get.back(result: true),
-              onCancel: () => Get.back(result: false),
             );
           },
           onDismissed: (direction) {

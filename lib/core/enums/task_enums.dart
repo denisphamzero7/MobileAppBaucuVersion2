@@ -282,4 +282,67 @@ enum TaskPriorityLevel {
     if (key == null || key.trim().isEmpty) return fallback;
     return _lookupMap[key.toLowerCase().trim()] ?? fallback;
   }
+
+  /// Danh sách mức độ ưu tiên theo thứ tự từ Thấp đến Khẩn cấp cho Form
+  static List<TaskPriorityLevel> get formOptions => [
+    TaskPriorityLevel.low,
+    TaskPriorityLevel.medium,
+    TaskPriorityLevel.high,
+    TaskPriorityLevel.urgent,
+  ];
+}
+
+/// ============================================================================
+/// 4. HÌNH THỨC THỜI HẠN CÔNG VIỆC (DEADLINE TYPE)
+/// ============================================================================
+enum TaskDeadlineType {
+  hasDeadline(
+    key: 'has_deadline',
+    label: 'Có thời hạn',
+    icon: Icons.calendar_today_outlined,
+    color: AppColors.primary,
+    aliases: ['co_han', 'có thời hạn', 'hasdeadline', '1', 'true'],
+  ),
+  noDeadline(
+    key: 'no_deadline',
+    label: 'Không có hạn',
+    icon: Icons.event_busy_outlined,
+    color: AppColors.grey,
+    aliases: ['khong_han', 'không có hạn', 'nodeadline', '0', 'false'],
+  );
+
+  final String key;
+  final String label;
+  final IconData icon;
+  final Color color;
+  final List<String> aliases;
+
+  const TaskDeadlineType({
+    required this.key,
+    required this.label,
+    required this.icon,
+    required this.color,
+    this.aliases = const [],
+  });
+
+  static final Map<String, TaskDeadlineType> _lookupMap = () {
+    final map = <String, TaskDeadlineType>{};
+    for (final type in TaskDeadlineType.values) {
+      map[type.key.toLowerCase()] = type;
+      for (final alias in type.aliases) {
+        map[alias.toLowerCase()] = type;
+      }
+    }
+    return map;
+  }();
+
+  static TaskDeadlineType fromKey(
+    String? key, {
+    TaskDeadlineType fallback = TaskDeadlineType.hasDeadline,
+  }) {
+    if (key == null || key.trim().isEmpty) return fallback;
+    return _lookupMap[key.toLowerCase().trim()] ?? fallback;
+  }
+
+  static List<TaskDeadlineType> get formOptions => TaskDeadlineType.values;
 }

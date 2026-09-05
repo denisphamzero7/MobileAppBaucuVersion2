@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
+import '../../helper/date_helper.dart';
 import '../../controllers/task_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../model/task_model.dart';
+import '../../core/utils/app_validator.dart';
+import '../../core/enums/task_enums.dart';
 import '../../untils/app_colors.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -27,20 +29,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   
   int? _selectedDocumentId;
   int? _selectedItemTypeId;
-  String _priority = 'medium';
-  String _deadlineType = 'has_deadline';
+  TaskPriorityLevel _selectedPriority = TaskPriorityLevel.medium;
+  TaskDeadlineType _selectedDeadlineType = TaskDeadlineType.hasDeadline;
   DateTime? _startDate;
   DateTime? _endDate;
   final List<int> _selectedAssigneeIds = [];
 
   bool _isLoading = false;
-
-  final List<Map<String, dynamic>> _priorities = [
-    {'value': 'low', 'label': 'Thấp', 'color': Colors.green},
-    {'value': 'medium', 'label': 'Trung bình', 'color': Colors.orange},
-    {'value': 'high', 'label': 'Cao', 'color': Colors.deepOrange},
-    {'value': 'urgent', 'label': 'Khẩn cấp', 'color': Colors.red},
-  ];
 
   @override
   void initState() {
@@ -52,22 +47,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       final t = widget.taskToUpdate!;
       _selectedDocumentId = t.taskAssignmentDocumentId;
       _selectedItemTypeId = t.taskAssignmentItemTypeId;
-      _priority = t.priority.isNotEmpty ? t.priority : 'medium';
-      _deadlineType = t.deadlineType.isNotEmpty ? t.deadlineType : 'has_deadline';
+      _selectedPriority = TaskPriorityLevel.fromKey(t.priority, fallback: TaskPriorityLevel.medium);
+      _selectedDeadlineType = TaskDeadlineType.fromKey(t.deadlineType, fallback: TaskDeadlineType.hasDeadline);
       if (t.assigneeIds != null && t.assigneeIds!.isNotEmpty) {
         _selectedAssigneeIds.addAll(t.assigneeIds!);
       }
 
       if (t.startAt != null && t.startAt!.isNotEmpty) {
-        try {
-          _startDate = DateFormat('yyyy-MM-dd HH:mm:ss').parse(t.startAt!);
-        } catch (_) {}
+        _startDate = DateHelper.parseDateTime(t.startAt);
       }
 
       if (t.endAt != null && t.endAt!.isNotEmpty) {
-        try {
-          _endDate = DateFormat('yyyy-MM-dd HH:mm:ss').parse(t.endAt!);
-        } catch (_) {}
+        _endDate = DateHelper.parseDateTime(t.endAt);
       }
     } else {
       _startDate = DateTime.now();
@@ -218,7 +209,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // 1. Kiểm tra thời hạn
-    if (_deadlineType == 'has_deadline' && _endDate == null) {
+    if (_selectedDeadlineType == TaskDeadlineType.hasDeadline && _endDate == null) {
       Get.snackbar('Lỗi', 'Vui lòng chọn thời gian kết thúc/hạn chót', backgroundColor: Colors.red[100]);
       return;
     }
@@ -275,9 +266,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       'name': _titleController.text.trim(),
       'title': _titleController.text.trim(),
       'description': _contentController.text.trim(),
-      'priority': _priority,
-      'deadline_type': _deadlineType,
-      'processing_status': widget.taskToUpdate?.processingStatus ?? 'todo',
+      'priority': _selectedPriority.key,
+      'deadline_type': _selectedDeadlineType.key,
+      'processing_status': widget.taskToUpdate?.processingStatus ?? TaskProcessingStatus.todo.key,
       'task_assignment_document_id': docId,
       'document_id': docId,
       'task_assignment_item_type_id': typeId,
@@ -291,11 +282,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
 
     if (_startDate != null) {
-      payload['start_at'] = DateFormat('yyyy-MM-dd HH:mm:ss').format(_startDate!);
+      payload['start_at'] = DateHelper.formatForApi(_startDate);
     }
     if (_endDate != null) {
-      payload['end_at'] = DateFormat('yyyy-MM-dd HH:mm:ss').format(_endDate!);
-      payload['deadline'] = DateFormat('yyyy-MM-dd').format(_endDate!);
+      payload['end_at'] = DateHelper.formatForApi(_endDate);
+      payload['deadline'] = DateHelper.formatForApi(_endDate, includeTime: false);
     }
 
     bool success = false;
@@ -394,7 +385,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     label: 'Tên / Tiêu đề công việc *',
                     hint: 'Nhập tên công việc...',
                     isDark: isDark,
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Vui lòng nhập tên công việc' : null,
+                    validator: (val) => AppValidator.requiredField(
+                      val,
+                      customMessage: 'Vui lòng nhập tên công việc',
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -440,7 +434,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           label: 'Hạn chót *',
                           date: _endDate,
                           isDark: isDark,
-                          onTap: _deadlineType == 'has_deadline' ? () => _pickDateTime(isStart: false) : null,
+                          onTap: _selectedDeadlineType == TaskDeadlineType.hasDeadline ? () => _pickDateTime(isStart: false) : null,
                         ),
                       ),
                     ],
@@ -590,14 +584,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         ),
         const SizedBox(height: 8),
         Row(
-          children: _priorities.map((item) {
-            final isSelected = _priority == item['value'];
-            final Color itemColor = item['color'] as Color;
+          children: TaskPriorityLevel.formOptions.map((priority) {
+            final isSelected = _selectedPriority == priority;
+            final Color itemColor = priority.color;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
                   setState(() {
-                    _priority = item['value'] as String;
+                    _selectedPriority = priority;
                   });
                 },
                 child: Container(
@@ -613,7 +607,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      item['label'] as String,
+                      priority.label,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -632,37 +626,31 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   Widget _buildDeadlineTypeToggle(bool isDark) {
     return Row(
-      children: [
-        ChoiceChip(
-          label: const Text('Có thời hạn'),
-          selected: _deadlineType == 'has_deadline',
-          onSelected: (selected) {
-            if (selected) {
-              setState(() => _deadlineType = 'has_deadline');
-            }
-          },
-          selectedColor: AppColors.primary.withValues(alpha: 0.2),
-          labelStyle: TextStyle(
-            color: _deadlineType == 'has_deadline' ? AppColors.primary : (isDark ? Colors.white70 : Colors.black87),
-            fontWeight: _deadlineType == 'has_deadline' ? FontWeight.bold : FontWeight.normal,
+      children: TaskDeadlineType.formOptions.map((type) {
+        final isSelected = _selectedDeadlineType == type;
+        return Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: ChoiceChip(
+            avatar: Icon(
+              type.icon,
+              size: 16,
+              color: isSelected ? type.color : (isDark ? Colors.white54 : AppColors.grey[600]),
+            ),
+            label: Text(type.label),
+            selected: isSelected,
+            onSelected: (selected) {
+              if (selected) {
+                setState(() => _selectedDeadlineType = type);
+              }
+            },
+            selectedColor: type.color.withValues(alpha: 0.15),
+            labelStyle: TextStyle(
+              color: isSelected ? type.color : (isDark ? Colors.white70 : Colors.black87),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        ChoiceChip(
-          label: const Text('Không có hạn'),
-          selected: _deadlineType == 'no_deadline',
-          onSelected: (selected) {
-            if (selected) {
-              setState(() => _deadlineType = 'no_deadline');
-            }
-          },
-          selectedColor: AppColors.primary.withValues(alpha: 0.2),
-          labelStyle: TextStyle(
-            color: _deadlineType == 'no_deadline' ? AppColors.primary : (isDark ? Colors.white70 : Colors.black87),
-            fontWeight: _deadlineType == 'no_deadline' ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
+        );
+      }).toList(),
     );
   }
 
@@ -692,7 +680,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    date == null ? 'Chưa chọn' : DateFormat('dd/MM/yyyy HH:mm').format(date),
+                    DateHelper.formatDateTime(date),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

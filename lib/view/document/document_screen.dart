@@ -10,6 +10,10 @@ import '../../service/petition_service.dart';
 import '../../core/widgets/import_excel_button.dart';
 import '../../core/widgets/app_pagination_widget.dart';
 import '../../core/widgets/app_paged_list_wrapper.dart';
+import '../../core/widgets/app_empty_widget.dart';
+import '../../core/enums/petition_enums.dart';
+import '../../model/advanced_filter_data.dart';
+import '../../core/utils/app_dialog_helper.dart';
 import '../../view/widgets/quick_action_bottom_sheet.dart';
 import '../../view/widgets/skeleton_loader.dart';
 import '../../view/widgets/smart_skeleton_wrapper.dart';
@@ -202,6 +206,13 @@ class _DocumentScreenState extends State<DocumentScreen> {
           // --- LỌC NÂNG CAO CHO ĐƠN THƯ ---
           var filteredPetitions = List<PetitionItemModel>.from(controller.petitionsList);
 
+          if (controller.selectedStatusFilter.value != 'all') {
+            filteredPetitions = filteredPetitions.where((p) {
+              final mapped = PetitionProcessingStatus.fromKey(p.processingStatus);
+              return mapped.key == controller.selectedStatusFilter.value;
+            }).toList();
+          }
+
           final af = controller.advancedFilter.value;
           if (af.departmentId != null) {
             filteredPetitions = filteredPetitions.where((p) => p.departmentId == af.departmentId).toList();
@@ -239,6 +250,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
           }
           final int startIndex = (controller.currentPage.value - 1) * PetitionController.itemsPerPage;
           final pagedPetitions = filteredPetitions.skip(startIndex).take(PetitionController.itemsPerPage).toList();
+
+          final bool hasActiveFilter = controller.advancedFilter.value.isActive ||
+              controller.searchText.value.isNotEmpty ||
+              controller.selectedStatusFilter.value != 'all' ||
+              controller.selectedDepartment.value != null;
 
           return SmartSkeletonWrapper(
             showSkeleton: showSkeleton,
@@ -290,21 +306,25 @@ class _DocumentScreenState extends State<DocumentScreen> {
                         ),
                       ),
                     )
-                  else if (controller.petitionsList.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0),
-                        child: Column(
-                          children: [
-                            Icon(Icons.mark_email_read_outlined, size: 48, color: AppColors.grey[400]),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Không có đơn thư nào phù hợp',
-                              style: TextStyle(fontSize: 13, color: AppColors.grey[500]),
-                            ),
-                          ],
-                        ),
-                      ),
+                  else if (filteredPetitions.isEmpty)
+                    AppEmptyWidget(
+                      icon: Icons.mark_email_read_outlined,
+                      message: 'Không có đơn thư nào phù hợp',
+                      subtitle: hasActiveFilter
+                          ? 'Không tìm thấy kết quả phù hợp với bộ lọc hiện tại'
+                          : 'Hiện tại chưa có đơn thư nào được ghi nhận',
+                      actionLabel: hasActiveFilter ? 'Đặt lại bộ lọc' : null,
+                      onAction: hasActiveFilter
+                          ? () {
+                              searchController.clear();
+                              controller.searchText.value = '';
+                              controller.selectedStatusFilter.value = 'all';
+                              controller.advancedFilter.value = AdvancedFilterData.initial;
+                              controller.selectedDepartment.value = null;
+                              controller.currentPage.value = 1;
+                              controller.fetchPetitions();
+                            }
+                          : null,
                     )
                   else
                     Column(
@@ -382,15 +402,12 @@ class _DocumentScreenState extends State<DocumentScreen> {
             child: const Icon(Icons.delete, color: Colors.white),
           ),
           confirmDismiss: (direction) async {
-            return await Get.defaultDialog<bool>(
+            return await AppDialogHelper.confirmDelete(
               title: 'Xóa đơn thư',
-              middleText: 'Bạn có chắc chắn muốn xóa đơn thư "${petition.title}"?',
-              textConfirm: 'Xóa',
-              textCancel: 'Hủy',
-              confirmTextColor: Colors.white,
+              message: 'Bạn có chắc chắn muốn xóa đơn thư "${petition.title}"?',
+              confirmText: 'Xóa',
+              cancelText: 'Hủy',
               buttonColor: Colors.red,
-              onConfirm: () => Get.back(result: true),
-              onCancel: () => Get.back(result: false),
             );
           },
           onDismissed: (direction) {

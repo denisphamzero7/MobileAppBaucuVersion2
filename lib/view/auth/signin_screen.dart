@@ -1,4 +1,5 @@
 import '../../untils/app_colors.dart';
+import '../../core/utils/app_validator.dart';
 import 'package:app_baucu_version1/controllers/auth_controller.dart';
 import 'package:app_baucu_version1/untils/app_textstyles.dart';
 import 'package:app_baucu_version1/view/auth/forgot_password.dart';
@@ -20,7 +21,6 @@ class SigninScreen extends StatefulWidget {
 class _SigninScreenState extends State<SigninScreen> {
   final AuthController _authController = Get.put(AuthController());
 
-  // Đổi tên biến cho rõ nghĩa
   final TextEditingController _usernameController = TextEditingController(text: 'admin@example.com');
   final TextEditingController _passwordController = TextEditingController(text: 'quandcore**11');
   final _formKey = GlobalKey<FormState>();
@@ -64,17 +64,14 @@ class _SigninScreenState extends State<SigninScreen> {
 
                 // --- USERNAME/EMAIL FIELD ---
                 CustomTextfield(
-                  label: 'Email or Username', // Rõ ràng hơn cho user
+                  label: 'Email or Username',
                   prefixIcon: Icons.person_outline,
                   keyboardType: TextInputType.emailAddress,
                   controller: _usernameController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email or username';
-                    }
-                    // Bỏ validation email vì có thể nhập username
-                    return null;
-                  },
+                  validator: (value) => AppValidator.requiredField(
+                    value,
+                    customMessage: 'Please enter your email or username',
+                  ),
                 ),
 
                 const SizedBox(height: 16),
@@ -85,15 +82,13 @@ class _SigninScreenState extends State<SigninScreen> {
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                   controller: _passwordController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: (value) => AppValidator.minLength(
+                    value,
+                    6,
+                    fieldName: 'Password',
+                    emptyMessage: 'Please enter your password',
+                    customMessage: 'Password must be at least 6 characters',
+                  ),
                 ),
                 const SizedBox(height: 8),
 
@@ -175,7 +170,7 @@ class _SigninScreenState extends State<SigninScreen> {
     );
   }
 
-    void _handleSignIn() async {
+  void _handleSignIn() async {
     if (_formKey.currentState!.validate()) {
       final loginData = await _authController.login(
         _usernameController.text.trim(),

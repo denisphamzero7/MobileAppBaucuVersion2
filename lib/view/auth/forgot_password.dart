@@ -1,4 +1,5 @@
-﻿import '../../untils/app_colors.dart';
+import '../../untils/app_colors.dart';
+import '../../core/utils/app_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -69,16 +70,11 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   controller: _emailController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    // Thêm regex check email nếu cần
-                    if (!GetUtils.isEmail(value)) {
-                      return 'Invalid email format';
-                    }
-                    return null;
-                  },
+                  validator: (value) => AppValidator.email(
+                    value,
+                    emptyMessage: 'Please enter your email',
+                    customMessage: 'Invalid email format',
+                  ),
                 ),
                 const SizedBox(height: 24),
 
